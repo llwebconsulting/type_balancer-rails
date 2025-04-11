@@ -1,0 +1,15 @@
+# frozen_string_literal: true
+
+TypeBalancer::Rails.configure do |config|
+  # Duration to cache balanced positions
+  config.cache_duration = 1.hour
+
+  # Collection size threshold for background processing
+  config.async_threshold = 1000
+
+  # Default number of items per page
+  config.per_page_default = 25
+
+  # Maximum number of items per page
+  config.max_per_page = 100
+end 
