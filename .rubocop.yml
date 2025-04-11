@@ -1,0 +1,71 @@
+require:
+  - rubocop-rails
+  - rubocop-rspec
+
+AllCops:
+  TargetRubyVersion: 3.2
+  NewCops: enable
+  SuggestExtensions: false
+  Exclude:
+    - 'bin/*'
+    - 'vendor/**/*'
+    - 'tmp/**/*'
+    - 'spec/dummy/**/*'
+
+Style/StringLiterals:
+  EnforcedStyle: single_quotes
+
+Style/Documentation:
+  Enabled: false
+
+Style/DocumentDynamicEvalDefinition:
+  Enabled: false
+
+Metrics/BlockLength:
+  Enabled: true
+  Exclude:
+    - 'spec/**/*'
+    - 'Rakefile'
+    - '*.gemspec'
+
+Metrics/MethodLength:
+  Max: 20
+
+Metrics/AbcSize:
+  Max: 20
+
+Metrics/CyclomaticComplexity:
+  Max: 10
+
+Metrics/PerceivedComplexity:
+  Max: 10
+
+Rails/ApplicationRecord:
+  Enabled: false  # We don't want to force ApplicationRecord in examples
+
+Rails/SkipsModelValidations:
+  Enabled: false  # Allow update_all, etc. in our gem
+
+RSpec/ExampleLength:
+  Max: 15
+
+RSpec/MultipleExpectations:
+  Max: 5
+
+RSpec/NestedGroups:
+  Max: 4
+
+RSpec/VerifiedDoubles:
+  Enabled: false
+
+RSpec/MultipleMemoizedHelpers:
+  Max: 10
+
+RSpec/RepeatedExample:
+  Enabled: false  # We have intentionally repeated examples
+
+RSpec/MultipleDescribes:
+  Enabled: false  # We have intentionally structured our specs this way
+
+RSpec/RepeatedExampleGroupDescription:
+  Enabled: false  # We have intentionally structured our specs this way 

@@ -1,0 +1,116 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  rspec:
+    name: RSpec Tests
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis
+        ports:
+          - 6379:6379
+    strategy:
+      matrix:
+        ruby-version: ['3.2.8', '3.3.0']
+        rails-version: ['7.0', '7.1']
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby-version }}
+          bundler-cache: true
+      
+      - name: Install Rails
+        run: |
+          gem install rails -v "~> ${{ matrix.rails-version }}.0"
+      
+      - name: Run tests with coverage
+        run: bundle exec rspec
+        env:
+          COVERAGE: true
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          RAILS_VERSION: ${{ matrix.rails-version }}
+
+      - name: Upload coverage results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report-ruby-${{ matrix.ruby-version }}-rails-${{ matrix.rails-version }}
+          path: coverage
+          retention-days: 14
+
+  rubocop:
+    name: RuboCop
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3.0'
+          bundler-cache: true
+      
+      - name: Run RuboCop
+        run: bundle exec rubocop
+
+  security:
+    name: Security Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3.0'
+          bundler-cache: true
+      
+      - name: Install bundler-audit
+        run: gem install bundler-audit
+      
+      - name: Check for vulnerable dependencies
+        run: bundle-audit check --update
+
+  integration:
+    name: Rails Integration Tests
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis
+        ports:
+          - 6379:6379
+    strategy:
+      matrix:
+        rails-version: ['7.0', '7.1']
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3.0'
+          bundler-cache: true
+      
+      - name: Set up test Rails app
+        run: |
+          gem install rails -v "~> ${{ matrix.rails-version }}.0"
+          rails new test_app --minimal --skip-git --skip-keeps --skip-active-storage --skip-action-mailer
+          cd test_app
+          bundle add type_balancer-rails --path=..
+          bundle install
+      
+      - name: Run integration tests
+        run: |
+          cd test_app
+          bundle exec rails test 

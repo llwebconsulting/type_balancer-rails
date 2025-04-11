@@ -1,0 +1,21 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Your rule content
+
+When writing or refactoring Object Oriented code, always follow these SOLID principals
+
+- Classes should only handle a single responsibility
+- Classes should be closed to modification but open to extension
+- When using inheritance, always stick to the Liskoff principal
+- When using typed languages, follow the principal for interfaces
+- Avoid tightly coupled dependencies. Whenever possible, dependencies should be injected
+
+Aside from this, there are some patterns that I strongly prefer using
+- Façade - whenever there is particularly complex reasoning that needs to be handled, I like to build façade classes to bury the complexity behind an easy to use interface so once it is tested it never has to be touched again
+- Adapter
+- Strategy
+- Others, of course, where appropriate

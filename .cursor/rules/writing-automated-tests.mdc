@@ -1,0 +1,16 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Your rule content
+
+When writing automated tests, always follow these rules
+
+- Unit tests should only test what a class is responsible for
+- Handling interactions with other classes should use some kind of mocking strategy
+- Only create integration tests when asked specifically to do so, and then under specific direction on what to test
+- When fixing tests, focus on fixing and re-running one test at a time
+- Never write tests to directly test private methods. Private methods should only be tested through the methods that call them
+- When checking code coverage make sure to run the entire suite first as coverage reports are unreliable otherwise

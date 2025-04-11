@@ -6,13 +6,10 @@ module TypeBalancer
     class BalancedCollectionQuery
       attr_reader :scope, :options
 
-      def initialize(scope, field: nil, order: nil)
+      def initialize(scope, options = {})
         @scope = scope
-        @options = {
-          type_field: field || infer_type_field,
-          type_order: order
-        }
-        @cache_key = generate_cache_key
+        @options = options
+        @per_page = options[:per_page] || 25
       end
 
       def page(num)
@@ -33,7 +30,58 @@ module TypeBalancer
       def infer_type_field
         %w[type media_type content_type category].find do |field|
           scope.column_names.include?(field)
-        end || raise(ArgumentError, "No type field found. Please specify one using balance_by_type(field: :your_field)")
+        end || raise(ArgumentError, 'No type field found. Please specify one using balance_by_type(field: :your_field)')
+      end
+
+      def fetch_or_calculate_positions
+        cache_key = generate_cache_key
+
+        ::Rails.cache.fetch(cache_key, expires_in: 1.hour) do
+          calculate_and_store_positions
+        end
+      end
+
+      def calculate_and_store_positions
+        # Calculate positions using the core gem
+        positions = TypeBalancer.calculate_positions(@scope, @options)
+
+        # Store positions in the database
+        store_positions(positions)
+
+        # Return the positions
+        positions
+      end
+
+      def store_positions(positions)
+        cache_key = generate_cache_key
+
+        ActiveRecord::Base.transaction do
+          # Clear existing positions for this cache key
+          BalancedPosition.for_collection(cache_key).delete_all
+
+          # Store new positions
+          positions.each_with_index do |record_id, index|
+            BalancedPosition.create!(
+              record_type: @scope.model_name.name,
+              record_id: record_id,
+              position: index + 1,
+              cache_key: cache_key,
+              type_field: @options[:type_field]
+            )
+          end
+        end
+      end
+
+      def paginate_by_positions(positions, page_num)
+        offset = (page_num - 1) * @per_page
+        page_positions = positions[offset, @per_page] || []
+
+        # Return empty scope if no positions for this page
+        return @scope.none if page_positions.empty?
+
+        # Order by the calculated positions
+        @scope.where(id: page_positions)
+              .order(Arel.sql("FIELD(id, #{page_positions.join(',')})"))
       end
 
       def generate_cache_key
@@ -42,50 +90,6 @@ module TypeBalancer
         options_key = Digest::MD5.hexdigest(@options.to_json)
         "#{base}/#{scope_key}/#{options_key}"
       end
-
-      def fetch_or_calculate_positions
-        Rails.cache.fetch(@cache_key, expires_in: TypeBalancer::Rails.configuration.cache_duration) do
-          calculate_and_store_positions
-        end
-      end
-
-      def calculate_and_store_positions
-        if scope.count > TypeBalancer::Rails.configuration.async_threshold
-          BalanceCalculationJob.perform_later(scope, @options)
-          BalancedPosition.for_collection(@cache_key)
-        else
-          calculate_positions
-        end
-      end
-
-      def calculate_positions
-        items = scope.to_a
-        balancer = TypeBalancer::Balancer.new(items, type_field: @options[:type_field])
-        balanced = balancer.call(order: @options[:type_order])
-
-        balanced.each_with_index.map do |record, index|
-          BalancedPosition.create!(
-            record: record,
-            position: index + 1,
-            cache_key: @cache_key,
-            type_field: @options[:type_field]
-          )
-        end
-      end
-
-      def paginate_by_positions(positions, page_num)
-        page_positions = positions.slice(page_offset(page_num), page_size)
-        scope.where(id: page_positions.map(&:record_id))
-             .order(Arel.sql("FIELD(id, #{page_positions.map(&:record_id).join(',')})"))
-      end
-
-      def page_size
-        @per_page || TypeBalancer::Rails.configuration.per_page_default
-      end
-
-      def page_offset(page_num)
-        (page_num.to_i - 1) * page_size
-      end
     end
   end
-end 
+end

@@ -13,12 +13,12 @@ module TypeBalancer
       private
 
       def invalidate_balance_cache
-        base_key = "type_balancer/#{self.class.name.underscore.pluralize}"
-        cache_key = "#{base_key}/#{cache_key_with_version}"
-        
-        ::Rails.cache.delete_matched("#{base_key}/*")
-        BalancedPosition.where(record: self).delete_all
+        # Delete all cache entries for this model type
+        ::Rails.cache.delete_matched("type_balancer/#{self.class.table_name}/*")
+
+        # Delete all balanced positions for this record
+        TypeBalancer::Rails::BalancedPosition.for_record(self).delete_all
       end
     end
   end
-end 
+end
