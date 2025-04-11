@@ -7,6 +7,7 @@ require "active_job/railtie"
 require "action_cable/engine"
 require "rspec/rails"
 require "type_balancer/rails"
+require "redis"
 
 # Configure Rails Environment
 ENV["RAILS_ENV"] = "test"
@@ -38,7 +39,16 @@ RSpec.configure do |config|
 
   config.expect_with :rspec do |c|
     c.syntax = :expect
+    c.include_chain_clauses_in_custom_matcher_descriptions = true
   end
+
+  config.mock_with :rspec do |mocks|
+    mocks.verify_partial_doubles = true
+  end
+
+  config.shared_context_metadata_behavior = :apply_to_host_groups
+  config.filter_run_when_matching :focus
+  config.warnings = true
 
   config.before(:suite) do
     # Create test schema
@@ -63,4 +73,10 @@ RSpec.configure do |config|
   # Include Rails testing helpers
   config.include ActiveJob::TestHelper
   config.include ActiveSupport::Testing::TimeHelpers
+
+  config.before(:each) do
+    # Reset container and registry before each test
+    TypeBalancer::Rails::Container.reset!
+    TypeBalancer::Rails::StrategyRegistry.reset!
+  end
 end

@@ -1,13 +1,6 @@
-# TypeBalancer::Rails
+# TypeBalancer Rails
 
-Rails integration for the TypeBalancer gem, providing ActiveRecord integration, efficient caching, and pagination support.
-
-## Features
-
-- **ActiveRecord Integration**: Easy type balancing with a clean DSL
-- **Pagination Support**: Works with Kaminari and will_paginate
-- **Caching Infrastructure**: Efficient position caching with proper invalidation
-- **Background Processing**: Handles large collections asynchronously
+Rails integration for the TypeBalancer gem, providing efficient pagination strategies for balanced type collections.
 
 ## Installation
 
@@ -17,12 +10,29 @@ Add this line to your application's Gemfile:
 gem 'type_balancer-rails'
 ```
 
-Then execute:
+And then execute:
 
 ```bash
 $ bundle install
-$ rails generate type_balancer:install
-$ rails db:migrate
+```
+
+## Configuration
+
+Configure TypeBalancer Rails in an initializer:
+
+```ruby
+# config/initializers/type_balancer.rb
+TypeBalancer::Rails.configure do |config|
+  # Choose your storage strategy (:cursor or :redis)
+  config.storage_strategy = :cursor
+
+  # Cursor strategy settings
+  config.cursor_buffer_multiplier = 3  # Fetch buffer size multiplier
+
+  # Redis strategy settings (if using Redis)
+  # config.redis = Redis.new(url: ENV['REDIS_URL'])
+  # config.redis_ttl = 1.hour
+end
 ```
 
 ## Usage
@@ -31,70 +41,63 @@ $ rails db:migrate
 
 ```ruby
 class Post < ApplicationRecord
-  include TypeBalancer::Rails::CacheInvalidation
-  
-  # Optional: Configure default type field
-  balance_by_type on: :media_type
+  # Define which field to balance by
+  def self.feed
+    balance_by_type(:media_type)
+  end
 end
 
 # In your controller
-@posts = Post.balance_by_type.page(params[:page])
-
-# With custom type field
-@posts = Post.balance_by_type(field: :category)
-
-# With custom type order
-@posts = Post.balance_by_type(order: [:video, :image, :article])
-
-# With pagination options
-@posts = Post.balance_by_type.page(3).per(20)
+@posts = Post.feed.page(params[:page]).per(20)
 ```
 
-### Configuration
+### Storage Strategies
 
-Configure TypeBalancer::Rails in `config/initializers/type_balancer.rb`:
+#### Cursor Strategy (Default)
+
+The cursor strategy is memory-efficient and ideal for real-time data. It doesn't require any additional dependencies.
+
+**Advantages:**
+- No additional dependencies
+- No storage overhead
+- Consistent results even with data changes
+- Excellent for real-time data
+- Memory efficient
+
+**Trade-offs:**
+- Fetches more records than needed (configurable buffer)
+- No "total pages" count
+- Forward-only pagination
+
+#### Redis Strategy
+
+The Redis strategy is ideal for high-traffic applications where caching balanced results improves performance.
+
+**Advantages:**
+- Cached results
+- Bidirectional pagination
+- Total pages available
+- Consistent ordering across page loads
+
+**Trade-offs:**
+- Redis dependency
+- Additional memory usage
+- Potentially stale data
+- Cache invalidation complexity
+
+### Pagination
+
+Works with standard pagination methods:
 
 ```ruby
-TypeBalancer::Rails.configure do |config|
-  # Duration to cache balanced positions
-  config.cache_duration = 1.hour
+# Basic pagination
+@posts = Post.feed.page(2).per(20)
 
-  # Collection size threshold for background processing
-  config.async_threshold = 1000
+# Check for next page
+@posts.next_page?
 
-  # Default number of items per page
-  config.per_page_default = 25
-
-  # Maximum number of items per page
-  config.max_per_page = 100
-end
-```
-
-### Cache Invalidation
-
-Include the `CacheInvalidation` module in your models to automatically invalidate cached positions when records change:
-
-```ruby
-class Post < ApplicationRecord
-  include TypeBalancer::Rails::CacheInvalidation
-end
-```
-
-### Background Processing
-
-Large collections are automatically processed in the background when they exceed the `async_threshold`. Progress can be monitored through ActionCable:
-
-```javascript
-// app/javascript/channels/type_balancer_channel.js
-import consumer from "./consumer"
-
-consumer.subscriptions.create("TypeBalancerChannel", {
-  received(data) {
-    if (data.status === "completed") {
-      // Refresh your view
-    }
-  }
-})
+# Get total pages (Redis strategy only)
+@posts.total_pages if @posts.respond_to?(:total_pages)
 ```
 
 ## Development

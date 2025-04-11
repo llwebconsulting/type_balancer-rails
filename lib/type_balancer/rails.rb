@@ -4,6 +4,8 @@ require "active_support"
 require "active_record"
 require "type_balancer"
 require_relative "rails/version"
+require_relative "rails/container"
+require_relative "rails/strategy_registry"
 
 module TypeBalancer
   # Rails integration for TypeBalancer
@@ -16,7 +18,7 @@ module TypeBalancer
 
     # Configuration class for TypeBalancer::Rails
     class Configuration
-      attr_accessor :cache_duration, :async_threshold, :per_page_default, :max_per_page
+      attr_accessor :cache_duration, :async_threshold, :per_page_default, :max_per_page, :storage_strategy, :redis, :redis_ttl, :cursor_buffer_multiplier
 
       def initialize
         @cache_duration = 1.hour
@@ -27,12 +29,49 @@ module TypeBalancer
     end
 
     class << self
+      def configure
+        yield(configuration)
+        register_default_services
+      end
+
       def configuration
         @configuration ||= Configuration.new
       end
 
-      def configure
-        yield(configuration)
+      def storage_strategy
+        Container.resolve(:storage_strategy)
+      end
+
+      private
+
+      def register_default_services
+        # Register strategies
+        StrategyRegistry.register(:cursor, Strategies::CursorStrategy)
+        StrategyRegistry.register(:redis, Strategies::RedisStrategy)
+
+        # Register storage strategy factory
+        Container.register(:storage_strategy) do
+          strategy_class = StrategyRegistry.get(configuration.storage_strategy || :cursor)
+          
+          case strategy_class.name
+          when "TypeBalancer::Rails::Strategies::RedisStrategy"
+            strategy_class.new(
+              redis: Container.resolve(:redis_client),
+              ttl: configuration.redis_ttl
+            )
+          when "TypeBalancer::Rails::Strategies::CursorStrategy"
+            strategy_class.new(
+              buffer_multiplier: configuration.cursor_buffer_multiplier
+            )
+          else
+            strategy_class.new
+          end
+        end
+
+        # Register Redis client if configured
+        Container.register(:redis_client) do
+          configuration.redis || Redis.new
+        end
       end
     end
 
@@ -52,6 +91,10 @@ module TypeBalancer
     end
   end
 end
+
+# Register default strategies
+TypeBalancer::Rails::StrategyRegistry.register(:cursor, TypeBalancer::Rails::Strategies::CursorStrategy)
+TypeBalancer::Rails::StrategyRegistry.register(:redis, TypeBalancer::Rails::Strategies::RedisStrategy)
 
 # Extend ActiveRecord::Base with TypeBalancer functionality
 ActiveSupport.on_load(:active_record) do
