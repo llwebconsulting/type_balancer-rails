@@ -2,6 +2,7 @@
 
 require 'simplecov'
 require 'simplecov-cobertura'
+require 'unit_helper'
 
 SimpleCov.formatters = [
   SimpleCov::Formatter::HTMLFormatter,
@@ -34,6 +35,12 @@ Dir[File.join(File.dirname(__FILE__), 'support/**/*.rb')].sort.each { |f| requir
 
 # Load our gem
 require 'type_balancer/rails'
+
+# Load integration support files
+Dir[File.join(File.dirname(__FILE__), 'integration/support/**/*.rb')].sort.each { |f| require f }
+
+# Initialize Rails application
+Rails.application.initialize!
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure

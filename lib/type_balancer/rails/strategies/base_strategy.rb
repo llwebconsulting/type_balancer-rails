@@ -1,7 +1,18 @@
+# frozen_string_literal: true
+
 module TypeBalancer
   module Rails
     module Strategies
       class BaseStrategy
+        def initialize(collection, options = {})
+          @collection = collection
+          @options = options
+        end
+
+        def execute
+          raise NotImplementedError, "#{self.class} must implement #execute"
+        end
+
         # @param scope [ActiveRecord::Relation] The scope to fetch records from
         # @param page_size [Integer] Number of records per page
         # @param cursor [String, Integer] Cursor for pagination (optional)
@@ -27,7 +38,11 @@ module TypeBalancer
         def total_pages(scope, page_size:)
           nil
         end
+
+        private
+
+        attr_reader :collection, :options
       end
     end
   end
-end 
+end

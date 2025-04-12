@@ -14,15 +14,15 @@ module TypeBalancer
         @cache_enabled = true
         @cache_ttl = 1.hour
       end
-    end
 
-    class << self
-      def configuration
-        @configuration ||= Configuration.new
-      end
+      class << self
+        def configuration
+          @configuration ||= new
+        end
 
-      def configure
-        yield(configuration)
+        def configure
+          yield(configuration)
+        end
       end
     end
   end

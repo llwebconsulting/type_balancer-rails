@@ -18,3 +18,4 @@ gem 'rubocop-rails', '~> 2.24'
 gem 'rubocop-rspec', '~> 2.27'
 gem 'simplecov', '~> 0.22.0'
 gem 'simplecov-cobertura', '~> 2.1' # XML format for CodeCov
+gem 'sqlite3', '~> 1.7.3' # Pin to the version that's already activated

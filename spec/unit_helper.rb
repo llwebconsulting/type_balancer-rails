@@ -24,18 +24,20 @@ require 'active_job'
 require 'redis'
 require 'rspec/mocks'
 
-# Load support files
+# Load our gem
+require 'type_balancer/rails'
+require 'type_balancer/rails/configuration'
+require 'type_balancer/rails/strategies'
+require 'type_balancer/rails/container'
+require 'type_balancer/rails/strategy_registry'
+require 'type_balancer/rails/cache_invalidation'
+
+# Set up a mock Rails cache for testing
+require 'active_support/cache/memory_store'
+Rails.cache = ActiveSupport::Cache::MemoryStore.new
+
+# Load support files after loading our gem
 Dir[File.join(File.dirname(__FILE__), 'support/**/*.rb')].sort.each { |f| require f }
-
-# Configure Rails test environment
-module TestApp
-  class Application < Rails::Application
-    config.eager_load = false
-    config.cache_store = :memory_store
-  end
-end
-
-Rails.application.initialize!
 
 # Configure RSpec
 RSpec.configure do |config|
@@ -55,14 +57,7 @@ RSpec.configure do |config|
   end
 
   # Clean up between tests
-  config.after do
+  config.before do
     Rails.cache.clear
   end
 end
-
-# Load our gem
-require 'type_balancer/rails'
-require 'type_balancer/rails/configuration'
-require 'type_balancer/rails/strategies'
-require 'type_balancer/rails/container'
-require 'type_balancer/rails/strategy_registry'

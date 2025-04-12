@@ -317,7 +317,7 @@ DEPENDENCIES
   rubocop-rspec (~> 2.27)
   simplecov (~> 0.22.0)
   simplecov-cobertura (~> 2.1)
-  sqlite3 (~> 1.7, >= 1.7.3)
+  sqlite3 (~> 1.7.3)
   type_balancer (~> 0.1.2)
   type_balancer-rails!
 
