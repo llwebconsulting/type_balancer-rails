@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "unit_helper"
+require "type_balancer/rails/strategy_registry"
 
 RSpec.describe TypeBalancer::Rails::StrategyRegistry do
   let(:post_class) do

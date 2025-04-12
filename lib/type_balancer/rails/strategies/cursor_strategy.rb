@@ -1,25 +1,28 @@
+# frozen_string_literal: true
+
+require_relative '../strategies'
+
 module TypeBalancer
   module Rails
     module Strategies
-      class CursorStrategy < BaseStrategy
-        def initialize(buffer_multiplier: 3)
-          @buffer_multiplier = buffer_multiplier
-        end
+      class CursorStrategy < Strategy
+        def execute
+          buffer_size = collection_query.per_page * TypeBalancer::Rails.configuration.cursor_buffer_multiplier
 
-        def fetch_page(scope, page_size: 20, cursor: nil)
-          scope = cursor ? scope.where("id > ?", cursor) : scope
-          records = scope.limit(page_size * @buffer_multiplier).to_a
-          
-          balanced = TypeBalancer.balance(records, type_field: scope.type_field)
-          paginated = balanced.first(page_size)
-          
-          [paginated, paginated.last&.id]
-        end
+          # Get a buffer of records to balance from
+          records = collection_query.base_scope
+                                    .limit(buffer_size)
+                                    .offset(collection_query.offset)
+                                    .to_a
 
-        def next_page_token(result)
-          result.last # Returns the cursor (last ID)
+          # Balance the records for the current page
+          TypeBalancer::Core::Balancer.new(
+            records,
+            collection_query.type_field,
+            collection_query.per_page
+          ).balance
         end
       end
     end
   end
-end 
+end

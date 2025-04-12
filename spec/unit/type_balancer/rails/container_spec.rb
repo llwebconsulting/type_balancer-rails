@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "unit_helper"
+require "type_balancer/rails/container"
 
 RSpec.describe TypeBalancer::Rails::Container do
   # Reset container state before each test
