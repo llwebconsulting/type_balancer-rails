@@ -22,7 +22,7 @@ RSpec.describe TypeBalancer::Rails::Container do
 
     it "registers a block that returns new instances" do
       counter = 0
-      described_class.register(:counter) { counter += 1 }
+      described_class.register(:counter, cache: false) { counter += 1 }
       
       expect(described_class.resolve(:counter)).to eq(1)
       expect(described_class.resolve(:counter)).to eq(2)

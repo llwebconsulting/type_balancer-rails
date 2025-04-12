@@ -7,45 +7,50 @@ module TypeBalancer
       queue_as :default
 
       def perform(scope, options = {})
-        # Calculate positions using the core gem
-        positions = TypeBalancer.calculate_positions(scope, options)
+        @scope = scope
+        @options = options
 
-        # Store positions in the database
-        store_positions(positions, options)
-
-        # Broadcast completion if needed
-        broadcast_completion if options[:broadcast]
+        ActiveRecord::Base.transaction do
+          positions = calculate_positions
+          store_positions(positions)
+          broadcast_completion
+        end
       end
 
       private
 
-      def store_positions(positions, options)
-        cache_key = generate_cache_key(options)
+      def calculate_positions
+        TypeBalancer.calculate_positions(@scope, @options)
+      end
 
-        # Store each position in a transaction
-        ActiveRecord::Base.transaction do
-          positions.each_with_index do |record_id, index|
-            BalancedPosition.create!(
-              record_type: options[:record_type],
-              record_id: record_id,
-              position: index + 1,
-              cache_key: cache_key,
-              type_field: options[:type_field]
-            )
-          end
+      def store_positions(positions)
+        cache_key = generate_cache_key
+
+        # Clear existing positions for this cache key
+        BalancedPosition.for_collection(cache_key).delete_all
+
+        # Store new positions
+        positions.each_with_index do |record_id, index|
+          BalancedPosition.create!(
+            record_type: @scope.klass.name,
+            record_id: record_id,
+            position: index + 1,
+            cache_key: cache_key,
+            type_field: @options[:type_field]
+          )
         end
       end
 
-      def generate_cache_key(options)
-        base = "type_balancer/#{options[:record_type].tableize}"
-        scope_key = options[:scope_key]
-        options_key = Digest::MD5.hexdigest(options.except(:scope_key, :record_type).to_json)
-        "#{base}/#{scope_key}/#{options_key}"
+      def broadcast_completion
+        channel = "type_balancer_#{@scope.klass.table_name}"
+        ActionCable.server.broadcast(channel, status: 'completed')
       end
 
-      def broadcast_completion
-        # Implementation depends on the notification system being used
-        # (ActionCable, Hotwire, etc.)
+      def generate_cache_key
+        base = "type_balancer/#{@scope.klass.table_name}"
+        scope_key = @scope.cache_key_with_version
+        options_key = Digest::MD5.hexdigest(@options.to_json)
+        "#{base}/#{scope_key}/#{options_key}"
       end
     end
   end

@@ -1,26 +1,45 @@
 # frozen_string_literal: true
 
-require_relative '../strategies'
-
 module TypeBalancer
   module Rails
     module Strategies
-      class CursorStrategy < Strategy
-        def execute
-          buffer_size = collection_query.per_page * TypeBalancer::Rails.configuration.cursor_buffer_multiplier
+      # Cursor-based storage strategy
+      class CursorStrategy < BaseStrategy
+        def initialize
+          super
+          @buffer_multiplier = TypeBalancer::Rails.configuration.cursor_buffer_multiplier
+        end
 
-          # Get a buffer of records to balance from
-          records = collection_query.base_scope
-                                    .limit(buffer_size)
-                                    .offset(collection_query.offset)
-                                    .to_a
+        def store(key, value, ttl = nil)
+          validate_key!(key)
+          validate_value!(value)
+          key = cache_key(key)
 
-          # Balance the records for the current page
-          TypeBalancer::Core::Balancer.new(
-            records,
-            collection_query.type_field,
-            collection_query.per_page
-          ).balance
+          if cache_enabled?
+            ::Rails.cache.write(key, value, expires_in: normalize_ttl(ttl))
+          else
+            value
+          end
+        end
+
+        def fetch(key)
+          validate_key!(key)
+          key = cache_key(key)
+
+          return unless cache_enabled?
+
+          ::Rails.cache.read(key)
+        end
+
+        def delete(key)
+          validate_key!(key)
+          key = cache_key(key)
+
+          ::Rails.cache.delete(key) if cache_enabled?
+        end
+
+        def clear
+          ::Rails.cache.clear if cache_enabled?
         end
       end
     end

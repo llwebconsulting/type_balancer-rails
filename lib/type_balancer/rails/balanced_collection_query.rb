@@ -7,9 +7,18 @@ module TypeBalancer
       attr_reader :scope, :options
 
       def initialize(scope, options = {})
-        @scope = scope
+        @scope = scope[:collection] if scope.is_a?(Hash) && scope[:collection]
+        @scope ||= scope
         @options = options
         @per_page = options[:per_page] || 25
+      end
+
+      def execute
+        fetch_or_calculate_positions
+      end
+
+      def background_processing?
+        scope.count > TypeBalancer::Rails.configuration.background_processing_threshold
       end
 
       def page(num)
@@ -36,7 +45,7 @@ module TypeBalancer
       def fetch_or_calculate_positions
         cache_key = generate_cache_key
 
-        ::Rails.cache.fetch(cache_key, expires_in: 1.hour) do
+        ::Rails.cache.fetch(cache_key, expires_in: TypeBalancer::Rails.configuration.cache_ttl) do
           calculate_and_store_positions
         end
       end
@@ -62,7 +71,7 @@ module TypeBalancer
           # Store new positions
           positions.each_with_index do |record_id, index|
             BalancedPosition.create!(
-              record_type: @scope.model_name.name,
+              record_type: scope.klass.name,
               record_id: record_id,
               position: index + 1,
               cache_key: cache_key,
@@ -85,8 +94,8 @@ module TypeBalancer
       end
 
       def generate_cache_key
-        base = "type_balancer/#{@scope.model_name.plural}"
-        scope_key = @scope.cache_key_with_version
+        base = "type_balancer/#{scope.klass.table_name}"
+        scope_key = scope.cache_key_with_version
         options_key = Digest::MD5.hexdigest(@options.to_json)
         "#{base}/#{scope_key}/#{options_key}"
       end

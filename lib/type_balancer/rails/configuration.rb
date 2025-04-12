@@ -1,44 +1,49 @@
 # frozen_string_literal: true
 
+require_relative 'config/configuration'
+require_relative 'config/strategy_manager'
+require_relative 'config/storage_adapter'
+
 module TypeBalancer
   module Rails
-    class Configuration
-      attr_accessor :cursor_buffer_multiplier,
-                    :background_processing_threshold,
-                    :cache_enabled,
-                    :cache_ttl,
-                    :storage_strategy,
-                    :redis_client
-
-      def initialize
-        @cursor_buffer_multiplier = 3
-        @background_processing_threshold = 1000
-        @cache_enabled = true
-        @cache_ttl = 1.hour
-        @storage_strategy = :cursor
-      end
-    end
-
+    # Main configuration interface for TypeBalancer Rails
     class << self
-      attr_accessor :configuration
-
       def configure
-        self.configuration ||= Configuration.new
-        yield(configuration)
+        yield(configuration) if block_given?
+        self
       end
 
-      def storage_strategy
-        container.resolve(:storage_strategy)
+      def configuration
+        @configuration ||= Config::Configuration.new
       end
 
-      def container
-        @container ||= Container.new
+      def strategy_manager
+        Config::StrategyManager
+      end
+
+      def storage_adapter
+        Config::StorageAdapter
       end
 
       def reset!
-        @configuration = Configuration.new
-        @container = Container.new
+        @configuration = nil
+        strategy_manager.reset!
+        storage_adapter.reset!
       end
+
+      def register_strategy(name, strategy)
+        strategy_manager.register(name, strategy)
+      end
+
+      def resolve_strategy(name)
+        strategy_manager.resolve(name)
+      end
+
+      delegate :configure_redis, to: :storage_adapter
+
+      delegate :configure_cache, to: :storage_adapter
+
+      delegate :redis_enabled?, to: :storage_adapter
     end
   end
 end

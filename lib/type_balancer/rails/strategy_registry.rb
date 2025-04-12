@@ -2,18 +2,24 @@
 
 module TypeBalancer
   module Rails
-    class StrategyRegistry
+    module StrategyRegistry
       class << self
-        def register(name, strategy_class)
-          strategies[name] = strategy_class
+        def register(name, strategy)
+          strategies[name] = strategy
         end
 
         def resolve(name)
           strategies[name] || raise(ArgumentError, "Unknown strategy: #{name}")
         end
+        alias get resolve
 
         def reset!
-          @strategies = {}
+          @strategies = nil
+          register_defaults
+        end
+
+        def available_strategies
+          strategies.keys
         end
 
         private
@@ -21,7 +27,18 @@ module TypeBalancer
         def strategies
           @strategies ||= {}
         end
+
+        def register_defaults
+          require_relative 'strategies/base_strategy'
+          require_relative 'strategies/redis_strategy'
+          require_relative 'strategies/cursor_strategy'
+
+          register(:redis, Strategies::RedisStrategy)
+          register(:cursor, Strategies::CursorStrategy)
+        end
       end
+
+      class UnknownStrategyError < StandardError; end
     end
   end
 end

@@ -1,6 +1,19 @@
 # TypeBalancer Rails
 
-Rails integration for the TypeBalancer gem, providing efficient pagination strategies for balanced type collections.
+A Ruby on Rails gem for balancing records by type in ActiveRecord collections.
+
+[![Gem Version](https://badge.fury.io/rb/type_balancer-rails.svg)](https://badge.fury.io/rb/type_balancer-rails)
+[![Build Status](https://github.com/your-username/type_balancer-rails/workflows/CI/badge.svg)](https://github.com/your-username/type_balancer-rails/actions)
+[![Code Climate](https://codeclimate.com/github/your-username/type_balancer-rails/badges/gpa.svg)](https://codeclimate.com/github/your-username/type_balancer-rails)
+
+## Features
+
+- Balance ActiveRecord collections by type field
+- Multiple storage strategies (Redis, Cursor)
+- Built-in caching support
+- Flexible pagination
+- Thread-safe operations
+- Rails integration
 
 ## Installation
 
@@ -10,104 +23,178 @@ Add this line to your application's Gemfile:
 gem 'type_balancer-rails'
 ```
 
-And then execute:
+Then execute:
 
 ```bash
 $ bundle install
 ```
 
-## Configuration
+## Quick Start
 
-Configure TypeBalancer Rails in an initializer:
+1. Configure TypeBalancer in an initializer:
 
 ```ruby
 # config/initializers/type_balancer.rb
 TypeBalancer::Rails.configure do |config|
-  # Choose your storage strategy (:cursor or :redis)
-  config.storage_strategy = :cursor
-
-  # Cursor strategy settings
-  config.cursor_buffer_multiplier = 3  # Fetch buffer size multiplier
-
-  # Redis strategy settings (if using Redis)
-  # config.redis = Redis.new(url: ENV['REDIS_URL'])
-  # config.redis_ttl = 1.hour
+  # Use Redis storage (recommended for production)
+  config.storage_strategy = :redis
+  config.configure_redis(Redis.new)
+  
+  # Enable caching for better performance
+  config.cache_enabled = true
+  config.cache_ttl = 1.hour
+  
+  # Optional: Configure cursor buffer for in-memory storage
+  config.cursor_buffer_multiplier = 2
 end
 ```
 
-## Usage
-
-### Basic Usage
+2. Add to your models:
 
 ```ruby
 class Post < ApplicationRecord
-  # Define which field to balance by
-  def self.feed
-    balance_by_type(:media_type)
-  end
+  balance_by_type :media_type
 end
-
-# In your controller
-@posts = Post.feed.page(params[:page]).per(20)
 ```
 
-### Storage Strategies
+3. Use in your controllers:
 
-#### Cursor Strategy (Default)
+```ruby
+class PostsController < ApplicationController
+  def index
+    @posts = Post.balance_by_type.page(params[:page]).per(20)
+  end
+end
+```
 
-The cursor strategy is memory-efficient and ideal for real-time data. It doesn't require any additional dependencies.
+## Storage Strategies
 
-**Advantages:**
-- No additional dependencies
-- No storage overhead
-- Consistent results even with data changes
-- Excellent for real-time data
-- Memory efficient
+### Redis Storage
 
-**Trade-offs:**
-- Fetches more records than needed (configurable buffer)
-- No "total pages" count
-- Forward-only pagination
+Recommended for production environments:
 
-#### Redis Strategy
+```ruby
+# Configure Redis
+TypeBalancer::Rails.configure do |config|
+  config.storage_strategy = :redis
+  config.configure_redis(Redis.new(url: ENV['REDIS_URL']))
+end
 
-The Redis strategy is ideal for high-traffic applications where caching balanced results improves performance.
+# Use in models
+class Post < ApplicationRecord
+  balance_by_type :media_type, storage: :redis, ttl: 1.hour
+end
+```
 
-**Advantages:**
-- Cached results
-- Bidirectional pagination
-- Total pages available
-- Consistent ordering across page loads
+### Cursor Storage
 
-**Trade-offs:**
-- Redis dependency
-- Additional memory usage
-- Potentially stale data
-- Cache invalidation complexity
+Lightweight in-memory storage for development:
 
-### Pagination
+```ruby
+# Configure cursor storage
+TypeBalancer::Rails.configure do |config|
+  config.storage_strategy = :cursor
+  config.cursor_buffer_multiplier = 2
+end
 
-Works with standard pagination methods:
+# Use in models
+class Post < ApplicationRecord
+  balance_by_type :media_type, storage: :cursor
+end
+```
+
+## Caching
+
+Enable caching for better performance:
+
+```ruby
+TypeBalancer::Rails.configure do |config|
+  config.cache_enabled = true
+  config.cache_ttl = 1.hour
+  config.configure_cache(Rails.cache)
+end
+```
+
+## Pagination
+
+TypeBalancer supports flexible pagination:
 
 ```ruby
 # Basic pagination
-@posts = Post.feed.page(2).per(20)
+@posts = Post.balance_by_type.page(2).per(20)
 
-# Check for next page
+# Check for more pages
 @posts.next_page?
+@posts.prev_page?
 
-# Get total pages (Redis strategy only)
-@posts.total_pages if @posts.respond_to?(:total_pages)
+# Get total pages
+@posts.total_pages
+
+# Current page
+@posts.current_page
 ```
 
-## Development
+## Custom Storage Strategies
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+Create your own storage strategy:
+
+```ruby
+module TypeBalancer
+  module Rails
+    module Storage
+      class CustomStorage < BaseStorage
+        def store(key, value, ttl: nil)
+          # Implementation
+        end
+
+        def fetch(key)
+          # Implementation
+        end
+
+        def delete(key)
+          # Implementation
+        end
+
+        def clear
+          # Implementation
+        end
+      end
+    end
+  end
+end
+```
+
+## Testing
+
+RSpec examples:
+
+```ruby
+RSpec.describe Post do
+  describe '#balance_by_type' do
+    it 'balances records by type' do
+      posts = Post.balance_by_type
+      expect(posts.per(10).page(1)).to be_a(TypeBalancer::Rails::TypeBalancerCollection)
+    end
+  end
+end
+```
+
+## Migration Guide
+
+If you're upgrading from an older version, please check our [Migration Guide](docs/migration_guide.md).
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/llwebconsulting/type_balancer-rails.
+1. Fork it
+2. Create your feature branch (`git checkout -b feature/my-new-feature`)
+3. Commit your changes (`git commit -am 'Add some feature'`)
+4. Push to the branch (`git push origin feature/my-new-feature`)
+5. Create new Pull Request
 
 ## License
 
 The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
+
+## Code of Conduct
+
+Everyone interacting in the TypeBalancer Rails project's codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](CODE_OF_CONDUCT.md).

@@ -1,44 +1,45 @@
+# frozen_string_literal: true
+
 module TypeBalancer
   module Rails
     module Strategies
+      # Redis-based storage strategy
       class RedisStrategy < BaseStrategy
-        def initialize(redis: nil, ttl: 1.hour)
-          @redis = redis || Redis.new
-          @ttl = ttl
+        def initialize
+          super
+          @redis = TypeBalancer::Rails.configuration.redis_client
+          @redis_ttl = TypeBalancer::Rails.configuration.redis_ttl
         end
 
-        def fetch_page(scope, page: 1, page_size: 20)
-          cache_key = "type_balancer:#{scope.cache_key_with_version}"
-          
-          balanced_ids = @redis.get(cache_key) || calculate_and_cache(scope, cache_key)
-          balanced_ids = JSON.parse(balanced_ids)
-          
-          start_idx = (page - 1) * page_size
-          page_ids = balanced_ids[start_idx, page_size]
-          
-          records = scope.where(id: page_ids)
-          ordered_records = records.index_by(&:id).values_at(*page_ids).compact
-          
-          [ordered_records, has_next_page?(balanced_ids, start_idx, page_size)]
+        def store(key, value, ttl = nil)
+          validate_key!(key)
+          validate_value!(value)
+          key = cache_key(key)
+          ttl = normalize_ttl(ttl)
+
+          if ttl && ttl > 0
+            @redis.setex(key, ttl.to_i, Marshal.dump(value))
+          else
+            @redis.set(key, Marshal.dump(value))
+          end
         end
 
-        def next_page_token(result)
-          result.last # Returns boolean indicating if there's a next page
+        def fetch(key)
+          validate_key!(key)
+          key = cache_key(key)
+          value = @redis.get(key)
+          value ? Marshal.load(value) : nil
         end
 
-        private
-
-        def calculate_and_cache(scope, cache_key)
-          balanced = TypeBalancer.balance(scope.to_a, type_field: scope.type_field)
-          balanced_ids = balanced.map(&:id)
-          @redis.setex(cache_key, @ttl, balanced_ids.to_json)
-          balanced_ids.to_json
+        def delete(key)
+          validate_key!(key)
+          @redis.del(cache_key(key))
         end
 
-        def has_next_page?(balanced_ids, start_idx, page_size)
-          start_idx + page_size < balanced_ids.size
+        def clear
+          @redis.flushdb
         end
       end
     end
   end
-end 
+end

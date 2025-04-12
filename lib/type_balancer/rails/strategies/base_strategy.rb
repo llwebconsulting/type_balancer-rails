@@ -3,45 +3,61 @@
 module TypeBalancer
   module Rails
     module Strategies
+      # Base class for all storage strategies
       class BaseStrategy
-        def initialize(collection, options = {})
+        attr_reader :collection, :options
+
+        def initialize(collection = nil, options = {})
           @collection = collection
           @options = options
+          @cache_enabled = TypeBalancer::Rails.configuration.cache_enabled
+          @cache_ttl = TypeBalancer::Rails.configuration.cache_ttl
         end
 
         def execute
           raise NotImplementedError, "#{self.class} must implement #execute"
         end
 
-        # @param scope [ActiveRecord::Relation] The scope to fetch records from
-        # @param page_size [Integer] Number of records per page
-        # @param cursor [String, Integer] Cursor for pagination (optional)
-        # @return [Array<Object>, Object] Array of [records, pagination_token]
-        def fetch_page(scope, page_size: 20, cursor: nil)
-          raise NotImplementedError, "#{self.class} must implement #fetch_page"
+        def store(key, value, ttl = nil)
+          raise NotImplementedError, "#{self.class} must implement #store"
         end
 
-        # @param result [Array<Object>] The records from the last fetch
-        # @return [Object] Token for the next page
-        def next_page_token(result)
-          raise NotImplementedError, "#{self.class} must implement #next_page_token"
+        def fetch(key)
+          raise NotImplementedError, "#{self.class} must implement #fetch"
         end
 
-        # @return [Boolean] Whether this strategy supports total pages count
-        def supports_total_pages?
-          false
+        def delete(key)
+          raise NotImplementedError, "#{self.class} must implement #delete"
         end
 
-        # @param scope [ActiveRecord::Relation] The scope to count pages for
-        # @param page_size [Integer] Number of records per page
-        # @return [Integer, nil] Total number of pages or nil if not supported
-        def total_pages(scope, page_size:)
-          nil
+        def clear
+          raise NotImplementedError, "#{self.class} must implement #clear"
         end
 
         private
 
-        attr_reader :collection, :options
+        def cache_key(key)
+          "type_balancer:#{key}"
+        end
+
+        def cache_enabled?
+          @cache_enabled
+        end
+
+        attr_reader :cache_ttl
+
+        def normalize_ttl(ttl)
+          ttl || cache_ttl
+        end
+
+        def validate_key!(key)
+          raise ArgumentError, 'Key cannot be nil' if key.nil?
+          raise ArgumentError, 'Key must be a string or symbol' unless key.is_a?(String) || key.is_a?(Symbol)
+        end
+
+        def validate_value!(value)
+          raise ArgumentError, 'Value cannot be nil' if value.nil?
+        end
       end
     end
   end
