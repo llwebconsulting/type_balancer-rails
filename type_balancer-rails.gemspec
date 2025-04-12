@@ -36,7 +36,7 @@ Gem::Specification.new do |spec|
   # Runtime dependencies
   spec.add_dependency 'rails', '>= 6.1'
   spec.add_dependency 'redis', '~> 5.0'
-  spec.add_dependency 'type_balancer', '~> 0.1'
+  spec.add_dependency 'type_balancer', '~> 0.1.1'
 
   # Development dependencies
   spec.add_development_dependency 'bundler-audit', '~> 0.9.1'
