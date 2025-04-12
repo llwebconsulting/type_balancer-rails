@@ -45,15 +45,17 @@ module TypeBalancer
         def validate_key!(key)
           raise ArgumentError, 'Key cannot be nil' if key.nil?
           raise ArgumentError, 'Key must be a string or symbol' unless key.is_a?(String) || key.is_a?(Symbol)
+          raise ArgumentError, 'Key cannot be empty' if key.to_s.strip.empty?
         end
 
         def validate_value!(value)
           raise ArgumentError, 'Value cannot be nil' if value.nil?
+          raise ArgumentError, 'Value must respond to to_json' unless value.respond_to?(:to_json)
         end
 
         def validate_ttl!(ttl)
           return if ttl.nil?
-          raise ArgumentError, 'TTL must be a positive integer' unless ttl.is_a?(Integer) && ttl.positive?
+          raise ArgumentError, 'TTL must be a non-negative integer' unless ttl.is_a?(Integer) && ttl >= 0
         end
       end
     end

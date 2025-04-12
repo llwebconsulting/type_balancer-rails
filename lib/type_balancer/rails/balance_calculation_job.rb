@@ -20,7 +20,7 @@ module TypeBalancer
       private
 
       def calculate_positions
-        TypeBalancer.calculate_positions(@scope, @options)
+        TypeBalancer.calculate_positions(collection: @scope, options: @options)
       end
 
       def store_positions(positions)

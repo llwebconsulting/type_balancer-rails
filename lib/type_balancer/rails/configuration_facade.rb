@@ -1,0 +1,125 @@
+# frozen_string_literal: true
+
+module TypeBalancer
+  module Rails
+    # A facade that buries all configuration complexity
+    # Once tested, this class should never need to change
+    class ConfigurationFacade
+      def initialize
+        @config = Configuration.new
+      end
+
+      def configure
+        yield(@config) if block_given?
+        self
+      end
+
+      def redis
+        @config.redis_settings
+      end
+
+      def cache
+        @config.cache_settings
+      end
+
+      def storage
+        @config.storage_settings
+      end
+
+      def pagination
+        @config.pagination_settings
+      end
+
+      def reset!
+        @config.reset!
+        self
+      end
+
+      def redis_client
+        ensure_configured!
+        @config.redis_settings[:client]
+      end
+
+      def redis_ttl
+        ensure_configured!
+        @config.redis_settings[:ttl]
+      end
+
+      def redis_enabled?
+        ensure_configured!
+        @config.redis_settings[:enabled]
+      end
+
+      def cache_enabled?
+        ensure_configured!
+        @config.cache_settings[:enabled]
+      end
+
+      def cache_ttl
+        ensure_configured!
+        @config.cache_settings[:ttl]
+      end
+
+      def cache_store
+        ensure_configured!
+        @config.cache_settings[:store]
+      end
+
+      def storage_strategy
+        ensure_configured!
+        @config.storage_settings[:strategy]
+      end
+
+      def max_per_page
+        ensure_configured!
+        @config.pagination_settings[:max_per_page]
+      end
+
+      def cursor_buffer_multiplier
+        ensure_configured!
+        @config.pagination_settings[:cursor_buffer_multiplier]
+      end
+
+      private
+
+      def ensure_configured!
+        return if @config
+
+        reset!
+      end
+
+      def validate_configuration!(config)
+        validate_redis!(config) if config.redis_settings[:enabled]
+        validate_cache!(config) if config.cache_settings[:enabled]
+        validate_storage!(config)
+        validate_pagination!(config)
+      end
+
+      def validate_redis!(config)
+        settings = config.redis_settings
+        raise ArgumentError, 'Redis client required when Redis is enabled' unless settings[:client]
+        raise ArgumentError, 'Redis TTL must be positive' unless settings[:ttl].to_i.positive?
+      end
+
+      def validate_cache!(config)
+        settings = config.cache_settings
+        raise ArgumentError, 'Cache TTL must be positive' unless settings[:ttl].to_i.positive?
+      end
+
+      def validate_storage!(config)
+        settings = config.storage_settings
+        raise ArgumentError, 'Storage strategy required' unless settings[:strategy]
+      end
+
+      def validate_pagination!(config)
+        settings = config.pagination_settings
+        raise ArgumentError, 'Max per page must be positive' unless settings[:max_per_page].to_i.positive?
+
+        return if settings[:cursor_buffer_multiplier].to_f > 1.0
+
+        raise ArgumentError,
+              'Cursor buffer multiplier must be greater than 1'
+      end
+    end
+  end
+end

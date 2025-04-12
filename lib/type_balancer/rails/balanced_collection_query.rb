@@ -52,7 +52,7 @@ module TypeBalancer
 
       def calculate_and_store_positions
         # Calculate positions using the core gem
-        positions = TypeBalancer.calculate_positions(@scope, @options)
+        positions = TypeBalancer.calculate_positions(collection: @scope, options: @options)
 
         # Store positions in the database
         store_positions(positions)

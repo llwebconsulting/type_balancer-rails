@@ -14,7 +14,7 @@ module TypeBalancer
 
         def calculate_positions
           validate_scope!
-          group_and_calculate
+          TypeBalancer.calculate_positions(collection: scope, options: options)
         end
 
         def store_positions(positions)
@@ -89,7 +89,7 @@ module TypeBalancer
         end
 
         def default_storage
-          TypeBalancer::Rails::StorageStrategies::CursorStrategy.new
+          TypeBalancer::Rails::Strategies::CursorStrategy.new
         end
       end
     end

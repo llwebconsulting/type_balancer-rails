@@ -34,10 +34,18 @@ module TypeBalancer
           raise NotImplementedError, "#{self.class} must implement #clear"
         end
 
+        def clear_for_scope(scope)
+          raise NotImplementedError, "#{self.class} must implement #clear_for_scope"
+        end
+
+        def fetch_for_scope(scope)
+          raise NotImplementedError, "#{self.class} must implement #fetch_for_scope"
+        end
+
         private
 
         def cache_key(key)
-          "type_balancer:#{key}"
+          "type_balancer:#{collection.object_id}:#{key}"
         end
 
         def cache_enabled?

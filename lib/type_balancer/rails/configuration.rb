@@ -1,49 +1,105 @@
-# frozen_string_literal: true
-
-require_relative 'config/configuration'
-require_relative 'config/strategy_manager'
-require_relative 'config/storage_adapter'
-
 module TypeBalancer
   module Rails
-    # Main configuration interface for TypeBalancer Rails
-    class << self
-      def configure
-        yield(configuration) if block_given?
-        self
+    class Configuration
+      attr_accessor :redis_client, :redis_enabled, :redis_ttl,
+                    :cache_enabled, :cache_ttl, :cache_store,
+                    :storage_strategy, :max_per_page, :cursor_buffer_multiplier
+      attr_reader :strategy_manager, :storage_adapter
+
+      class StorageStrategyRegistry
+        def initialize
+          @strategies = {}
+        end
+
+        def register(name, strategy)
+          @strategies[name.to_sym] = strategy
+        end
+
+        def [](name)
+          @strategies[name.to_sym]
+        end
+
+        delegate :clear, to: :@strategies
       end
 
-      def configuration
-        @configuration ||= Config::Configuration.new
+      class StorageAdapter
+        def initialize
+          @adapter = nil
+        end
+
+        attr_accessor :adapter
       end
 
-      def strategy_manager
-        Config::StrategyManager
+      def initialize
+        @redis_enabled = true
+        @cache_enabled = true
+        @cache_ttl = 3600 # 1 hour default
+        @storage_strategy = :redis
+        @strategy_manager = StorageStrategyRegistry.new
+        @storage_adapter = StorageAdapter.new
+        register_default_strategies
+        reset!
       end
 
-      def storage_adapter
-        Config::StorageAdapter
+      delegate :register_strategy, to: :TypeBalancer
+
+      def redis_enabled?
+        @redis_enabled && !@redis_client.nil?
       end
 
       def reset!
-        @configuration = nil
-        strategy_manager.reset!
-        storage_adapter.reset!
+        @redis_ttl = 3600 # 1 hour default
+        @cache_store = nil
+        @max_per_page = 100
+        @cursor_buffer_multiplier = 1.5
+        TypeBalancer.reset!
       end
 
-      def register_strategy(name, strategy)
-        strategy_manager.register(name, strategy)
+      def redis_settings
+        {
+          enabled: redis_enabled?,
+          client: @redis_client,
+          ttl: @redis_ttl
+        }
       end
 
-      def resolve_strategy(name)
-        strategy_manager.resolve(name)
+      def cache_settings
+        {
+          enabled: @cache_enabled,
+          store: @cache_store,
+          ttl: @cache_ttl
+        }
       end
 
-      delegate :configure_redis, to: :storage_adapter
+      def storage_settings
+        {
+          strategy: @storage_strategy
+        }
+      end
 
-      delegate :configure_cache, to: :storage_adapter
+      def pagination_settings
+        {
+          max_per_page: @max_per_page,
+          cursor_buffer_multiplier: @cursor_buffer_multiplier
+        }
+      end
 
-      delegate :redis_enabled?, to: :storage_adapter
+      def configure_redis(&)
+        @redis_client = yield if block_given?
+        self
+      end
+
+      def configure_cache(&)
+        yield ::Rails.cache if block_given?
+        self
+      end
+
+      private
+
+      def register_default_strategies
+        strategy_manager.register(:redis, Strategies::RedisStrategy)
+        strategy_manager.register(:cursor, Strategies::CursorStrategy)
+      end
     end
   end
 end

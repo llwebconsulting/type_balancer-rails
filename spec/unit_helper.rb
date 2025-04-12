@@ -30,7 +30,6 @@ require 'type_balancer/rails/configuration'
 require 'type_balancer/rails/strategies'
 require 'type_balancer/rails/strategies/base_strategy'
 require 'type_balancer/rails/container'
-require 'type_balancer/rails/strategy_registry'
 require 'type_balancer/rails/cache_invalidation'
 
 # Set up a mock Rails cache for testing

@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require_relative 'query/balanced_query'
+require_relative 'query/pagination_service'
+require_relative 'query/position_manager'
 
 module TypeBalancer
   module Rails
