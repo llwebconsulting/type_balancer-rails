@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require "simplecov"
-require "simplecov-cobertura"
+require 'simplecov'
+require 'simplecov-cobertura'
 
 SimpleCov.formatters = [
   SimpleCov::Formatter::HTMLFormatter,
@@ -9,27 +9,38 @@ SimpleCov.formatters = [
 ]
 
 SimpleCov.start do
-  add_filter "/spec/"
-  add_filter "/lib/type_balancer/rails/version"
-  
-  add_group "Core", "lib/type_balancer/rails"
-  add_group "ActiveRecord", "lib/type_balancer/rails/active_record"
-  add_group "Strategies", "lib/type_balancer/rails/strategies"
+  add_filter '/spec/'
+  add_filter '/lib/type_balancer/rails/version'
+
+  add_group 'Core', 'lib/type_balancer/rails'
+  add_group 'ActiveRecord', 'lib/type_balancer/rails/active_record'
+  add_group 'Strategies', 'lib/type_balancer/rails/strategies'
 end
 
-require "bundler/setup"
-require "rails"
-require "active_record"
-require "active_job"
-require "redis"
-require "rspec/mocks"
+require 'bundler/setup'
+require 'rails'
+require 'active_record'
+require 'active_job'
+require 'redis'
+require 'rspec/mocks'
 
-# Load our gem
-require "type_balancer/rails"
+# Load support files
+Dir[File.join(File.dirname(__FILE__), 'support/**/*.rb')].sort.each { |f| require f }
 
+# Configure Rails test environment
+module TestApp
+  class Application < Rails::Application
+    config.eager_load = false
+    config.cache_store = :memory_store
+  end
+end
+
+Rails.application.initialize!
+
+# Configure RSpec
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
-  config.example_status_persistence_file_path = ".rspec_status"
+  config.example_status_persistence_file_path = '.rspec_status'
 
   # Disable RSpec exposing methods globally on `Module` and `main`
   config.disable_monkey_patching!
@@ -38,11 +49,20 @@ RSpec.configure do |config|
     c.syntax = :expect
   end
 
-  # Mock ActiveRecord::Base for unit tests
-  config.before(:each) do
-    # Setup common mocks
-    allow(ActiveRecord::Base).to receive(:include).and_return(true)
-    allow(Rails.cache).to receive(:fetch).and_yield
-    allow(Rails.cache).to receive(:delete_matched)
+  # Allow expectations on nil to support Rails.cache mocking
+  config.mock_with :rspec do |mocks|
+    mocks.allow_message_expectations_on_nil = true
   end
-end 
+
+  # Clean up between tests
+  config.after do
+    Rails.cache.clear
+  end
+end
+
+# Load our gem
+require 'type_balancer/rails'
+require 'type_balancer/rails/configuration'
+require 'type_balancer/rails/strategies'
+require 'type_balancer/rails/container'
+require 'type_balancer/rails/strategy_registry'
