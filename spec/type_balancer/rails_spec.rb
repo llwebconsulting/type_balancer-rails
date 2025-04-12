@@ -1,14 +1,15 @@
 # frozen_string_literal: true
 
-require "spec_helper"
+require "unit_helper"
 
 RSpec.describe TypeBalancer::Rails do
   it "has a version number" do
     expect(TypeBalancer::Rails::VERSION).not_to be nil
   end
 
-  it "does something useful" do
-    expect(false).to eq(true)
+  it "integrates with Rails.cache" do
+    expect(Rails.cache).to receive(:fetch).with("test_key", expires_in: 1.hour)
+    Rails.cache.fetch("test_key", expires_in: 1.hour) { "test" }
   end
 
   describe ".configure" do
