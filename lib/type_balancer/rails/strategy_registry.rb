@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module TypeBalancer
   module Rails
     class StrategyRegistry
@@ -6,18 +8,20 @@ module TypeBalancer
           strategies[name] = strategy_class
         end
 
-        def get(name)
-          strategies[name] || raise(ArgumentError, "Unknown storage strategy: #{name}")
-        end
-
-        def strategies
-          @strategies ||= {}
+        def resolve(name)
+          strategies[name] || raise(ArgumentError, "Unknown strategy: #{name}")
         end
 
         def reset!
           @strategies = {}
         end
+
+        private
+
+        def strategies
+          @strategies ||= {}
+        end
       end
     end
   end
-end 
+end

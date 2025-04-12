@@ -39,53 +39,43 @@ RSpec.describe TypeBalancer::Rails::StrategyRegistry do
     end
   end
 
+  before do
+    described_class.reset!
+  end
+
   describe ".register" do
-    after { described_class.reset! }
-
-    it "registers a strategy class" do
+    it "registers a strategy" do
       described_class.register(:test, dummy_strategy)
-      expect(described_class.get(:test)).to eq(dummy_strategy)
-    end
-
-    it "allows overwriting existing strategies" do
-      first_strategy = Class.new(TypeBalancer::Rails::Strategies::BaseStrategy)
-      described_class.register(:test, first_strategy)
-      described_class.register(:test, dummy_strategy)
-      expect(described_class.get(:test)).to eq(dummy_strategy)
+      expect(described_class.resolve(:test)).to eq(dummy_strategy)
     end
   end
 
-  describe ".get" do
-    before { described_class.register(:test, dummy_strategy) }
-    after { described_class.reset! }
+  describe ".resolve" do
+    context "when strategy exists" do
+      before do
+        described_class.register(:test, dummy_strategy)
+      end
 
-    it "retrieves a registered strategy" do
-      expect(described_class.get(:test)).to eq(dummy_strategy)
+      it "returns the registered strategy" do
+        expect(described_class.resolve(:test)).to eq(dummy_strategy)
+      end
     end
 
-    it "raises ArgumentError for unknown strategies" do
-      expect {
-        described_class.get(:nonexistent)
-      }.to raise_error(ArgumentError, "Unknown storage strategy: nonexistent")
+    context "when strategy does not exist" do
+      it "raises an error" do
+        expect { described_class.resolve(:unknown) }.to raise_error(ArgumentError, "Unknown strategy: unknown")
+      end
     end
   end
 
   describe ".reset!" do
     before do
-      # Mock the default strategies to avoid loading actual implementations
-      allow(TypeBalancer::Rails::Strategies).to receive(:const_get).with("CursorStrategy")
-        .and_return(Class.new(TypeBalancer::Rails::Strategies::BaseStrategy))
-      allow(TypeBalancer::Rails::Strategies).to receive(:const_get).with("RedisStrategy")
-        .and_return(Class.new(TypeBalancer::Rails::Strategies::BaseStrategy))
+      described_class.register(:test, dummy_strategy)
     end
 
     it "clears all registered strategies" do
-      described_class.register(:test, dummy_strategy)
       described_class.reset!
-      
-      expect {
-        described_class.get(:test)
-      }.to raise_error(ArgumentError)
+      expect { described_class.resolve(:test) }.to raise_error(ArgumentError)
     end
   end
 

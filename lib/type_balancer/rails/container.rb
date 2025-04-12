@@ -1,30 +1,27 @@
+# frozen_string_literal: true
+
 module TypeBalancer
   module Rails
     class Container
       class << self
-        def register(key, value = nil, &block)
-          if block_given?
-            services[key] = block
-          else
-            services[key] = -> { value }
-          end
+        def register(name, &block)
+          registry[name] = block
         end
 
-        def resolve(key)
-          service = services[key]
-          raise KeyError, "Service not registered: #{key}" unless service
-          
-          service.call
-        end
-
-        def services
-          @services ||= {}
+        def resolve(name)
+          registry[name]&.call || raise(ArgumentError, "Unknown service: #{name}")
         end
 
         def reset!
-          @services = {}
+          @registry = {}
+        end
+
+        private
+
+        def registry
+          @registry ||= {}
         end
       end
     end
   end
-end 
+end
