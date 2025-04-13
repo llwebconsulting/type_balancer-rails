@@ -1,0 +1,215 @@
+# frozen_string_literal: true
+
+require 'spec_helper'
+
+RSpec.describe TypeBalancer::Rails::Strategies::CursorStrategy do
+  let(:storage_adapter) do
+    Class.new do
+      def self.cache_enabled
+        @cache_enabled
+      end
+
+      def self.cache_enabled=(value)
+        @cache_enabled = value
+      end
+
+      def self.cache_ttl
+        3600
+      end
+    end
+  end
+
+  let(:model_class) { mock_model_class('TestModel') }
+  let(:scope) { mock_active_record_relation(model_class) }
+  let(:strategy) { described_class.new(collection, options) }
+  let(:key) { 'test_key' }
+  let(:value) { { data: 'test_value' } }
+  let(:ttl) { 3600 }
+  let(:collection) { double('Collection', object_id: 1) }
+  let(:options) { {} }
+
+  before do
+    stub_const('Rails', Module.new)
+    allow(Rails).to receive(:cache).and_return(double('cache'))
+    stub_const('TypeBalancer::Rails::Config::StorageAdapter', storage_adapter)
+    storage_adapter.cache_enabled = cache_enabled
+  end
+
+  describe '#initialize' do
+    let(:cache_enabled) { true }
+
+    it 'inherits from BaseStrategy' do
+      expect(strategy).to be_a(TypeBalancer::Rails::Strategies::BaseStrategy)
+    end
+  end
+
+  describe '#execute' do
+    let(:cache_enabled) { true }
+
+    it 'returns the collection' do
+      expect(strategy.execute).to eq(collection)
+    end
+  end
+
+  describe '#store' do
+    context 'when cache is enabled' do
+      let(:cache_enabled) { true }
+
+      it 'stores the value in cache' do
+        expect(Rails.cache).to receive(:write).with("type_balancer:1:#{key}", value, expires_in: ttl).and_return(true)
+        strategy.store(key, value, ttl)
+      end
+
+      it 'returns true when storage is successful' do
+        allow(Rails.cache).to receive(:write).with("type_balancer:1:#{key}", value, expires_in: ttl).and_return(true)
+        expect(strategy.store(key, value, ttl)).to be true
+      end
+
+      it 'validates the key' do
+        expect { strategy.store(nil, value, ttl) }.to raise_error(ArgumentError, 'Key cannot be nil')
+      end
+
+      it 'validates the value' do
+        expect { strategy.store(key, nil, ttl) }.to raise_error(ArgumentError, 'Value cannot be nil')
+      end
+    end
+
+    context 'when cache is disabled' do
+      let(:cache_enabled) { false }
+
+      it 'returns the value without storing' do
+        expect(Rails.cache).not_to receive(:write)
+        expect(strategy.store(key, value, ttl)).to eq(value)
+      end
+    end
+  end
+
+  describe '#fetch' do
+    context 'when cache is enabled' do
+      let(:cache_enabled) { true }
+
+      it 'fetches the value from cache' do
+        expect(Rails.cache).to receive(:read).with("type_balancer:1:#{key}").and_return(value)
+        expect(strategy.fetch(key)).to eq(value)
+      end
+
+      it 'returns nil when key not found' do
+        allow(Rails.cache).to receive(:read).with("type_balancer:1:#{key}").and_return(nil)
+        expect(strategy.fetch(key)).to be_nil
+      end
+
+      it 'validates the key' do
+        expect { strategy.fetch(nil) }.to raise_error(ArgumentError, 'Key cannot be nil')
+      end
+    end
+
+    context 'when cache is disabled' do
+      let(:cache_enabled) { false }
+
+      it 'returns nil without fetching' do
+        expect(Rails.cache).not_to receive(:read)
+        expect(strategy.fetch(key)).to be_nil
+      end
+    end
+  end
+
+  describe '#delete' do
+    context 'when cache is enabled' do
+      let(:cache_enabled) { true }
+
+      it 'deletes the key from cache' do
+        expect(Rails.cache).to receive(:delete).with("type_balancer:1:#{key}").and_return(true)
+        expect(strategy.delete(key)).to be true
+      end
+
+      it 'validates the key' do
+        expect { strategy.delete(nil) }.to raise_error(ArgumentError, 'Key cannot be nil')
+      end
+    end
+
+    context 'when cache is disabled' do
+      let(:cache_enabled) { false }
+
+      it 'returns true without deleting' do
+        expect(Rails.cache).not_to receive(:delete)
+        expect(strategy.delete(key)).to be true
+      end
+    end
+  end
+
+  describe '#clear' do
+    context 'when cache is enabled' do
+      let(:cache_enabled) { true }
+
+      it 'clears the entire cache' do
+        expect(Rails.cache).to receive(:clear).and_return(true)
+        expect(strategy.clear).to be true
+      end
+    end
+
+    context 'when cache is disabled' do
+      let(:cache_enabled) { false }
+
+      it 'returns nil without clearing' do
+        expect(Rails.cache).not_to receive(:clear)
+        expect(strategy.clear).to be_nil
+      end
+    end
+  end
+
+  describe '#clear_for_scope' do
+    context 'when cache is enabled' do
+      let(:cache_enabled) { true }
+      let(:expected_pattern) { "type_balancer:1:test_models*" }
+
+      it 'deletes matched keys for the scope' do
+        expect(Rails.cache).to receive(:delete_matched).with(expected_pattern).and_return(true)
+        expect(strategy.clear_for_scope(scope)).to be true
+      end
+
+      it 'validates the scope is not nil' do
+        expect { strategy.clear_for_scope(nil) }.to raise_error(ArgumentError, 'Scope cannot be nil')
+      end
+
+      it 'validates the scope is an ActiveRecord::Relation' do
+        invalid_scope = double('InvalidScope')
+        allow(invalid_scope).to receive(:is_a?).with(ActiveRecord::Relation).and_return(false)
+        expect { strategy.clear_for_scope(invalid_scope) }
+          .to raise_error(ArgumentError, 'Scope must be an ActiveRecord::Relation')
+      end
+    end
+
+    context 'when cache is disabled' do
+      let(:cache_enabled) { false }
+
+      it 'returns true without clearing' do
+        expect(Rails.cache).not_to receive(:delete_matched)
+        expect(strategy.clear_for_scope(scope)).to be true
+      end
+    end
+  end
+
+  describe '#fetch_for_scope' do
+    context 'when cache is enabled' do
+      let(:cache_enabled) { true }
+
+      it 'fetches the key for the scope' do
+        expect(Rails.cache).to receive(:read).with("type_balancer:1:test_models").and_return(value)
+        expect(strategy.fetch_for_scope(scope)).to eq(value)
+      end
+
+      it 'validates the scope' do
+        expect { strategy.fetch_for_scope(nil) }.to raise_error(ArgumentError, 'Scope cannot be nil')
+      end
+    end
+
+    context 'when cache is disabled' do
+      let(:cache_enabled) { false }
+
+      it 'returns nil without fetching' do
+        expect(Rails.cache).not_to receive(:read)
+        expect(strategy.fetch_for_scope(scope)).to be_nil
+      end
+    end
+  end
+end 

@@ -5,6 +5,85 @@ module TypeBalancer
     # A facade that buries all configuration complexity
     # Once tested, this class should never need to change
     class ConfigurationFacade
+      class << self
+        def redis(&)
+          configuration.redis(&)
+        end
+
+        def cache(&)
+          configuration.cache(&)
+        end
+
+        def storage(&)
+          configuration.storage_strategy_registry.tap do |registry|
+            yield(registry) if block_given?
+          end
+        end
+
+        def pagination(&)
+          configuration.pagination(&)
+        end
+
+        delegate :reset!, to: :configuration
+
+        def configuration
+          @configuration ||= Configuration.new
+        end
+
+        def validate!
+          validate_redis! if configuration.redis_settings[:enabled]
+          validate_cache! if configuration.cache_settings[:enabled]
+        end
+
+        private
+
+        def validate_redis!
+          client = configuration.redis_settings[:client]
+          unless client
+            raise TypeBalancer::Rails::Errors::ConfigurationError,
+                  'Redis client is not configured'
+          end
+
+          unless client.respond_to?(:get)
+            raise TypeBalancer::Rails::Errors::ConfigurationError,
+                  'Redis client must respond to :get'
+          end
+          unless client.respond_to?(:set)
+            raise TypeBalancer::Rails::Errors::ConfigurationError,
+                  'Redis client must respond to :set'
+          end
+          unless client.respond_to?(:del)
+            raise TypeBalancer::Rails::Errors::ConfigurationError,
+                  'Redis client must respond to :del'
+          end
+          return if client.respond_to?(:scan)
+
+          raise TypeBalancer::Rails::Errors::ConfigurationError,
+                'Redis client must respond to :scan'
+        end
+
+        def validate_cache!
+          store = ::Rails.cache
+          unless store
+            raise TypeBalancer::Rails::Errors::ConfigurationError,
+                  'Cache store is not configured'
+          end
+
+          unless store.respond_to?(:read)
+            raise TypeBalancer::Rails::Errors::ConfigurationError,
+                  'Cache store must respond to :read'
+          end
+          unless store.respond_to?(:write)
+            raise TypeBalancer::Rails::Errors::ConfigurationError,
+                  'Cache store must respond to :write'
+          end
+          return if store.respond_to?(:delete)
+
+          raise TypeBalancer::Rails::Errors::ConfigurationError,
+                'Cache store must respond to :delete'
+        end
+      end
+
       def initialize
         @config = Configuration.new
       end
@@ -80,6 +159,12 @@ module TypeBalancer
         @config.pagination_settings[:cursor_buffer_multiplier]
       end
 
+      def pagination_settings
+        {
+          max_per_page: @config.pagination_settings[:max_per_page]
+        }
+      end
+
       private
 
       def ensure_configured!
@@ -119,6 +204,12 @@ module TypeBalancer
 
         raise ArgumentError,
               'Cursor buffer multiplier must be greater than 1'
+      end
+
+      def validate_pagination_settings!(settings)
+        return if settings[:max_per_page].to_i > 0
+
+        raise ArgumentError, 'max_per_page must be greater than 0'
       end
     end
   end

@@ -3,7 +3,7 @@
 module TypeBalancer
   module Rails
     module Storage
-      # Base class defining the interface for all storage strategies
+      # Base class for all storage strategies
       class BaseStorage
         def initialize(options = {})
           @options = options
@@ -45,7 +45,7 @@ module TypeBalancer
         def validate_key!(key)
           raise ArgumentError, 'Key cannot be nil' if key.nil?
           raise ArgumentError, 'Key must be a string or symbol' unless key.is_a?(String) || key.is_a?(Symbol)
-          raise ArgumentError, 'Key cannot be empty' if key.to_s.strip.empty?
+          raise ArgumentError, 'Key cannot be empty' if key.is_a?(String) && key.strip.empty?
         end
 
         def validate_value!(value)

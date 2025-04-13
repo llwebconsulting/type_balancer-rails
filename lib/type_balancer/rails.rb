@@ -13,14 +13,12 @@ require_relative 'rails/version'
 require_relative 'rails/balanced_position'
 require_relative 'rails/cache_invalidation'
 require_relative 'rails/balance_calculation_job'
-require_relative 'rails/balanced_collection_query'
 require_relative 'rails/container'
 require_relative 'rails/storage_strategies'
 require_relative 'rails/strategies'
 require_relative 'rails/strategies/storage_adapter'
 require_relative 'rails/railtie' if defined?(Rails)
 require_relative 'rails/configuration'
-require_relative 'rails/balanced_query'
 require_relative 'rails/pagination'
 require_relative 'rails/position_manager'
 require_relative 'rails/background_processor'
@@ -101,7 +99,7 @@ module TypeBalancer
       end
 
       def balance_collection(relation, options = {})
-        BalancedQuery.new(relation, options).execute
+        Query::BalancedQuery.new(relation, options).build
       end
 
       def reset!

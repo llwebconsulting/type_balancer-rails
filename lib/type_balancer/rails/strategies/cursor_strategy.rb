@@ -7,7 +7,6 @@ module TypeBalancer
       class CursorStrategy < BaseStrategy
         def initialize(collection = nil, options = {})
           super
-          @buffer_multiplier = TypeBalancer::Rails.configuration.cursor_buffer_multiplier
         end
 
         def execute
@@ -40,7 +39,11 @@ module TypeBalancer
           validate_key!(key)
           key = cache_key(key)
 
-          ::Rails.cache.delete(key) if cache_enabled?
+          if cache_enabled?
+            ::Rails.cache.delete(key)
+          else
+            true
+          end
         end
 
         def clear
@@ -49,14 +52,19 @@ module TypeBalancer
 
         def clear_for_scope(scope)
           validate_scope!(scope)
-          key_pattern = cache_key("#{scope.model_name.plural}*")
-          ::Rails.cache.delete_matched(key_pattern) if cache_enabled?
+          key_pattern = cache_key("#{scope.klass.model_name.plural}*")
+          if cache_enabled?
+            ::Rails.cache.delete_matched(key_pattern)
+          else
+            true
+          end
         end
 
         def fetch_for_scope(scope)
           validate_scope!(scope)
-          key = cache_key(scope.model_name.plural)
-          fetch(key)
+          return unless cache_enabled?
+
+          ::Rails.cache.read(cache_key(scope.klass.model_name.plural))
         end
 
         private

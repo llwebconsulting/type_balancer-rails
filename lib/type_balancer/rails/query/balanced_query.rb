@@ -10,7 +10,8 @@ module TypeBalancer
         def initialize(scope, options = {})
           @scope = extract_scope(scope)
           @options = default_options.merge(options)
-          @type_field = options[:type_field]
+          @query_builder = QueryBuilder.new(@scope)
+          @type_field_resolver = TypeFieldResolver.new(@scope)
         end
 
         def build
@@ -18,7 +19,7 @@ module TypeBalancer
           apply_type_field
           apply_order
           apply_conditions
-          scope
+          query_builder.scope
         end
 
         def with_options(new_options)
@@ -27,7 +28,7 @@ module TypeBalancer
 
         private
 
-        attr_reader :type_field
+        attr_reader :query_builder, :type_field_resolver, :resolved_type_field
 
         def extract_scope(scope_or_hash)
           return scope_or_hash[:collection] if scope_or_hash.is_a?(Hash) && scope_or_hash[:collection]
@@ -47,45 +48,26 @@ module TypeBalancer
           raise ArgumentError, 'Scope cannot be nil' if scope.nil?
           raise ArgumentError, 'Scope must be an ActiveRecord::Relation' unless scope.is_a?(ActiveRecord::Relation)
 
-          return if type_field || inferred_type_field
+          @resolved_type_field = type_field_resolver.resolve(options[:type_field])
+          return if @resolved_type_field
 
           raise ArgumentError, 'No type field found. Please specify one using type_field: :your_field'
         end
 
         def apply_type_field
-          @type_field ||= inferred_type_field
+          @resolved_type_field
         end
 
         def apply_order
           return unless options[:order]
 
-          order_clause = sanitize_order(options[:order])
-          @scope = scope.order(order_clause)
+          query_builder.apply_order(options[:order])
         end
 
         def apply_conditions
           return if options[:conditions].empty?
 
-          @scope = scope.where(options[:conditions])
-        end
-
-        def inferred_type_field
-          %w[type media_type content_type category].find do |field|
-            scope.column_names.include?(field)
-          end
-        end
-
-        def sanitize_order(order)
-          case order
-          when Symbol, String
-            order.to_s
-          when Array
-            order.map(&:to_s)
-          when Hash
-            order.transform_values(&:to_s)
-          else
-            raise ArgumentError, 'Invalid order format'
-          end
+          query_builder.apply_conditions(options[:conditions])
         end
       end
     end

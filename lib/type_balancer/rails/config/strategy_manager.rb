@@ -26,7 +26,7 @@ module TypeBalancer
         end
 
         def validate!
-          raise Errors::ConfigurationError, 'No strategies registered' if @strategies.empty?
+          raise TypeBalancer::Rails::Errors::ConfigurationError, 'No strategies registered' if @strategies.empty?
 
           @strategies.each_value { |strategy| validate_strategy!(strategy) }
           true
@@ -42,7 +42,7 @@ module TypeBalancer
         def validate_strategy!(strategy)
           return if strategy.respond_to?(:store) && strategy.respond_to?(:fetch)
 
-          raise Errors::ConfigurationError, 'Strategy must implement store and fetch methods'
+          raise TypeBalancer::Rails::Errors::ConfigurationError, 'Strategy must implement store and fetch methods'
         end
       end
     end

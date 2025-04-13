@@ -1,6 +1,7 @@
 module TypeBalancer
   module Rails
-    class PositionManager
+    # Handles position calculation and caching for background jobs
+    class BackgroundPositionManager
       def initialize(strategy: ::Rails.configuration.type_balancer.storage_strategy)
         @strategy = strategy
       end

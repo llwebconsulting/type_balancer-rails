@@ -12,19 +12,37 @@ module TypeBalancer
         def initialize(collection, options = {})
           @collection = collection
           @options = options
-          @page = (options[:page] || DEFAULT_PAGE).to_i
-          @per_page = [(options[:per_page] || DEFAULT_PER_PAGE).to_i, MAX_PER_PAGE].min
+          @paginate = options.fetch(:paginate, true)
+          @total_count = nil
+
+          begin
+            @page = Integer(options[:page] || 1)
+            @page = [@page, 1].max
+          rescue ArgumentError
+            @page = 0
+          end
+
+          begin
+            @per_page = Integer(options[:per_page] || DEFAULT_PER_PAGE)
+            @per_page = if @per_page <= 0
+                          DEFAULT_PER_PAGE
+                        else
+                          [@per_page, MAX_PER_PAGE].min
+                        end
+          rescue ArgumentError
+            @per_page = DEFAULT_PER_PAGE
+          end
         end
 
         def paginate
-          return collection if skip_pagination?
+          return collection unless @paginate
 
-          if kaminari_enabled?
+          if collection.respond_to?(:page)
             paginate_with_kaminari
-          elsif will_paginate_enabled?
+          elsif collection.respond_to?(:paginate)
             paginate_with_will_paginate
           else
-            manual_pagination
+            paginate_manually
           end
         end
 
@@ -48,30 +66,23 @@ module TypeBalancer
 
         attr_reader :collection, :options, :page, :per_page
 
-        def skip_pagination?
-          options[:paginate] == false
-        end
-
-        def kaminari_enabled?
-          defined?(Kaminari) && collection.respond_to?(:page)
-        end
-
-        def will_paginate_enabled?
-          defined?(WillPaginate::Collection) && collection.respond_to?(:paginate)
-        end
-
         def paginate_with_kaminari
-          collection.page(page).per(per_page)
+          collection.page(@page).per(@per_page)
         end
 
         def paginate_with_will_paginate
-          collection.paginate(page: page, per_page: per_page)
+          collection.paginate(page: @page, per_page: @per_page)
         end
 
-        def manual_pagination
-          collection
-            .offset(offset)
-            .limit(per_page)
+        def paginate_manually
+          validate_manual_pagination_methods!
+          collection.offset(offset).limit(limit_value)
+        end
+
+        def validate_manual_pagination_methods!
+          return if collection.respond_to?(:offset) && collection.respond_to?(:limit) && collection.respond_to?(:count)
+
+          raise NoMethodError, 'Collection must respond to :offset, :limit, and :count for manual pagination'
         end
 
         def offset
@@ -80,6 +91,10 @@ module TypeBalancer
 
         def total_count
           @total_count ||= collection.count
+        end
+
+        def limit_value
+          per_page
         end
       end
     end

@@ -81,25 +81,37 @@ module TypeBalancer
         private
 
         def validate_cache_ttl!
-          raise Errors::ConfigurationError, 'Cache TTL must be an integer' unless @cache_ttl.is_a?(Integer)
-          raise Errors::ConfigurationError, 'Cache TTL must be positive' unless @cache_ttl.positive?
+          unless @cache_ttl.is_a?(Integer)
+            raise TypeBalancer::Rails::Errors::ConfigurationError,
+                  'Cache TTL must be an integer'
+          end
+          return if @cache_ttl.positive?
+
+          raise TypeBalancer::Rails::Errors::ConfigurationError,
+                'Cache TTL must be positive'
         end
 
         def validate_redis_ttl!
-          raise Errors::ConfigurationError, 'Redis TTL must be an integer' unless @redis_ttl.is_a?(Integer)
-          raise Errors::ConfigurationError, 'Redis TTL must be positive' unless @redis_ttl.positive?
+          unless @redis_ttl.is_a?(Integer)
+            raise TypeBalancer::Rails::Errors::ConfigurationError,
+                  'Redis TTL must be an integer'
+          end
+          return if @redis_ttl.positive?
+
+          raise TypeBalancer::Rails::Errors::ConfigurationError,
+                'Redis TTL must be positive'
         end
 
         def validate_strategy_manager!
           @strategy_manager.validate!
         rescue StandardError => e
-          raise Errors::ConfigurationError, "Invalid strategy: #{e.message}"
+          raise TypeBalancer::Rails::Errors::ConfigurationError, "Invalid strategy: #{e.message}"
         end
 
         def validate_storage_adapter!
           @storage_adapter.validate!
         rescue StandardError => e
-          raise Errors::ConfigurationError, "Invalid storage: #{e.message}"
+          raise TypeBalancer::Rails::Errors::ConfigurationError, "Invalid storage: #{e.message}"
         end
       end
 

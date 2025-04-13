@@ -24,6 +24,30 @@
    end
    ```
 
+   ### ActiveRecord Test Doubles
+
+   We have two systems for mocking ActiveRecord behavior:
+
+   1. **ActiveRecord Doubles** (`spec/support/active_record_doubles.rb`)
+      ```ruby
+      # Provides lightweight, controlled doubles
+      ar_class_double      # For mocking AR class behavior
+      ar_instance_double   # For mocking AR instance behavior
+      ar_relation_double   # For mocking AR::Relation behavior
+      ```
+      Use these when you need simple method stubbing and interface verification.
+
+   2. **ActiveRecord Mocks** (`spec/support/active_record_mocks.rb`)
+      ```ruby
+      # Provides more complete AR-like behavior
+      mock_model_class     # Creates a full mock AR class with naming, callbacks
+      mock_active_record_relation  # Creates relation with actual enumerable behavior
+      ```
+      Use these when you need actual ActiveRecord-like behavior (callbacks, naming, etc.)
+
+   **Important**: Choose one approach per test file to avoid conflicts. Do not mix these approaches
+   as they may create conflicting method stubs or behavior.
+
 4. **Test Organization**
    - Group tests by component responsibility
    - Maintain clear separation between unit and future integration tests

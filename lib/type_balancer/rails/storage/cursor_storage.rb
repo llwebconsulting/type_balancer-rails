@@ -42,10 +42,12 @@ module TypeBalancer
 
         def delete(key)
           validate_key!(key)
+          key_str = key.to_s
 
           @mutex.synchronize do
-            @store.delete(key.to_s)
-            @ttl_store.delete(key.to_s)
+            @store.delete(key_str)
+            @ttl_store.delete(key_str)
+            key_str
           end
         end
 

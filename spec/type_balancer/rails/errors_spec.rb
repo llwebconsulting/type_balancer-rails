@@ -3,84 +3,76 @@
 require 'spec_helper'
 
 RSpec.describe TypeBalancer::Rails::Errors do
-  describe 'Error class hierarchy' do
-    it 'has a base Error class that inherits from StandardError' do
-      expect(TypeBalancer::Rails::Errors::Error).to be < StandardError
+  describe 'error hierarchy' do
+    it 'ensures Error inherits from StandardError' do
+      expect(described_class::Error).to be < StandardError
     end
 
-    {
-      'ConfigurationError' => 'when configuration validation fails',
-      'StrategyError' => 'when a strategy validation fails',
-      'CacheError' => 'when cache operations fail',
-      'RedisError' => 'when Redis operations fail',
-      'ValidationError' => 'when invalid input is provided',
-      'DependencyError' => 'when a required dependency is missing'
-    }.each do |error_name, description|
-      describe "::#{error_name}" do
-        let(:error_class) { TypeBalancer::Rails::Errors.const_get(error_name) }
-        
-        it "inherits from Error base class" do
-          expect(error_class).to be < TypeBalancer::Rails::Errors::Error
-        end
+    it 'ensures ConfigurationError inherits from Error' do
+      expect(described_class::ConfigurationError).to be < described_class::Error
+    end
 
-        it "can be instantiated with a message" do
-          message = "Error occurred #{description}"
-          error = error_class.new(message)
-          expect(error.message).to eq(message)
-        end
+    it 'ensures StrategyError inherits from Error' do
+      expect(described_class::StrategyError).to be < described_class::Error
+    end
 
-        it "can be raised and caught" do
-          message = "Error occurred #{description}"
-          
-          expect {
-            raise error_class, message
-          }.to raise_error(error_class, message)
-        end
+    it 'ensures CacheError inherits from Error' do
+      expect(described_class::CacheError).to be < described_class::Error
+    end
 
-        it "can be caught as a TypeBalancer::Rails::Errors::Error" do
-          expect {
-            raise error_class, "Some message"
-          }.to raise_error(TypeBalancer::Rails::Errors::Error)
-        end
-      end
+    it 'ensures RedisError inherits from Error' do
+      expect(described_class::RedisError).to be < described_class::Error
+    end
+
+    it 'ensures ValidationError inherits from Error' do
+      expect(described_class::ValidationError).to be < described_class::Error
+    end
+
+    it 'ensures DependencyError inherits from Error' do
+      expect(described_class::DependencyError).to be < described_class::Error
     end
   end
 
-  describe 'Error usage examples' do
-    it 'ConfigurationError provides helpful configuration error messages' do
-      expect {
-        raise TypeBalancer::Rails::Errors::ConfigurationError, 'Invalid cache configuration'
-      }.to raise_error(TypeBalancer::Rails::Errors::ConfigurationError, 'Invalid cache configuration')
+  describe 'error instantiation' do
+    it 'can instantiate Error with a message' do
+      error = described_class::Error.new('test message')
+      expect(error.message).to eq('test message')
     end
 
-    it 'StrategyError provides helpful strategy error messages' do
-      expect {
-        raise TypeBalancer::Rails::Errors::StrategyError, 'Unknown strategy: custom'
-      }.to raise_error(TypeBalancer::Rails::Errors::StrategyError, 'Unknown strategy: custom')
+    it 'can instantiate ConfigurationError with a message' do
+      error = described_class::ConfigurationError.new('test message')
+      expect(error.message).to eq('test message')
     end
 
-    it 'CacheError provides helpful cache error messages' do
-      expect {
-        raise TypeBalancer::Rails::Errors::CacheError, 'Cache store not configured'
-      }.to raise_error(TypeBalancer::Rails::Errors::CacheError, 'Cache store not configured')
+    it 'can instantiate StrategyError with a message' do
+      error = described_class::StrategyError.new('test message')
+      expect(error.message).to eq('test message')
     end
 
-    it 'RedisError provides helpful Redis error messages' do
-      expect {
-        raise TypeBalancer::Rails::Errors::RedisError, 'Redis connection failed'
-      }.to raise_error(TypeBalancer::Rails::Errors::RedisError, 'Redis connection failed')
+    it 'can instantiate CacheError with a message' do
+      error = described_class::CacheError.new('test message')
+      expect(error.message).to eq('test message')
     end
 
-    it 'ValidationError provides helpful validation error messages' do
-      expect {
-        raise TypeBalancer::Rails::Errors::ValidationError, 'Invalid type field'
-      }.to raise_error(TypeBalancer::Rails::Errors::ValidationError, 'Invalid type field')
+    it 'can instantiate RedisError with a message' do
+      error = described_class::RedisError.new('test message')
+      expect(error.message).to eq('test message')
     end
 
-    it 'DependencyError provides helpful dependency error messages' do
-      expect {
-        raise TypeBalancer::Rails::Errors::DependencyError, 'Redis gem not installed'
-      }.to raise_error(TypeBalancer::Rails::Errors::DependencyError, 'Redis gem not installed')
+    it 'can instantiate ValidationError with a message' do
+      error = described_class::ValidationError.new('test message')
+      expect(error.message).to eq('test message')
+    end
+
+    it 'can instantiate DependencyError with a message' do
+      error = described_class::DependencyError.new('test message')
+      expect(error.message).to eq('test message')
+    end
+  end
+
+  describe 'error namespace' do
+    it 'is properly namespaced under TypeBalancer::Rails::Errors' do
+      expect(described_class.name).to eq('TypeBalancer::Rails::Errors')
     end
   end
 end 

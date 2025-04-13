@@ -46,6 +46,11 @@ module TypeBalancer
         end
 
         def validate!
+          if @strategy_manager.nil?
+            raise TypeBalancer::Rails::Errors::ConfigurationError,
+                  'Strategy manager is not configured'
+          end
+
           validate_strategy_manager!
           validate_redis! if redis_enabled?
           validate_cache! if cache_enabled?
@@ -71,24 +76,26 @@ module TypeBalancer
         private
 
         def validate_strategy_manager!
-          raise Errors::ConfigurationError, 'Strategy manager is not configured' if @strategy_manager.nil?
-
           @strategy_manager.validate!
         end
 
         def validate_redis!
-          raise Errors::RedisError, 'Redis client is not configured' if @redis_client.nil?
-          raise Errors::RedisError, 'Redis client is not responding' unless @redis_client.ping == 'PONG'
+          raise TypeBalancer::Rails::Errors::RedisError, 'Redis client is not configured' if @redis_client.nil?
+
+          unless @redis_client.ping == 'PONG'
+            raise TypeBalancer::Rails::Errors::RedisError,
+                  'Redis client is not responding'
+          end
         rescue StandardError => e
-          raise Errors::RedisError, "Redis validation failed: #{e.message}"
+          raise TypeBalancer::Rails::Errors::RedisError, "Redis validation failed: #{e.message}"
         end
 
         def validate_cache!
-          raise Errors::CacheError, 'Cache store is not configured' if @cache_store.nil?
+          raise TypeBalancer::Rails::Errors::CacheError, 'Cache store is not configured' if @cache_store.nil?
 
           @cache_store.read('test_key')
         rescue StandardError => e
-          raise Errors::CacheError, "Cache validation failed: #{e.message}"
+          raise TypeBalancer::Rails::Errors::CacheError, "Cache validation failed: #{e.message}"
         end
 
         def store_in_redis(key, value, ttl)

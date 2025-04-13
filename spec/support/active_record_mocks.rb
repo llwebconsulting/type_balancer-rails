@@ -16,7 +16,7 @@ module TypeBalancer
       def mock_active_record_relation(model_class, records = [])
         instance_double(
           ActiveRecord::Relation,
-          model_name: model_class.model_name,
+          klass: model_class,
           to_a: records,
           each: records.each,
           map: records.map,
@@ -24,7 +24,11 @@ module TypeBalancer
           pluck: records.map(&:id),
           update_all: records.length,
           transaction: ->(block) { block.call }
-        )
+        ).tap do |relation|
+          allow(relation).to receive(:is_a?).with(any_args).and_return(false)
+          allow(relation).to receive(:is_a?).with(ActiveRecord::Relation).and_return(true)
+          allow(relation).to receive(:klass).and_return(model_class)
+        end
       end
 
       def mock_model_class(name)
@@ -35,29 +39,44 @@ module TypeBalancer
 
           define_model_callbacks :commit
 
-          def self.name
-            name
-          end
+          class << self
+            attr_accessor :_model_name
 
-          def self.base_class
-            self
-          end
+            def name
+              _model_name
+            end
 
-          def self.primary_key
-            'id'
-          end
+            def base_class
+              self
+            end
 
-          def self.table_name
-            name.underscore.pluralize
-          end
+            def primary_key
+              'id'
+            end
 
-          def self.after_commit(*args, &block)
-            set_callback(:commit, :after, *args, &block)
+            def table_name
+              model_name.plural
+            end
+
+            def after_commit(*args, &block)
+              set_callback(:commit, :after, *args, &block)
+            end
+
+            def model_name
+              @model_name ||= begin
+                model_name = ActiveModel::Name.new(self, nil, _model_name)
+                def model_name.plural
+                  @plural ||= ActiveSupport::Inflector.pluralize(self.name.underscore)
+                end
+                model_name
+              end
+            end
           end
 
           attr_accessor :id
         end
 
+        klass._model_name = name
         stub_const(name, klass)
         klass
       end

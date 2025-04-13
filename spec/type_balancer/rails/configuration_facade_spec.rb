@@ -159,6 +159,168 @@ module TypeBalancer
             end
           end
         end
+
+        describe '#pagination_settings' do
+          it 'returns pagination settings' do
+            allow(config).to receive(:pagination_settings).and_return(max_per_page: 100)
+            expect(facade.pagination_settings).to eq(config.pagination_settings)
+          end
+        end
+
+        describe '#validate_pagination_settings!' do
+          it 'raises error when max_per_page is invalid' do
+            expect {
+              facade.send(:validate_pagination_settings!, max_per_page: 0)
+            }.to raise_error(ArgumentError, 'max_per_page must be greater than 0')
+          end
+        end
+      end
+
+      describe ".redis" do
+        it "yields the configuration instance" do
+          expect { |b| described_class.redis(&b) }.to yield_control
+        end
+      end
+
+      describe ".cache" do
+        it "yields the configuration instance" do
+          expect { |b| described_class.cache(&b) }.to yield_control
+        end
+      end
+
+      describe ".storage" do
+        it "yields the storage strategy registry" do
+          expect { |b| described_class.storage(&b) }.to yield_control
+        end
+      end
+
+      describe ".pagination" do
+        it "yields the pagination configuration" do
+          expect { |b| described_class.pagination(&b) }.to yield_control
+        end
+      end
+
+      describe ".validate!" do
+        before do
+          described_class.reset!
+        end
+
+        context "when redis is enabled" do
+          before do
+            described_class.redis do |config|
+              config.enable_redis
+              config.redis_client = redis_client
+            end
+          end
+
+          context "with valid redis client" do
+            let(:redis_client) do
+              double("Redis",
+                get: nil,
+                set: nil,
+                del: nil,
+                scan: nil
+              )
+            end
+
+            it "does not raise error" do
+              expect { described_class.validate! }.not_to raise_error
+            end
+          end
+
+          context "with invalid redis client" do
+            let(:redis_client) { nil }
+
+            it "raises ConfigurationError" do
+              expect { described_class.validate! }.to raise_error(TypeBalancer::Rails::Errors::ConfigurationError, "Redis client is not configured")
+            end
+          end
+
+          context "with redis client missing required methods" do
+            let(:redis_client) { double("Redis") }
+
+            it "raises ConfigurationError for missing get" do
+              expect { described_class.validate! }.to raise_error(TypeBalancer::Rails::Errors::ConfigurationError, "Redis client must respond to :get")
+            end
+
+            it "raises ConfigurationError for missing set" do
+              allow(redis_client).to receive(:get)
+              expect { described_class.validate! }.to raise_error(TypeBalancer::Rails::Errors::ConfigurationError, "Redis client must respond to :set")
+            end
+
+            it "raises ConfigurationError for missing del" do
+              allow(redis_client).to receive(:get)
+              allow(redis_client).to receive(:set)
+              expect { described_class.validate! }.to raise_error(TypeBalancer::Rails::Errors::ConfigurationError, "Redis client must respond to :del")
+            end
+
+            it "raises ConfigurationError for missing scan" do
+              allow(redis_client).to receive(:get)
+              allow(redis_client).to receive(:set)
+              allow(redis_client).to receive(:del)
+              expect { described_class.validate! }.to raise_error(TypeBalancer::Rails::Errors::ConfigurationError, "Redis client must respond to :scan")
+            end
+          end
+        end
+
+        context "when cache is enabled" do
+          before do
+            described_class.cache do |config|
+              config.enable_cache
+            end
+          end
+
+          context "with valid cache store" do
+            let(:cache_store) do
+              double("CacheStore",
+                read: nil,
+                write: nil,
+                delete: nil
+              )
+            end
+
+            before do
+              allow(::Rails).to receive(:cache).and_return(cache_store)
+            end
+
+            it "does not raise error" do
+              expect { described_class.validate! }.not_to raise_error
+            end
+          end
+
+          context "with no cache store" do
+            before do
+              allow(::Rails).to receive(:cache).and_return(nil)
+            end
+
+            it "raises ConfigurationError" do
+              expect { described_class.validate! }.to raise_error(TypeBalancer::Rails::Errors::ConfigurationError, "Cache store is not configured")
+            end
+          end
+
+          context "with cache store missing required methods" do
+            let(:cache_store) { double("CacheStore") }
+
+            before do
+              allow(::Rails).to receive(:cache).and_return(cache_store)
+            end
+
+            it "raises ConfigurationError for missing read" do
+              expect { described_class.validate! }.to raise_error(TypeBalancer::Rails::Errors::ConfigurationError, "Cache store must respond to :read")
+            end
+
+            it "raises ConfigurationError for missing write" do
+              allow(cache_store).to receive(:read)
+              expect { described_class.validate! }.to raise_error(TypeBalancer::Rails::Errors::ConfigurationError, "Cache store must respond to :write")
+            end
+
+            it "raises ConfigurationError for missing delete" do
+              allow(cache_store).to receive(:read)
+              allow(cache_store).to receive(:write)
+              expect { described_class.validate! }.to raise_error(TypeBalancer::Rails::Errors::ConfigurationError, "Cache store must respond to :delete")
+            end
+          end
+        end
       end
     end
   end

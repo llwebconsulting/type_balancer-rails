@@ -3,32 +3,30 @@
 module TypeBalancer
   module Rails
     class Configuration
-      # Configuration for pagination
+      # Configuration for pagination settings
       class PaginationConfig
-        attr_reader :max_per_page, :cursor_buffer_multiplier
+        attr_accessor :max_per_page
 
-        def initialize(max_per_page: 100, cursor_buffer_multiplier: 1.5)
-          @max_per_page = max_per_page
-          @cursor_buffer_multiplier = cursor_buffer_multiplier
+        def initialize(max_per_page = 100)
+          value = max_per_page.is_a?(Hash) ? max_per_page[:max_per_page] : max_per_page
+          value = value.nil? ? 100 : value.to_i
+          @max_per_page = value > 0 ? value : 100
+        end
+
+        def configure
+          yield(self) if block_given?
+          self
         end
 
         def set_max_per_page(value)
           value = value.to_i
-          return if value <= 0
-
-          @max_per_page = value
-        end
-
-        def set_buffer_multiplier(value)
-          value = value.to_f
-          return if value <= 1.0
-
-          @cursor_buffer_multiplier = value
+          @max_per_page = value if value > 0
+          self
         end
 
         def reset!
           @max_per_page = 100
-          @cursor_buffer_multiplier = 1.5
+          self
         end
       end
     end
