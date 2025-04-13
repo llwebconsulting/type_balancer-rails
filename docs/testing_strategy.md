@@ -1,169 +1,118 @@
-# Testing Strategy for TypeBalancer Rails
+# Testing Strategy for Complex Components
 
 ## Core Principles
 
-1. **Bottom-Up Testing Approach**
-   - Start with leaf classes (no dependencies)
-   - Progress to branch classes (some dependencies)
-   - Finally test trunk classes (core functionality)
+1. **Leaf-First Testing Approach**
+   - Only mock components that have already been thoroughly tested
+   - Build testing from the bottom up, starting with leaf nodes
+   - Document dependencies between components to ensure proper testing order
 
-2. **Mocking Strategy**
-   - Only mock classes that have already been tested
-   - Use strict mocking to ensure interface compliance
-   - Mock all external services (Redis, Rails cache, etc.)
-   - For ActiveRecord mocking, use the provided test doubles in `spec/support/active_record_doubles.rb` and `spec/support/active_record_mocks.rb`
-   - Add new mock behaviors to these support files when needed rather than creating one-off mocks
+2. **Dependency Mapping**
+   - Before testing a component, map out all its dependencies
+   - Classify dependencies as:
+     - Leaf nodes (can be mocked if tested)
+     - Complex dependencies (must be tested first)
+     - External services (always mocked)
 
-3. **Test Organization**
-   - One describe block per class
-   - Nested describes for methods/contexts
-   - Clear, descriptive test names
-   - Organized setup with well-named let blocks
-
-4. **Coverage Goals**
-   - 100% coverage of public methods
-   - Edge cases and error conditions covered
-   - Thread safety tested where relevant
-   - No direct testing of private methods
-
-5. **Test-Driven Development Flow**
-   - Complete one test file at a time
-   - Write all necessary tests for the current class/module
-   - Ensure all tests in the file pass before moving to the next file
-   - Never start testing a new class until current class tests are passing
-   - If tests fail, focus on fixing the current file before moving on
-   - Progress through the dependency tree systematically
-
-## Implementation Order
-
-### Phase 1: Leaf Classes
-- Strategy classes (Redis, Memory)
-- Error classes
-- Configuration value objects
-- Utility classes
-
-### Phase 2: Branch Classes
-- StrategyManager
-- StorageAdapter
-- Configuration validators
-
-### Phase 3: Core Classes
-- Core configuration
-- Rails integration
-- Public API methods
-
-## Testing Guidelines
-
-1. **Each Test Should**
-   - Test one specific behavior
-   - Have clear setup and expectations
-   - Use meaningful test data
-   - Follow arrange-act-assert pattern
-
-2. **Mocking Guidelines**
-   - Use provided ActiveRecord test doubles (`ar_instance_double`, `ar_class_double`, `ar_relation_double`, `ar_test_class`) for consistent AR mocking
-   - Extend shared mock behaviors in support files rather than duplicating in individual tests
-   - Use instance_double for strict interface checking
-   - Mock only what's necessary
-   - Avoid stubbing non-existent methods
-   - Verify mock expectations
-
-3. **Naming Conventions**
-   - Use descriptive test names
-   - Follow "it should..." pattern
-   - Group related tests in contexts
-   - Use clear variable names
+3. **Mock Strategy**
+   ```ruby
+   # Example of proper mocking approach
+   let(:tested_leaf_node) { instance_double("TypeBalancer::Rails::LeafComponent") }
+   before do
+     # Only mock methods that are actually tested in LeafComponent's specs
+     allow(tested_leaf_node).to receive(:verified_method).and_return(expected_value)
+   end
+   ```
 
 4. **Test Organization**
+   - Group tests by component responsibility
+   - Maintain clear separation between unit and future integration tests
+   - Follow the testing pyramid:
+     - Many unit tests
+     - Fewer integration tests (when added later)
+     - Minimal end-to-end tests (when needed)
+
+## Testing Order Guidelines
+
+1. **Phase 1: Core Components** (Completed)
+   - ✓ Memory Strategy
+   - ✓ Configuration Facade
+   - ✓ Storage Strategy Registry
+
+2. **Phase 2: Complex Interactions**
+   - Cache Invalidation (depends on tested storage adapters)
+   - Background Processing (depends on tested collection handling)
+   - Query Services (depends on tested pagination)
+
+3. **Phase 3: Integration Points**
+   - Rails initialization hooks
+   - ActiveRecord extensions
+   - Cache store integrations
+
+## Best Practices
+
+1. **Coverage Requirements**
+   - Maintain high unit test coverage (target: >90%)
+   - Focus on branch coverage for complex logic
+   - Document any intentionally uncovered code
+
+2. **Test Isolation**
    ```ruby
-   RSpec.describe SomeClass do
-     describe '#method_name' do
-       context 'when some condition' do
-         it 'should do something specific' do
-           # test code
-         end
+   # Good: Testing single responsibility
+   describe "#process_collection" do
+     context "when using tested storage adapter" do
+       let(:storage) { instance_double("TestedStorageAdapter") }
+       it "processes items correctly" do
+         # Test only the processing logic
        end
      end
    end
    ```
 
-## ActiveRecord Test Helpers
+3. **Documentation**
+   - Document test dependencies in the spec file header
+   - Note which components must be tested first
+   - Explain mocking decisions
 
-The gem provides two complementary approaches for testing ActiveRecord-related code:
+## Avoiding Common Pitfalls
 
-### 1. Test Doubles (`active_record_doubles.rb`)
-Use these when you need to:
-- Mock ActiveRecord behavior without actual implementation
-- Verify method calls and responses
-- Test interface compliance
-- Need predefined responses for common AR methods
+1. **Circular Dependencies**
+   - Map component relationships before writing tests
+   - Break circular dependencies through proper abstraction
+   - Document dependency resolution strategies
 
-Available helpers:
-```ruby
-# Mock an AR instance with common methods stubbed
-let(:user) { ar_instance_double("User") }
+2. **Test Pollution**
+   - Reset global state between tests
+   - Use RSpec metadata for shared context
+   - Avoid sharing state between examples
 
-# Mock an AR class with common class methods stubbed
-let(:user_class) { ar_class_double("User") }
+3. **False Positives**
+   - Test edge cases explicitly
+   - Verify mock expectations
+   - Test failure conditions
 
-# Mock an AR relation with chainable scopes
-let(:users_relation) { ar_relation_double("User") }
+## Implementation Checklist
 
-# Create a basic test class with AR modules included
-let(:test_model) { ar_test_class("TestModel") }
-```
+Before testing a component:
+- [ ] Map all dependencies
+- [ ] Verify leaf nodes are tested
+- [ ] Document mocking strategy
+- [ ] Review edge cases
+- [ ] Plan error scenarios
 
-### 2. Test Classes (`active_record_test_classes.rb`)
-Use these when you need:
-- Real ActiveRecord-like behavior (callbacks, naming, etc.)
-- To test module inclusion
-- To work with actual record arrays
-- To test behavior that depends on ActiveRecord's class hierarchy
+## Future Considerations
 
-Available helpers:
-```ruby
-# Create a full mock AR class with naming and callbacks
-let(:user_class) { mock_model_class("User") }
+1. **Integration Testing**
+   - Will be added after unit test completion
+   - Focus on critical paths
+   - Test different Rails configurations
 
-# Create a relation that works with actual records
-let(:relation) { mock_active_record_relation(user_class, [user1, user2]) }
-```
+2. **Performance Testing**
+   - Measure impact on Rails boot time
+   - Profile memory usage
+   - Test caching strategies
 
-### When to Use Each
-
-1. Use Test Doubles (`active_record_doubles.rb`) when:
-   - You just need to verify method calls
-   - You want strict interface checking
-   - You need simple predefined responses
-   - You're testing code that uses AR as a dependency
-
-2. Use Test Classes (`active_record_test_classes.rb`) when:
-   - You need to test module inclusion
-   - You need real callback behavior
-   - You're working with collections of actual records
-   - You need AR's class hierarchy features
-
-### Extending the Helpers
-
-When new ActiveRecord behaviors need to be mocked:
-1. First check if the behavior exists in either support file
-2. Decide which approach better fits your needs:
-   - Interface verification → add to `active_record_doubles.rb`
-   - Actual behavior implementation → add to `active_record_test_classes.rb`
-3. Document the new behavior in the file's comments
-4. Use the shared mock in your tests
-
-## Quality Checks
-
-- Run full test suite before checking coverage
-- Ensure no test is testing private methods
-- Verify thread safety in concurrent scenarios
-- Check for test isolation (no dependencies between tests)
-
-## Next Steps
-
-1. Remove all existing tests
-2. Map out class dependencies
-3. Identify leaf classes
-4. Begin with simplest leaf class
-5. Progress systematically through dependency tree, one file at a time 
+3. **Compatibility Testing**
+   - Multiple Rails versions
+   - Different Ruby versions
+   - Various database adapters 
