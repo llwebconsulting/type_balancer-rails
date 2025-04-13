@@ -23,9 +23,9 @@ module TypeBalancer
           json_value = value.to_json
 
           if normalized_ttl
-            storage_adapter.redis_client.setex(redis_key, normalized_ttl, json_value)
+            @redis.setex(redis_key, normalized_ttl, json_value)
           else
-            storage_adapter.redis_client.set(redis_key, json_value)
+            @redis.set(redis_key, json_value)
           end
 
           deep_symbolize_keys(value)
@@ -36,7 +36,7 @@ module TypeBalancer
           validate_redis!
           redis_key = cache_key(key)
 
-          return unless json_value = storage_adapter.redis_client.get(redis_key)
+          return unless json_value = @redis.get(redis_key)
 
           deep_symbolize_keys(JSON.parse(json_value))
         end
@@ -45,31 +45,31 @@ module TypeBalancer
           validate_key!(key)
           validate_redis!
           redis_key = cache_key(key)
-          storage_adapter.redis_client.del(redis_key)
+          @redis.del(redis_key)
         end
 
         def clear
           validate_redis!
           pattern = cache_key('*')
-          keys = storage_adapter.redis_client.keys(pattern)
-          storage_adapter.redis_client.del(*keys) if keys.any?
+          keys = @redis.keys(pattern)
+          @redis.del(*keys) if keys.any?
         end
 
         def clear_for_scope(scope)
           validate_redis!
           pattern = cache_pattern(scope)
-          keys = storage_adapter.redis_client.keys(pattern)
-          storage_adapter.redis_client.del(*keys) if keys.any?
+          keys = @redis.keys(pattern)
+          @redis.del(*keys) if keys.any?
         end
 
         def fetch_for_scope(scope)
           validate_redis!
           pattern = cache_pattern(scope)
-          keys = storage_adapter.redis_client.keys(pattern)
+          keys = @redis.keys(pattern)
           return {} if keys.empty?
 
           keys.each_with_object({}) do |key, hash|
-            if value = storage_adapter.redis_client.get(key)
+            if value = @redis.get(key)
               hash[key] = deep_symbolize_keys(JSON.parse(value))
             end
           end

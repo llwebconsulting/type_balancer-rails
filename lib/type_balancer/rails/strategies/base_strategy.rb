@@ -5,15 +5,15 @@ module TypeBalancer
     module Strategies
       # Base class for all storage strategies
       class BaseStrategy
-        attr_reader :collection, :options
+        attr_reader :collection, :options, :storage_adapter
 
-        def initialize(collection, options = {})
+        def initialize(collection, storage_adapter, options = {})
           @collection = collection
+          @storage_adapter = storage_adapter
           @options = options
-          @storage_adapter = TypeBalancer::Rails::Config::StorageAdapter
         end
 
-        def execute(*)
+        def execute(key, value = nil)
           raise NotImplementedError, "#{self.class} must implement #execute"
         end
 
@@ -41,18 +41,45 @@ module TypeBalancer
           raise NotImplementedError, "#{self.class} must implement #fetch_for_scope"
         end
 
-        protected
+        delegate :redis_enabled?, to: :@storage_adapter
 
-        def cache_enabled?
-          @storage_adapter.cache_enabled
+        def redis_ttl
+          @options[:ttl] || TypeBalancer::Rails.configuration.redis_ttl
         end
 
         def cache_ttl
-          options[:ttl] || @storage_adapter.cache_ttl
+          @options[:ttl] || TypeBalancer::Rails.configuration.cache_ttl
         end
 
-        def cache_key(key)
-          "type_balancer:#{collection.object_id}:#{key}"
+        def key_for(key)
+          raise ArgumentError, 'key cannot be nil' if key.nil?
+
+          "type_balancer:#{@collection.object_id}:#{key}"
+        end
+
+        def scope_key_for(key, scope)
+          raise ArgumentError, 'key cannot be nil' if key.nil?
+          raise ArgumentError, 'scope cannot be nil' if scope.nil?
+
+          "type_balancer:#{@collection.object_id}:#{scope}:#{key}"
+        end
+
+        def serialize(value)
+          raise ArgumentError, 'value cannot be nil' if value.nil?
+
+          value.to_json
+        end
+
+        def deserialize(value)
+          raise ArgumentError, 'value cannot be nil' if value.nil?
+
+          JSON.parse(value)
+        end
+
+        protected
+
+        def cache_enabled?
+          @storage_adapter.cache_enabled?
         end
 
         def validate_key!(key)
@@ -67,10 +94,6 @@ module TypeBalancer
 
         def normalize_ttl(ttl = nil)
           ttl || cache_ttl
-        end
-
-        def redis_enabled?
-          @storage_adapter.redis_enabled
         end
       end
     end

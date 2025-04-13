@@ -32,42 +32,46 @@ Post.balance_by_type.page(3).per(20)
 Post.balance_by_type.paginate(page: 3, per_page: 20)
 ```
 
-### 3. Caching Infrastructure
+### 3. Storage Strategies
 
-#### Database Structure
-
-```ruby
-create_table :type_balancer_balanced_positions do |t|
-  t.references :record, polymorphic: true, null: false
-  t.integer :position, null: false
-  t.string :cache_key, null: false
-  t.string :type_field
-  t.timestamps
-
-  t.index [:cache_key, :position], unique: true
-  t.index [:record_type, :record_id, :cache_key], unique: true
-end
-```
-
-#### Caching Strategy
+#### Redis Strategy
 
 ```ruby
 module TypeBalancer
   module Rails
-    class BalancedCollectionQuery
-      def fetch_or_calculate_positions
-        Rails.cache.fetch(cache_key, expires_in: 1.hour) do
-          calculate_and_store_positions
+    module Storage
+      class RedisStorage < BaseStorage
+        def store(key, value, ttl: nil)
+          redis.set(key, serialize(value))
+          redis.expire(key, ttl) if ttl
+        end
+
+        def fetch(key)
+          if data = redis.get(key)
+            deserialize(data)
+          end
         end
       end
+    end
+  end
+end
+```
 
-      private
+#### Cursor Strategy
 
-      def cache_key
-        base = "type_balancer/#{@scope.model_name.plural}"
-        scope_key = @scope.cache_key_with_version
-        options_key = Digest::MD5.hexdigest(@options.to_json)
-        "#{base}/#{scope_key}/#{options_key}"
+```ruby
+module TypeBalancer
+  module Rails
+    module Storage
+      class CursorStorage < BaseStorage
+        def store(key, value, ttl: nil)
+          store_in_memory(key, value)
+          schedule_cleanup(key, ttl) if ttl
+        end
+
+        def fetch(key)
+          fetch_from_memory(key)
+        end
       end
     end
   end
@@ -124,46 +128,6 @@ module TypeBalancer
 end
 ```
 
-#### 2. Position Storage
-
-```ruby
-module TypeBalancer
-  module Rails
-    class BalancedPosition < ApplicationRecord
-      belongs_to :record, polymorphic: true
-      
-      validates :position, presence: true
-      validates :cache_key, presence: true
-      
-      scope :for_collection, ->(cache_key) { where(cache_key: cache_key) }
-    end
-  end
-end
-```
-
-#### 3. Cache Invalidation
-
-```ruby
-module TypeBalancer
-  module Rails
-    module CacheInvalidation
-      extend ActiveSupport::Concern
-
-      included do
-        after_commit :invalidate_balance_cache
-      end
-
-      private
-
-      def invalidate_balance_cache
-        Rails.cache.delete("type_balancer/#{self.class.name.underscore.pluralize}/#{cache_key_with_version}")
-        BalancedPosition.where(record: self).delete_all
-      end
-    end
-  end
-end
-```
-
 ### Installation
 
 ```ruby
@@ -173,7 +137,6 @@ gem 'type_balancer-rails'
 # Install
 bundle install
 rails generate type_balancer:install
-rails db:migrate
 ```
 
 ### Configuration
@@ -181,8 +144,10 @@ rails db:migrate
 ```ruby
 # config/initializers/type_balancer.rb
 TypeBalancer::Rails.configure do |config|
-  config.cache_duration = 1.hour
-  config.async_threshold = 1000  # Use background job for collections larger than this
+  config.storage_strategy = :redis  # or :cursor
+  config.configure_redis(Redis.new)
+  config.cache_enabled = true
+  config.cache_ttl = 1.hour
   config.per_page_default = 25
   config.max_per_page = 100
 end
@@ -190,20 +155,15 @@ end
 
 ## Performance Considerations
 
-1. **Cached Position Storage**
-   - Positions stored in dedicated table
-   - Indexed for fast retrieval
-   - Cache invalidation on record updates
+1. **Efficient Storage Strategies**
+   - Redis for distributed caching and persistence
+   - Cursor strategy for lightweight, memory-efficient storage
+   - Automatic cleanup of expired entries
 
 2. **Pagination Optimization**
    - Uses window functions for efficient pagination
    - Maintains balanced order across pages
-   - Minimizes database queries
-
-3. **Background Processing**
-   - Automatic for large collections
-   - Progress tracking
-   - Cache warming
+   - Cursor-based pagination for memory efficiency
 
 ## Future Enhancements
 

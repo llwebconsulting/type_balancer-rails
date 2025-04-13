@@ -1,19 +1,21 @@
 module TypeBalancer
   module Rails
     class Pagination
-      DEFAULT_PER_PAGE = 25
-      MAX_PER_PAGE = 100
+      DEFAULT_PER_PAGE = 100
+      MAX_PER_PAGE = 1000
 
-      def initialize(per_page: nil, page: nil)
-        @per_page = [per_page || DEFAULT_PER_PAGE, MAX_PER_PAGE].min
-        @page = page || 1
+      def initialize(positions = [], per_page: DEFAULT_PER_PAGE, page: 1)
+        @positions = positions
+        @per_page = [per_page.to_i, MAX_PER_PAGE].min
+        @page = [page.to_i, 1].max
       end
 
-      def apply_to(relation, positions)
-        page_positions = positions.slice(page_offset, @per_page)
-        return relation.none if page_positions.empty?
+      def apply_to(relation)
+        return relation.none if @positions.empty?
 
-        record_ids = page_positions.keys
+        page_positions = @positions.slice(page_offset, @per_page)
+        record_ids = page_positions.map { |pos| pos[:id] }
+
         relation
           .where(id: record_ids)
           .reorder(position_order_clause(record_ids))

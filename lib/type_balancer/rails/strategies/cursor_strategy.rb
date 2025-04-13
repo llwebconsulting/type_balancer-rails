@@ -5,7 +5,7 @@ module TypeBalancer
     module Strategies
       # Cursor-based storage strategy
       class CursorStrategy < BaseStrategy
-        def initialize(collection = nil, options = {})
+        def initialize(collection, storage_adapter, options = {})
           super
         end
 
@@ -17,7 +17,7 @@ module TypeBalancer
         def store(key, value, ttl = nil)
           validate_key!(key)
           validate_value!(value)
-          key = cache_key(key)
+          key = key_for(key)
 
           if cache_enabled?
             ::Rails.cache.write(key, value, expires_in: normalize_ttl(ttl))
@@ -28,7 +28,7 @@ module TypeBalancer
 
         def fetch(key)
           validate_key!(key)
-          key = cache_key(key)
+          key = key_for(key)
 
           return unless cache_enabled?
 
@@ -37,7 +37,7 @@ module TypeBalancer
 
         def delete(key)
           validate_key!(key)
-          key = cache_key(key)
+          key = key_for(key)
 
           if cache_enabled?
             ::Rails.cache.delete(key)
@@ -52,7 +52,7 @@ module TypeBalancer
 
         def clear_for_scope(scope)
           validate_scope!(scope)
-          key_pattern = cache_key("#{scope.klass.model_name.plural}*")
+          key_pattern = key_for("#{scope.klass.model_name.plural}*")
           if cache_enabled?
             ::Rails.cache.delete_matched(key_pattern)
           else
@@ -64,7 +64,7 @@ module TypeBalancer
           validate_scope!(scope)
           return unless cache_enabled?
 
-          ::Rails.cache.read(cache_key(scope.klass.model_name.plural))
+          ::Rails.cache.read(key_for(scope.klass.model_name.plural))
         end
 
         private

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'active_support'
-require 'type_balancer/rails/strategies/storage_adapter'
+require 'type_balancer/rails/config/storage_adapter'
 
 module TypeBalancer
   module Rails
