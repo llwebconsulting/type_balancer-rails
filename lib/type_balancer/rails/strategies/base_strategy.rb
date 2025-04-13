@@ -7,14 +7,13 @@ module TypeBalancer
       class BaseStrategy
         attr_reader :collection, :options
 
-        def initialize(collection = nil, options = {})
+        def initialize(collection, options = {})
           @collection = collection
           @options = options
-          @cache_enabled = TypeBalancer::Rails.configuration.cache_enabled
-          @cache_ttl = TypeBalancer::Rails.configuration.cache_ttl
+          @storage_adapter = TypeBalancer::Rails::Config::StorageAdapter
         end
 
-        def execute
+        def execute(*)
           raise NotImplementedError, "#{self.class} must implement #execute"
         end
 
@@ -42,20 +41,18 @@ module TypeBalancer
           raise NotImplementedError, "#{self.class} must implement #fetch_for_scope"
         end
 
-        private
+        protected
+
+        def cache_enabled?
+          @storage_adapter.cache_enabled
+        end
+
+        def cache_ttl
+          options[:ttl] || @storage_adapter.cache_ttl
+        end
 
         def cache_key(key)
           "type_balancer:#{collection.object_id}:#{key}"
-        end
-
-        def cache_enabled?
-          @cache_enabled
-        end
-
-        attr_reader :cache_ttl
-
-        def normalize_ttl(ttl)
-          ttl || cache_ttl
         end
 
         def validate_key!(key)
@@ -65,6 +62,15 @@ module TypeBalancer
 
         def validate_value!(value)
           raise ArgumentError, 'Value cannot be nil' if value.nil?
+          raise ArgumentError, 'Value must be JSON serializable' unless value.respond_to?(:to_json)
+        end
+
+        def normalize_ttl(ttl = nil)
+          ttl || cache_ttl
+        end
+
+        def redis_enabled?
+          @storage_adapter.redis_enabled
         end
       end
     end

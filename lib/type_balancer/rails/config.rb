@@ -20,55 +20,131 @@ module TypeBalancer
       end
 
       class StrategyManager
-        class << self
-          def register(name, strategy)
-            registry[name] = strategy
-          end
+        attr_reader :strategies
 
-          def resolve(name)
-            registry.fetch(name) { raise KeyError, "Strategy not found: #{name}" }
-          end
+        def initialize
+          @strategies = {}
+        end
 
-          def reset!
-            @registry = nil
-          end
+        def register(name, strategy)
+          @strategies[name] = strategy
+        end
 
-          private
+        delegate :[], to: :strategies
 
-          def registry
-            @registry ||= {}
+        def validate!
+          raise TypeBalancer::Rails::Errors::ConfigurationError, 'No strategies registered' if strategies.empty?
+
+          strategies.each_value do |strategy|
+            unless strategy.respond_to?(:store) && strategy.respond_to?(:fetch)
+              raise TypeBalancer::Rails::Errors::StrategyError,
+                    "Invalid strategy: #{strategy}"
+            end
           end
+          true
+        end
+
+        def reset!
+          @strategies = {}
         end
       end
 
       class StorageAdapter
-        class << self
-          def configure_redis(client = nil, &)
-            if block_given?
-              yield(redis_client)
-            else
-              @redis_client = client
+        attr_reader :redis_client, :cache_store
+
+        def initialize(redis_client = nil, cache_store = nil)
+          @redis_client = redis_client
+          @cache_store = cache_store || ::Rails.cache
+        end
+
+        def store(key:, value:, ttl: nil)
+          if redis_enabled?
+            redis_client.set(key, value.to_json, ex: ttl)
+          else
+            cache_store.write(key, value, expires_in: ttl)
+          end
+        end
+
+        def fetch(key)
+          if redis_enabled?
+            result = redis_client.get(key)
+            result ? JSON.parse(result, symbolize_names: true) : nil
+          else
+            cache_store.read(key)
+          end
+        end
+
+        def delete(key)
+          if redis_enabled?
+            redis_client.del(key)
+          else
+            cache_store.delete(key)
+          end
+        end
+
+        def clear
+          if redis_enabled?
+            redis_client.flushdb
+          else
+            cache_store.clear
+          end
+        end
+
+        def validate!
+          if redis_enabled?
+            unless redis_client.respond_to?(:set) && redis_client.respond_to?(:get)
+              raise TypeBalancer::Rails::Errors::RedisError,
+                    'Redis client is not properly configured'
+            end
+          else
+            unless cache_store.respond_to?(:write) && cache_store.respond_to?(:read)
+              raise TypeBalancer::Rails::Errors::CacheError,
+                    'Cache store is not properly configured'
             end
           end
+          true
+        end
 
-          def configure_cache(store = nil, &)
-            if block_given?
-              yield(cache_store)
-            else
-              @cache_store = store
-            end
-          end
+        private
 
-          attr_reader :redis_client, :cache_store
+        def redis_enabled?
+          !redis_client.nil? && redis_client.respond_to?(:set)
+        end
+      end
 
-          def redis_enabled?
-            !redis_client.nil?
-          end
+      class CacheConfig
+        attr_accessor :enabled, :ttl
 
-          def reset!
-            @redis_client = nil
-            @cache_store = nil
-          end
+        def initialize(enabled: true, ttl: 1.hour)
+          @enabled = enabled
+          @ttl = ttl
+        end
+
+        def configure
+          yield(::Rails.cache) if block_given?
+        end
+
+        def reset!
+          @enabled = true
+          @ttl = 1.hour
+        end
+      end
+
+      class RedisConfig
+        attr_accessor :client, :enabled
+
+        def initialize(enabled: true)
+          @enabled = enabled
+          @client = nil
+        end
+
+        def configure
+          yield(self) if block_given?
+        end
+
+        def reset!
+          @enabled = true
+          @client = nil
         end
       end
     end

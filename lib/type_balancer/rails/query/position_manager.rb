@@ -5,91 +5,92 @@ module TypeBalancer
     module Query
       # Manages position calculation and storage for balanced collections
       class PositionManager
-        def initialize(scope, options = {})
+        attr_reader :scope, :type_field, :storage_adapter, :options
+
+        def initialize(scope, type_field = nil, storage_adapter = nil, options = {})
           @scope = scope
+          @type_field = type_field || scope&.klass&.type_field
+          @storage_adapter = storage_adapter || TypeBalancer::Rails.storage_adapter
           @options = options
-          @storage = options.fetch(:storage) { default_storage }
-          @type_field = options[:type_field]
+
+          validate!
         end
 
         def calculate_positions
           validate_scope!
-          TypeBalancer.calculate_positions(collection: scope, options: options)
+          records = scope.pluck(:id, type_field)
+          type_order = determine_type_order(records.map { |_, type| type }.uniq)
+
+          positions = {}
+          records.each_with_index do |(id, type), index|
+            type_position = type_order.index(type) || Float::INFINITY
+            positions[id] = ((type_position + 1) * 1000) + (index * 0.001)
+          end
+
+          positions
         end
 
         def store_positions(positions)
-          positions.each_with_index do |record, index|
-            storage.store(
-              record_id: record.id,
-              record_type: record.class.name,
-              position: index + 1,
-              type_field: type_field,
-              type_value: record.public_send(type_field)
+          positions.each do |record_id, position|
+            record = scope.find(record_id)
+            storage_adapter.store(
+              key: cache_key(record_id),
+              value: {
+                record_id: record_id,
+                record_type: scope.klass.name,
+                position: position,
+                type_value: record.public_send(type_field)
+              },
+              ttl: options[:ttl]
             )
           end
         end
 
         def fetch_positions
-          storage.fetch_for_scope(scope)
+          record_ids = scope.pluck(:id)
+          record_ids.each_with_object({}) do |record_id, result|
+            if position_data = storage_adapter.fetch(cache_key(record_id))
+              result[record_id] = position_data[:position]
+            end
+          end
         end
 
         def clear_positions
-          storage.clear_for_scope(scope)
+          record_ids = scope.pluck(:id)
+          record_ids.each do |record_id|
+            storage_adapter.delete(cache_key(record_id))
+          end
         end
 
         private
 
-        attr_reader :scope, :options, :storage, :type_field
+        def validate!
+          raise ArgumentError, 'Scope cannot be nil' if scope.nil?
+          raise ArgumentError, 'Type field must be specified' if type_field.nil?
+        end
 
         def validate_scope!
-          raise ArgumentError, 'Scope cannot be nil' if scope.nil?
-          raise ArgumentError, 'Scope must be an ActiveRecord::Relation' unless scope.is_a?(ActiveRecord::Relation)
-          raise ArgumentError, 'Type field must be specified' unless type_field
+          raise ArgumentError, 'Invalid scope' unless scope.respond_to?(:pluck)
         end
 
-        def group_and_calculate
-          records_by_type = scope.group_by { |record| record.public_send(type_field) }
-          balance_groups(records_by_type)
+        def cache_key(record_id)
+          "#{scope.klass.model_name.plural}:#{record_id}"
         end
 
-        def balance_groups(records_by_type)
-          types = determine_type_order(records_by_type.keys)
-          balanced_records = []
-
-          max_per_type = calculate_max_per_type(records_by_type)
-          current_indexes = Hash.new(0)
-
-          until balanced_records.length == scope.count
-            types.each do |type|
-              records = records_by_type[type] || []
-              index = current_indexes[type]
-
-              if index < records.length && index < max_per_type
-                balanced_records << records[index]
-                current_indexes[type] += 1
-              end
-            end
+        def determine_type_order(types)
+          if options[:order].present?
+            options[:order]
+          elsif options[:alphabetical]
+            types.sort
+          else
+            types
           end
-
-          balanced_records
-        end
-
-        def determine_type_order(available_types)
-          return options[:order] if options[:order].present?
-          return available_types.sort if options[:order_alphabetically]
-
-          available_types
         end
 
         def calculate_max_per_type(records_by_type)
-          counts = records_by_type.values.map(&:length)
-          return 0 if counts.empty?
+          return 0 if records_by_type.empty?
 
-          counts.max
-        end
-
-        def default_storage
-          TypeBalancer::Rails::Strategies::CursorStrategy.new
+          records_by_type.values.map(&:size).max
         end
       end
     end

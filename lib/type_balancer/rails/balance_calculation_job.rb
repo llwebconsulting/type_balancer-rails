@@ -6,51 +6,22 @@ module TypeBalancer
     class BalanceCalculationJob < ::ActiveJob::Base
       queue_as :default
 
-      def perform(scope, options = {})
-        @scope = scope
-        @options = options
+      def perform(relation, options)
+        manager = PositionManager.new
+        positions = manager.fetch_or_calculate(relation)
 
-        ActiveRecord::Base.transaction do
-          positions = calculate_positions
-          store_positions(positions)
-          broadcast_completion
-        end
+        # Store positions in the configured storage strategy
+        strategy = ::Rails.configuration.type_balancer.storage_strategy
+        cache_key = generate_cache_key(relation)
+        strategy.store(cache_key, positions)
       end
 
       private
 
-      def calculate_positions
-        TypeBalancer.calculate_positions(collection: @scope, options: @options)
-      end
-
-      def store_positions(positions)
-        cache_key = generate_cache_key
-
-        # Clear existing positions for this cache key
-        BalancedPosition.for_collection(cache_key).delete_all
-
-        # Store new positions
-        positions.each_with_index do |record_id, index|
-          BalancedPosition.create!(
-            record_type: @scope.klass.name,
-            record_id: record_id,
-            position: index + 1,
-            cache_key: cache_key,
-            type_field: @options[:type_field]
-          )
-        end
-      end
-
-      def broadcast_completion
-        channel = "type_balancer_#{@scope.klass.table_name}"
-        ActionCable.server.broadcast(channel, status: 'completed')
-      end
-
-      def generate_cache_key
-        base = "type_balancer/#{@scope.klass.table_name}"
-        scope_key = @scope.cache_key_with_version
-        options_key = Digest::MD5.hexdigest(@options.to_json)
-        "#{base}/#{scope_key}/#{options_key}"
+      def generate_cache_key(collection)
+        base = "type_balancer/#{collection.model_name.plural}"
+        scope_key = collection.cache_key_with_version
+        "#{base}/#{scope_key}"
       end
     end
   end

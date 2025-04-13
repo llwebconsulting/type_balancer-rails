@@ -1,26 +1,13 @@
 module TypeBalancer
   module Rails
     class Configuration
+      require_relative 'configuration/storage_strategy_registry'
+
       attr_accessor :redis_client, :redis_enabled, :redis_ttl,
                     :cache_enabled, :cache_ttl, :cache_store,
-                    :storage_strategy, :max_per_page, :cursor_buffer_multiplier
+                    :storage_strategy, :max_per_page, :cursor_buffer_multiplier,
+                    :async_threshold, :per_page_default, :cache_duration
       attr_reader :strategy_manager, :storage_adapter
-
-      class StorageStrategyRegistry
-        def initialize
-          @strategies = {}
-        end
-
-        def register(name, strategy)
-          @strategies[name.to_sym] = strategy
-        end
-
-        def [](name)
-          @strategies[name.to_sym]
-        end
-
-        delegate :clear, to: :@strategies
-      end
 
       class StorageAdapter
         def initialize
@@ -35,7 +22,7 @@ module TypeBalancer
         @cache_enabled = true
         @cache_ttl = 3600 # 1 hour default
         @storage_strategy = :redis
-        @strategy_manager = StorageStrategyRegistry.new
+        @strategy_manager = TypeBalancer::Rails::Configuration::StorageStrategyRegistry.new
         @storage_adapter = StorageAdapter.new
         register_default_strategies
         reset!
@@ -52,7 +39,10 @@ module TypeBalancer
         @cache_store = nil
         @max_per_page = 100
         @cursor_buffer_multiplier = 1.5
-        TypeBalancer.reset!
+        @async_threshold = BackgroundProcessor::DEFAULT_ASYNC_THRESHOLD
+        @per_page_default = Pagination::DEFAULT_PER_PAGE
+        @cache_duration = 1.hour
+        self
       end
 
       def redis_settings
@@ -85,7 +75,7 @@ module TypeBalancer
       end
 
       def configure_redis(&)
-        @redis_client = yield if block_given?
+        yield @redis_client if block_given?
         self
       end
 

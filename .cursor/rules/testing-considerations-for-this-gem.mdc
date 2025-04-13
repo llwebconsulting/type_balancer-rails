@@ -1,0 +1,10 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Your rule content
+
+- Do not use a database for unit tests in this application. We will mock any interactions that could use a database
+- We will not create integration tests until I give specific instructions to add them. I want all unit tests to be passing and coverage to be excellent before taking that step.

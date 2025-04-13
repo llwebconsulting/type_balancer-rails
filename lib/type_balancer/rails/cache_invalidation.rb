@@ -8,18 +8,11 @@ module TypeBalancer
 
       included do
         include ::ActiveRecord::Callbacks
-        after_commit :invalidate_balance_cache, if: :persisted?
+        after_commit :invalidate_type_balancer_cache
       end
 
-      def invalidate_balance_cache
-        # Delete all cache entries for this model type
-        ::Rails.cache.delete_matched("type_balancer/#{self.class.table_name}/*")
-
-        # Delete all balanced positions for this record
-        TypeBalancer::Rails::BalancedPosition.where(
-          record_type: self.class.name,
-          record_id: id
-        ).delete_all
+      def invalidate_type_balancer_cache
+        TypeBalancer::Rails.storage_adapter.clear
       end
     end
   end

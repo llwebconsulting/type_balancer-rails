@@ -5,6 +5,8 @@ module TypeBalancer
     module Strategies
       class Strategy
         def initialize(collection_query)
+          raise ArgumentError, 'collection_query is required' if collection_query.nil?
+
           @collection_query = collection_query
         end
 

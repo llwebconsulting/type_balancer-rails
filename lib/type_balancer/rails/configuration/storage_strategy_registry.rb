@@ -14,10 +14,7 @@ module TypeBalancer
         end
 
         def resolve(name)
-          strategy = @strategies[name.to_sym]
-          raise KeyError, "Unknown storage strategy: #{name}" unless strategy
-
-          strategy
+          @strategies[name.to_sym] || raise(KeyError, "Unknown storage strategy: #{name}")
         end
 
         def registered_strategies

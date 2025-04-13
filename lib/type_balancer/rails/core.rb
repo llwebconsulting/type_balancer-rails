@@ -1,28 +1,25 @@
 # frozen_string_literal: true
 
 require 'active_support'
+require 'type_balancer/rails/strategies/storage_adapter'
 
 module TypeBalancer
   module Rails
     # Core configuration module
     module Core
       module ConfigurationFacade
-        def self.included(base)
-          base.extend(ClassMethods)
-        end
-
         module ClassMethods
+          def configure
+            yield(configuration) if block_given?
+            self
+          end
+
           def configuration
             @configuration ||= Configuration.new
           end
 
-          def configure
-            yield configuration if block_given?
-            self
-          end
-
           def reset!
-            configuration.reset!
+            @configuration = Configuration.new
             self
           end
         end
@@ -31,28 +28,95 @@ module TypeBalancer
       extend ConfigurationFacade::ClassMethods
 
       class Configuration
-        attr_accessor :strategy_manager, :storage_adapter, :redis_client, :cache_ttl
+        attr_accessor :redis_client, :cache_ttl, :redis_ttl
+        attr_reader :strategy_manager, :storage_adapter, :redis_enabled, :cache_enabled
 
         def initialize
-          reset!
+          @redis_enabled = true
+          @cache_enabled = true
+          @cache_ttl = 3600
+          @redis_ttl = 3600
+          @redis_client = nil
+          @strategy_manager = TypeBalancer::Rails::Config::StrategyManager.new
+          @storage_adapter = TypeBalancer::Rails::Config::StorageAdapter.new(@strategy_manager)
         end
 
-        def configure_redis
+        def configure_redis(client = nil)
+          @redis_client = client if client
+          raise Errors::RedisError, 'Redis client is not configured' if @redis_client.nil?
+
+          @storage_adapter.configure_redis(@redis_client)
           yield @redis_client if block_given?
+          validate!
           self
         end
 
         def configure_cache
-          yield ::Rails.cache if block_given?
+          cache_store = ::Rails.cache
+          raise Errors::CacheError, 'Cache store is not configured' if cache_store.nil?
+
+          @storage_adapter.configure_cache(cache_store)
+          yield cache_store if block_given?
+          validate!
           self
         end
 
         def reset!
-          @strategy_manager = nil
-          @storage_adapter = nil
           @redis_client = nil
           @cache_ttl = 3600
+          @redis_ttl = 3600
+          @strategy_manager = TypeBalancer::Rails::Config::StrategyManager.new
+          @storage_adapter = TypeBalancer::Rails::Config::StorageAdapter.new(@strategy_manager)
+          self
         end
+
+        def validate!
+          validate_strategy_manager!
+          validate_storage_adapter!
+          validate_cache_ttl!
+          validate_redis_ttl!
+          true
+        end
+
+        private
+
+        def validate_cache_ttl!
+          raise Errors::ConfigurationError, 'Cache TTL must be an integer' unless @cache_ttl.is_a?(Integer)
+          raise Errors::ConfigurationError, 'Cache TTL must be positive' unless @cache_ttl.positive?
+        end
+
+        def validate_redis_ttl!
+          raise Errors::ConfigurationError, 'Redis TTL must be an integer' unless @redis_ttl.is_a?(Integer)
+          raise Errors::ConfigurationError, 'Redis TTL must be positive' unless @redis_ttl.positive?
+        end
+
+        def validate_strategy_manager!
+          @strategy_manager.validate!
+        rescue StandardError => e
+          raise Errors::ConfigurationError, "Invalid strategy: #{e.message}"
+        end
+
+        def validate_storage_adapter!
+          @storage_adapter.validate!
+        rescue StandardError => e
+          raise Errors::ConfigurationError, "Invalid storage: #{e.message}"
+        end
+      end
+
+      class StorageStrategyRegistry
+        def initialize
+          @strategies = {}
+        end
+
+        def register(name, strategy)
+          @strategies[name.to_sym] = strategy
+        end
+
+        def [](name)
+          @strategies[name.to_sym]
+        end
+
+        delegate :clear, to: :@strategies
       end
     end
   end
