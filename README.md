@@ -3,17 +3,19 @@
 A Ruby on Rails gem for balancing records by type in ActiveRecord collections.
 
 [![Gem Version](https://badge.fury.io/rb/type_balancer-rails.svg)](https://badge.fury.io/rb/type_balancer-rails)
-[![Build Status](https://github.com/your-username/type_balancer-rails/workflows/CI/badge.svg)](https://github.com/your-username/type_balancer-rails/actions)
-[![Code Climate](https://codeclimate.com/github/your-username/type_balancer-rails/badges/gpa.svg)](https://codeclimate.com/github/your-username/type_balancer-rails)
+[![Build Status](https://github.com/carl/type_balancer-rails/workflows/CI/badge.svg)](https://github.com/carl/type_balancer-rails/actions)
+[![Code Climate](https://codeclimate.com/github/carl/type_balancer-rails/badges/gpa.svg)](https://codeclimate.com/github/carl/type_balancer-rails)
 
 ## Features
 
 - Balance ActiveRecord collections by type field
 - Multiple storage strategies (Redis, Cursor)
-- Built-in caching support
+- Built-in caching support with configurable TTL
 - Flexible pagination
 - Thread-safe operations
-- Rails integration
+- Background processing for balance calculations
+- Rails integration with automatic configuration
+- SOLID design principles throughout
 
 ## Installation
 
@@ -115,6 +117,20 @@ TypeBalancer::Rails.configure do |config|
 end
 ```
 
+## Background Processing
+
+TypeBalancer supports background processing for balance calculations:
+
+```ruby
+# Configure background processing
+TypeBalancer::Rails.configure do |config|
+  config.enable_background_processing = true
+end
+
+# Trigger background balance calculation
+Post.calculate_balance_in_background
+```
+
 ## Pagination
 
 TypeBalancer supports flexible pagination:
@@ -134,36 +150,6 @@ TypeBalancer supports flexible pagination:
 @posts.current_page
 ```
 
-## Custom Storage Strategies
-
-Create your own storage strategy:
-
-```ruby
-module TypeBalancer
-  module Rails
-    module Storage
-      class CustomStorage < BaseStorage
-        def store(key, value, ttl: nil)
-          # Implementation
-        end
-
-        def fetch(key)
-          # Implementation
-        end
-
-        def delete(key)
-          # Implementation
-        end
-
-        def clear
-          # Implementation
-        end
-      end
-    end
-  end
-end
-```
-
 ## Testing
 
 RSpec examples:
@@ -179,17 +165,60 @@ RSpec.describe Post do
 end
 ```
 
-## Migration Guide
-
-If you're upgrading from an older version, please check our [Migration Guide](docs/migration_guide.md).
-
 ## Contributing
 
-1. Fork it
-2. Create your feature branch (`git checkout -b feature/my-new-feature`)
-3. Commit your changes (`git commit -am 'Add some feature'`)
-4. Push to the branch (`git push origin feature/my-new-feature`)
-5. Create new Pull Request
+We welcome contributions to TypeBalancer Rails! Here's how you can help:
+
+1. Fork the repository
+   ```bash
+   git clone https://github.com/carl/type_balancer-rails.git
+   cd type_balancer-rails
+   ```
+
+2. Set up your development environment
+   ```bash
+   bundle install
+   ```
+
+3. Create a feature branch
+   ```bash
+   git checkout -b feature/my-new-feature
+   ```
+
+4. Make your changes following our coding standards:
+   - Follow SOLID principles
+   - Write tests for new functionality
+   - Update documentation as needed
+   - Keep commits focused and well-documented
+
+5. Run the test suite
+   ```bash
+   bundle exec rspec
+   ```
+
+6. Commit your changes
+   ```bash
+   git commit -am 'Add some feature'
+   ```
+
+7. Push to the branch
+   ```bash
+   git push origin feature/my-new-feature
+   ```
+
+8. Create a Pull Request
+   - Provide a clear description of your changes
+   - Reference any related issues
+   - Ensure all tests are passing
+
+### Development Guidelines
+
+- Follow the SOLID principles
+- Use the Façade pattern for complex functionality
+- Write unit tests for all new features
+- Keep documentation up to date
+- Use meaningful commit messages
+- Follow Ruby style guidelines
 
 ## License
 
