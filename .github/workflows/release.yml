@@ -1,0 +1,66 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.0.0)'
+        required: true
+        type: string
+      release_notes:
+        description: 'Release notes'
+        required: true
+        type: string
+
+jobs:
+  prepare-release:
+    name: Prepare Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3.0'
+          bundler-cache: true
+          cache-version: 1
+      
+      - name: Install dependencies
+        run: |
+          gem install create_github_release
+      
+      - name: Create release branch and PR
+        run: |
+          create_github_release \
+            --version "${{ github.event.inputs.version }}" \
+            --release-notes "${{ github.event.inputs.release_notes }}" \
+            --github-token "${{ secrets.GITHUB_TOKEN }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish:
+    name: Publish to RubyGems
+    needs: prepare-release
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+      
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3.0'
+          bundler-cache: true
+          cache-version: 1
+      
+      - name: Build and publish gem
+        run: |
+          gem build type_balancer-rails.gemspec
+          gem push type_balancer-rails-*.gem
+        env:
+          RUBYGEMS_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }} 

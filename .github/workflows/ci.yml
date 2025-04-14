@@ -17,8 +17,8 @@ jobs:
           - 6379:6379
     strategy:
       matrix:
-        ruby-version: ['3.2.8', '3.3.0']
-        rails-version: ['7.0', '7.1']
+        ruby-version: ['3.2.0', '3.3.0']
+        rails-version: ['7.1', '8.0']
 
     steps:
       - uses: actions/checkout@v4
@@ -28,6 +28,7 @@ jobs:
         with:
           ruby-version: ${{ matrix.ruby-version }}
           bundler-cache: true
+          cache-version: 1
       
       - name: Install Rails
         run: |
@@ -59,6 +60,7 @@ jobs:
         with:
           ruby-version: '3.3.0'
           bundler-cache: true
+          cache-version: 1
       
       - name: Run RuboCop
         run: bundle exec rubocop
@@ -74,12 +76,18 @@ jobs:
         with:
           ruby-version: '3.3.0'
           bundler-cache: true
+          cache-version: 1
       
-      - name: Install bundler-audit
-        run: gem install bundler-audit
+      - name: Install security tools
+        run: |
+          gem install bundler-audit
+          gem install brakeman
       
       - name: Check for vulnerable dependencies
         run: bundle-audit check --update
+      
+      - name: Run Brakeman
+        run: brakeman -A -w2
 
   integration:
     name: Rails Integration Tests
@@ -91,7 +99,7 @@ jobs:
           - 6379:6379
     strategy:
       matrix:
-        rails-version: ['7.0', '7.1']
+        rails-version: ['7.1', '8.0']
     
     steps:
       - uses: actions/checkout@v4
@@ -101,6 +109,7 @@ jobs:
         with:
           ruby-version: '3.3.0'
           bundler-cache: true
+          cache-version: 1
       
       - name: Set up test Rails app
         run: |

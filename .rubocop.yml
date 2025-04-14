@@ -7,26 +7,25 @@ AllCops:
   NewCops: enable
   SuggestExtensions: false
   Exclude:
-    - 'bin/*'
+    - 'bin/**/*'
+    - 'db/**/*'
+    - 'config/**/*'
+    - 'script/**/*'
     - 'vendor/**/*'
+    - 'test_app/**/*'
     - 'tmp/**/*'
-    - 'spec/dummy/**/*'
+    - 'coverage/**/*'
 
-Style/StringLiterals:
-  EnforcedStyle: single_quotes
-
-Style/Documentation:
-  Enabled: false
-
-Style/DocumentDynamicEvalDefinition:
-  Enabled: false
+Layout/LineLength:
+  Max: 120
+  Exclude:
+    - 'spec/**/*'
 
 Metrics/BlockLength:
   Enabled: true
   Exclude:
     - 'spec/**/*'
-    - 'Rakefile'
-    - '*.gemspec'
+    - 'lib/**/*.rb'
 
 Metrics/MethodLength:
   Max: 20
@@ -47,7 +46,7 @@ Rails/SkipsModelValidations:
   Enabled: false  # Allow update_all, etc. in our gem
 
 RSpec/ExampleLength:
-  Max: 15
+  Max: 10
 
 RSpec/MultipleExpectations:
   Max: 5
@@ -68,4 +67,19 @@ RSpec/MultipleDescribes:
   Enabled: false  # We have intentionally structured our specs this way
 
 RSpec/RepeatedExampleGroupDescription:
-  Enabled: false  # We have intentionally structured our specs this way 
+  Enabled: false  # We have intentionally structured our specs this way
+
+Style/Documentation:
+  Enabled: false
+
+Style/FrozenStringLiteralComment:
+  Enabled: true
+
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+Style/SymbolArray:
+  EnforcedStyle: brackets
+
+Style/DocumentDynamicEvalDefinition:
+  Enabled: false 
