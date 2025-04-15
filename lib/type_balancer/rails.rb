@@ -16,7 +16,7 @@ require_relative 'rails/storage_strategies'
 require_relative 'rails/strategies'
 require_relative 'rails/config/storage_adapter'
 require_relative 'rails/railtie' if defined?(Rails)
-require_relative 'rails/configuration'
+require_relative 'rails/config/base_configuration'
 require_relative 'rails/pagination'
 require_relative 'rails/position_manager'
 require_relative 'rails/background_processor'

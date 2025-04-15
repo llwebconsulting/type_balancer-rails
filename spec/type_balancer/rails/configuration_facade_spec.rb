@@ -10,13 +10,13 @@ module TypeBalancer
 
       describe '#initialize' do
         it 'creates a new Configuration instance' do
-          expect(facade.instance_variable_get(:@config)).to be_a(Configuration)
+          expect(facade.instance_variable_get(:@config)).to be_a(TypeBalancer::Rails::Config::BaseConfiguration)
         end
       end
 
       describe '#configure' do
         it 'yields the configuration object and returns self' do
-          expect { |b| facade.configure(&b) }.to yield_with_args(Configuration)
+          expect { |b| facade.configure(&b) }.to yield_with_args(TypeBalancer::Rails::Config::BaseConfiguration)
           expect(facade.configure).to eq(facade)
         end
       end

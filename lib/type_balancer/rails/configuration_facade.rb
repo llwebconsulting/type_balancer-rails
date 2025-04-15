@@ -27,7 +27,7 @@ module TypeBalancer
         delegate :reset!, to: :configuration
 
         def configuration
-          @configuration ||= Configuration.new
+          @configuration ||= TypeBalancer::Rails::Config::BaseConfiguration.new
         end
 
         def validate!
@@ -85,7 +85,7 @@ module TypeBalancer
       end
 
       def initialize
-        @config = Configuration.new
+        @config = TypeBalancer::Rails::Config::BaseConfiguration.new
       end
 
       def configure
