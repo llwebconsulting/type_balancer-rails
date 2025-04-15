@@ -31,7 +31,7 @@ module TypeBalancer
   # Rails integration for TypeBalancer
   module Rails
     extend ActiveSupport::Autoload
-    extend Core::ConfigurationFacade::ClassMethods
+    extend TypeBalancer::Rails::Core::ConfigurationFacade::ClassMethods
 
     DEFAULT_PER_PAGE = 25
     MAX_PER_PAGE = 100
