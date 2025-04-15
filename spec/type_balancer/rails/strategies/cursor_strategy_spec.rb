@@ -3,10 +3,10 @@
 require 'spec_helper'
 
 RSpec.describe TypeBalancer::Rails::Strategies::CursorStrategy do
-  let(:storage_adapter) { instance_double('TypeBalancer::Rails::Config::StorageAdapter') }
+  let(:storage_adapter) { instance_double('TypeBalancer::Rails::Config::ConfigStorageAdapter') }
   let(:model_class) { mock_model_class('TestModel') }
   let(:scope) { mock_active_record_relation(model_class) }
-  let(:collection) { double('Collection', object_id: 1) }
+  let(:collection) { double('Collection', object_id: 123) }
   let(:options) { { ttl: 3600 } }
   let(:strategy) { described_class.new(collection, storage_adapter, options) }
   let(:key) { 'test_key' }
@@ -43,12 +43,12 @@ RSpec.describe TypeBalancer::Rails::Strategies::CursorStrategy do
       let(:cache_enabled) { true }
 
       it 'stores the value in cache' do
-        expect(rails_cache).to receive(:write).with("type_balancer:1:#{key}", value, expires_in: ttl).and_return(true)
+        expect(rails_cache).to receive(:write).with("type_balancer:123:#{key}", value, expires_in: ttl).and_return(true)
         strategy.store(key, value, ttl)
       end
 
       it 'returns true when storage is successful' do
-        allow(rails_cache).to receive(:write).with("type_balancer:1:#{key}", value, expires_in: ttl).and_return(true)
+        allow(rails_cache).to receive(:write).with("type_balancer:123:#{key}", value, expires_in: ttl).and_return(true)
         expect(strategy.store(key, value, ttl)).to be true
       end
 
@@ -76,12 +76,12 @@ RSpec.describe TypeBalancer::Rails::Strategies::CursorStrategy do
       let(:cache_enabled) { true }
 
       it 'fetches the value from cache' do
-        expect(rails_cache).to receive(:read).with("type_balancer:1:#{key}").and_return(value)
+        expect(rails_cache).to receive(:read).with("type_balancer:123:#{key}").and_return(value)
         expect(strategy.fetch(key)).to eq(value)
       end
 
       it 'returns nil when key not found' do
-        allow(rails_cache).to receive(:read).with("type_balancer:1:#{key}").and_return(nil)
+        allow(rails_cache).to receive(:read).with("type_balancer:123:#{key}").and_return(nil)
         expect(strategy.fetch(key)).to be_nil
       end
 
@@ -105,7 +105,7 @@ RSpec.describe TypeBalancer::Rails::Strategies::CursorStrategy do
       let(:cache_enabled) { true }
 
       it 'deletes the key from cache' do
-        expect(rails_cache).to receive(:delete).with("type_balancer:1:#{key}").and_return(true)
+        expect(rails_cache).to receive(:delete).with("type_balancer:123:#{key}").and_return(true)
         expect(strategy.delete(key)).to be true
       end
 
@@ -147,7 +147,7 @@ RSpec.describe TypeBalancer::Rails::Strategies::CursorStrategy do
   describe '#clear_for_scope' do
     context 'when cache is enabled' do
       let(:cache_enabled) { true }
-      let(:expected_pattern) { "type_balancer:1:test_models*" }
+      let(:expected_pattern) { "type_balancer:123:test_models*" }
 
       it 'deletes matched keys for the scope' do
         expect(rails_cache).to receive(:delete_matched).with(expected_pattern).and_return(true)
@@ -181,7 +181,7 @@ RSpec.describe TypeBalancer::Rails::Strategies::CursorStrategy do
       let(:cache_enabled) { true }
 
       it 'fetches the key for the scope' do
-        expect(rails_cache).to receive(:read).with("type_balancer:1:test_models").and_return(value)
+        expect(rails_cache).to receive(:read).with("type_balancer:123:test_models").and_return(value)
         expect(strategy.fetch_for_scope(scope)).to eq(value)
       end
 

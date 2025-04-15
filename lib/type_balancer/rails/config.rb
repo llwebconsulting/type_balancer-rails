@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require_relative 'storage/base_storage'
-
 module TypeBalancer
   module Rails
     # Configuration module that ties together all configuration components
@@ -46,69 +44,6 @@ module TypeBalancer
 
         def reset!
           @strategies = {}
-        end
-      end
-
-      class StorageAdapter
-        attr_reader :redis_client, :cache_store
-
-        def initialize(redis_client = nil, cache_store = nil)
-          @redis_client = redis_client
-          @cache_store = cache_store || ::Rails.cache
-        end
-
-        def store(key:, value:, ttl: nil)
-          if redis_enabled?
-            redis_client.set(key, value.to_json, ex: ttl)
-          else
-            cache_store.write(key, value, expires_in: ttl)
-          end
-        end
-
-        def fetch(key)
-          if redis_enabled?
-            result = redis_client.get(key)
-            result ? JSON.parse(result, symbolize_names: true) : nil
-          else
-            cache_store.read(key)
-          end
-        end
-
-        def delete(key)
-          if redis_enabled?
-            redis_client.del(key)
-          else
-            cache_store.delete(key)
-          end
-        end
-
-        def clear
-          if redis_enabled?
-            redis_client.flushdb
-          else
-            cache_store.clear
-          end
-        end
-
-        def validate!
-          if redis_enabled?
-            unless redis_client.respond_to?(:set) && redis_client.respond_to?(:get)
-              raise TypeBalancer::Rails::Errors::RedisError,
-                    'Redis client is not properly configured'
-            end
-          else
-            unless cache_store.respond_to?(:write) && cache_store.respond_to?(:read)
-              raise TypeBalancer::Rails::Errors::CacheError,
-                    'Cache store is not properly configured'
-            end
-          end
-          true
-        end
-
-        private
-
-        def redis_enabled?
-          !redis_client.nil? && redis_client.respond_to?(:set)
         end
       end
 

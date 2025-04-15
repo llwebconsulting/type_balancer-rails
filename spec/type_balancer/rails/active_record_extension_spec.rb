@@ -23,7 +23,7 @@ RSpec.describe TypeBalancer::Rails::ActiveRecordExtension do
     allow(Rails).to receive(:cache).and_return(double('Cache').as_null_object)
     
     # Mock storage adapter
-    allow(TypeBalancer::Rails).to receive(:storage_adapter).and_return(double('StorageAdapter').as_null_object)
+    allow(TypeBalancer::Rails).to receive(:storage_adapter).and_return(double('TypeBalancer::Rails::Config::ConfigStorageAdapter').as_null_object)
     
     # Include the module properly
     test_class.include(described_class)

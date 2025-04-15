@@ -34,7 +34,7 @@ RSpec.describe TypeBalancer::Rails::Query::PositionManager do
   end
 
   let(:storage_adapter) do
-    instance_double('TypeBalancer::Rails::StorageAdapter').tap do |adapter|
+    instance_double('TypeBalancer::Rails::Config::ConfigStorageAdapter').tap do |adapter|
       allow(adapter).to receive(:store).and_return(true)
       allow(adapter).to receive(:fetch).and_return(nil)
       allow(adapter).to receive(:delete).and_return(true)
@@ -169,9 +169,9 @@ RSpec.describe TypeBalancer::Rails::Query::PositionManager do
 
   describe '#fetch_positions' do
     before do
-      allow(storage_adapter).to receive(:fetch).with('test_models:1').and_return({ position: 1000.001 })
-      allow(storage_adapter).to receive(:fetch).with('test_models:2').and_return({ position: 2000.001 })
-      allow(storage_adapter).to receive(:fetch).with('test_models:3').and_return({ position: 1000.002 })
+      allow(storage_adapter).to receive(:fetch).with(key: 'test_models:1').and_return({ position: 1000.001 })
+      allow(storage_adapter).to receive(:fetch).with(key: 'test_models:2').and_return({ position: 2000.001 })
+      allow(storage_adapter).to receive(:fetch).with(key: 'test_models:3').and_return({ position: 1000.002 })
     end
 
     it 'retrieves positions from storage' do
@@ -186,7 +186,7 @@ RSpec.describe TypeBalancer::Rails::Query::PositionManager do
 
     context 'when some positions are missing' do
       before do
-        allow(storage_adapter).to receive(:fetch).with('test_models:2').and_return(nil)
+        allow(storage_adapter).to receive(:fetch).with(key: 'test_models:2').and_return(nil)
       end
 
       it 'only includes found positions' do
@@ -201,8 +201,10 @@ RSpec.describe TypeBalancer::Rails::Query::PositionManager do
 
   describe '#clear_positions' do
     it 'deletes positions from storage' do
+      expect(storage_adapter).to receive(:delete).with(key: 'test_models:1')
+      expect(storage_adapter).to receive(:delete).with(key: 'test_models:2')
+      expect(storage_adapter).to receive(:delete).with(key: 'test_models:3')
       manager.clear_positions
-      expect(storage_adapter).to have_received(:delete).exactly(3).times
     end
   end
 end 
