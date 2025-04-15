@@ -4,7 +4,7 @@ module TypeBalancer
   module Rails
     module Strategies
       # Adapter for storage strategies
-      class StorageAdapter
+      class StrategyStorageAdapter
         attr_reader :strategy_manager, :adapter, :cache_ttl
 
         def initialize(strategy_manager = nil)
