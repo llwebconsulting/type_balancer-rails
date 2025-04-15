@@ -3,22 +3,13 @@ module TypeBalancer
     class Configuration
       require_relative 'configuration/storage_strategy_registry'
       require_relative 'configuration/pagination_config'
-      require_relative 'storage/memory_storage'
-      require_relative 'storage/redis_storage'
+      require_relative 'config/storage_adapter'
 
       attr_accessor :redis_client, :redis_enabled, :redis_ttl,
                     :cache_enabled, :cache_ttl, :cache_store,
                     :storage_strategy, :max_per_page, :cursor_buffer_multiplier,
                     :async_threshold, :per_page_default, :cache_duration
       attr_reader :strategy_manager, :storage_adapter, :storage_strategy_registry, :pagination_config
-
-      class StorageAdapter
-        def initialize
-          @adapter = nil
-        end
-
-        attr_accessor :adapter
-      end
 
       def initialize
         @redis_enabled = false
@@ -113,8 +104,8 @@ module TypeBalancer
       private
 
       def register_default_storage_strategies
-        @storage_strategy_registry.register(:memory, TypeBalancer::Rails::Storage::MemoryStorage)
-        @storage_strategy_registry.register(:redis, TypeBalancer::Rails::Storage::RedisStorage)
+        @storage_strategy_registry.register(:memory, TypeBalancer::Rails::Strategies::MemoryStrategy)
+        @storage_strategy_registry.register(:redis, TypeBalancer::Rails::Strategies::RedisStrategy)
       end
     end
   end
