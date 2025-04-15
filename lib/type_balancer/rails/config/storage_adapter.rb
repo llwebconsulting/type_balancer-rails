@@ -73,6 +73,24 @@ module TypeBalancer
           !@cache_store.nil?
         end
 
+        def delete(key:)
+          validate!
+          if redis_enabled?
+            delete_from_redis(key)
+          else
+            delete_from_cache(key)
+          end
+        end
+
+        def exists?(key:)
+          validate!
+          if redis_enabled?
+            exists_in_redis?(key)
+          else
+            exists_in_cache?(key)
+          end
+        end
+
         private
 
         def validate_strategy_manager!
@@ -131,6 +149,22 @@ module TypeBalancer
 
         def clear_cache
           @cache_store.clear
+        end
+
+        def delete_from_redis(key)
+          @redis_client.del(key)
+        end
+
+        def delete_from_cache(key)
+          @cache_store.delete(key)
+        end
+
+        def exists_in_redis?(key)
+          @redis_client.exists?(key)
+        end
+
+        def exists_in_cache?(key)
+          @cache_store.exist?(key)
         end
       end
     end
