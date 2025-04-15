@@ -36,3 +36,12 @@
 .rvmrc
 .env
 .env.*
+
+# Cursor files
+/.cursor/*
+
+# Documentation instructions
+/docs/instructions
+
+# Documentation requirements
+/docs/requirements

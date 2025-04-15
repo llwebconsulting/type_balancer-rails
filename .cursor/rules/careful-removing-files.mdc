@@ -1,9 +1,0 @@
----
-description: 
-globs: 
-alwaysApply: true
----
-
-# Your rule content
-
-- Whenever using commands to remove files, use the complete path to where you want to remove from
