@@ -5,12 +5,13 @@ require 'spec_helper'
 RSpec.describe TypeBalancer::Rails::Strategies::MemoryStrategy do
   let(:collection) { double('Collection', object_id: 123) }
   let(:options) { { ttl: 3600 } }
-  let(:storage_adapter) { instance_double('TypeBalancer::Rails::Config::StorageAdapter') }
+  let(:strategy_manager) { instance_double('TypeBalancer::Rails::Config::StrategyManager') }
+  let(:storage_adapter) { instance_double('TypeBalancer::Rails::Config::ConfigStorageAdapter') }
   
   subject(:strategy) { described_class.new(collection, options) }
 
   before do
-    allow(TypeBalancer::Rails::Config::StorageAdapter).to receive(:new).and_return(storage_adapter)
+    allow(TypeBalancer::Rails::Config::ConfigStorageAdapter).to receive(:new).and_return(storage_adapter)
   end
 
   describe '#store' do

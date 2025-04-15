@@ -10,7 +10,7 @@ RSpec.describe TypeBalancer::Rails::Strategies::BaseStrategy do
   let(:configuration) { double('configuration') }
 
   before do
-    allow(TypeBalancer::Rails::Config::StorageAdapter).to receive(:new).with(strategy_manager).and_return(storage_adapter)
+    allow(TypeBalancer::Rails::Config::ConfigStorageAdapter).to receive(:new).with(strategy_manager).and_return(storage_adapter)
     allow(storage_adapter).to receive(:cache_enabled?).and_return(true)
     allow(storage_adapter).to receive(:redis_enabled?).and_return(true)
     allow(TypeBalancer::Rails).to receive(:configuration).and_return(configuration)

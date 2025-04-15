@@ -38,7 +38,7 @@ module TypeBalancer
           @redis_ttl = 3600
           @redis_client = nil
           @strategy_manager = TypeBalancer::Rails::Config::StrategyManager.new
-          @storage_adapter = TypeBalancer::Rails::Config::StorageAdapter.new(@strategy_manager)
+          @storage_adapter = TypeBalancer::Rails::Config::ConfigStorageAdapter.new(@strategy_manager)
         end
 
         def configure_redis(client = nil)
@@ -66,7 +66,7 @@ module TypeBalancer
           @cache_ttl = 3600
           @redis_ttl = 3600
           @strategy_manager = TypeBalancer::Rails::Config::StrategyManager.new
-          @storage_adapter = TypeBalancer::Rails::Config::StorageAdapter.new(@strategy_manager)
+          @storage_adapter = TypeBalancer::Rails::Config::ConfigStorageAdapter.new(@strategy_manager)
           self
         end
 

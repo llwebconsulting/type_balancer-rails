@@ -12,8 +12,8 @@ RSpec.describe TypeBalancer::Rails::Strategies::RedisStrategy do
   before do
     allow(TypeBalancer::Rails.configuration).to receive(:redis_client).and_return(redis)
     allow(TypeBalancer::Rails.configuration).to receive(:redis_enabled?).and_return(true)
-    allow(TypeBalancer::Rails::Config::StorageAdapter).to receive(:cache_ttl).and_return(3600)
-    allow(TypeBalancer::Rails::Config::StorageAdapter).to receive(:redis_enabled).and_return(true)
+    allow(TypeBalancer::Rails::Config::ConfigStorageAdapter).to receive(:cache_ttl).and_return(3600)
+    allow(TypeBalancer::Rails::Config::ConfigStorageAdapter).to receive(:redis_enabled).and_return(true)
     allow(redis).to receive(:setex)
     allow(redis).to receive(:set)
     allow(redis).to receive(:get)

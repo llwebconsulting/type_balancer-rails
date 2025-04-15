@@ -1,7 +1,7 @@
 module TypeBalancer
   module Rails
     module Config
-      class StorageAdapter
+      class ConfigStorageAdapter
         attr_reader :redis_client, :cache_store
 
         def initialize(strategy_manager)
