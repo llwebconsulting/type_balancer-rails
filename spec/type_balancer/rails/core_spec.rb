@@ -3,6 +3,8 @@
 require 'spec_helper'
 
 RSpec.describe TypeBalancer::Rails::Core do
+  before(:each) { described_class.reset! if described_class.respond_to?(:reset!) }
+
   after(:each) { described_class.reset! if described_class.respond_to?(:reset!) }
 
   describe '.configure' do
