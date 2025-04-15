@@ -4,7 +4,7 @@ require 'spec_helper'
 
 RSpec.describe TypeBalancer::Rails::CacheInvalidation do
   let(:test_class) { mock_model_class("TestModel") }
-  let(:storage_adapter) { instance_double('TypeBalancer::Rails::StorageAdapter') }
+  let(:storage_adapter) { instance_double('TypeBalancer::Rails::Config::ConfigStorageAdapter') }
 
   before do
     allow(TypeBalancer::Rails).to receive(:storage_adapter).and_return(storage_adapter)

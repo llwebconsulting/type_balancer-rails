@@ -49,7 +49,7 @@ module TypeBalancer
         def fetch_positions
           record_ids = scope.pluck(:id)
           record_ids.each_with_object({}) do |record_id, result|
-            if position_data = storage_adapter.fetch(cache_key(record_id))
+            if position_data = storage_adapter.fetch(key: cache_key(record_id))
               result[record_id] = position_data[:position]
             end
           end
@@ -58,7 +58,7 @@ module TypeBalancer
         def clear_positions
           record_ids = scope.pluck(:id)
           record_ids.each do |record_id|
-            storage_adapter.delete(cache_key(record_id))
+            storage_adapter.delete(key: cache_key(record_id))
           end
         end
 
