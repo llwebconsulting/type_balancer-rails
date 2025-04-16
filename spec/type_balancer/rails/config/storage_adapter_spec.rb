@@ -5,14 +5,14 @@ require 'type_balancer/rails/config/strategy_manager'
 require 'type_balancer/rails/config/storage_adapter'
 
 RSpec.describe TypeBalancer::Rails::Config::ConfigStorageAdapter do
+  subject(:adapter) { described_class.new(strategy_manager) }
+
   let(:strategy_manager) { instance_double(TypeBalancer::Rails::Config::StrategyManager) }
-  let(:redis_client) { instance_double('Redis') }
-  let(:cache_store) { instance_double('ActiveSupport::Cache::Store') }
+  let(:redis_client) { instance_double(Redis) }
+  let(:cache_store) { instance_double(ActiveSupport::Cache::Store) }
   let(:test_key) { 'test_key' }
   let(:test_value) { { name: 'test', value: 123 } }
   let(:test_ttl) { 3600 }
-
-  subject(:adapter) { described_class.new(strategy_manager) }
 
   before do
     allow(strategy_manager).to receive(:validate!)
@@ -161,4 +161,4 @@ RSpec.describe TypeBalancer::Rails::Config::ConfigStorageAdapter do
       adapter.validate!
     end
   end
-end 
+end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 TypeBalancer::Rails.configure do |config|
   # Configure Redis client
   config.configure_redis do |redis|

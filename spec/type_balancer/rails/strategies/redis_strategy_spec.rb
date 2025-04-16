@@ -3,17 +3,15 @@
 require 'spec_helper'
 
 RSpec.describe TypeBalancer::Rails::Strategies::RedisStrategy do
-  let(:collection) { double('collection', object_id: 123) }
-  let(:redis) { instance_double('Redis') }
-  let(:options) { { ttl: 3600, redis: redis } }
-
   subject { described_class.new(collection, options) }
 
+  let(:collection) { double('collection', object_id: 123) }
+  let(:redis) { instance_double(Redis) }
+  let(:options) { { ttl: 3600, redis: redis } }
+
   before do
-    allow(TypeBalancer::Rails.configuration).to receive(:redis_client).and_return(redis)
-    allow(TypeBalancer::Rails.configuration).to receive(:redis_enabled?).and_return(true)
-    allow(TypeBalancer::Rails::Config::ConfigStorageAdapter).to receive(:cache_ttl).and_return(3600)
-    allow(TypeBalancer::Rails::Config::ConfigStorageAdapter).to receive(:redis_enabled).and_return(true)
+    allow(TypeBalancer::Rails.configuration).to receive_messages(redis_client: redis, redis_enabled?: true)
+    allow(TypeBalancer::Rails::Config::ConfigStorageAdapter).to receive_messages(cache_ttl: 3600, redis_enabled: true)
     allow(redis).to receive(:setex)
     allow(redis).to receive(:set)
     allow(redis).to receive(:get)
@@ -94,7 +92,7 @@ RSpec.describe TypeBalancer::Rails::Strategies::RedisStrategy do
 
   describe '#clear' do
     before do
-      allow(redis).to receive(:keys).with('type_balancer:123:*').and_return(['key1', 'key2'])
+      allow(redis).to receive(:keys).with('type_balancer:123:*').and_return(%w[key1 key2])
     end
 
     it 'removes all keys' do
@@ -107,7 +105,7 @@ RSpec.describe TypeBalancer::Rails::Strategies::RedisStrategy do
     let(:scope) { double('scope', object_id: 456) }
 
     before do
-      allow(redis).to receive(:keys).with('type_balancer:456:*').and_return(['key1', 'key2'])
+      allow(redis).to receive(:keys).with('type_balancer:456:*').and_return(%w[key1 key2])
     end
 
     it 'removes all keys for scope' do
@@ -120,7 +118,8 @@ RSpec.describe TypeBalancer::Rails::Strategies::RedisStrategy do
     let(:scope) { double('scope', object_id: 456) }
 
     before do
-      allow(redis).to receive(:keys).with('type_balancer:456:*').and_return(['type_balancer:456:key1', 'type_balancer:456:key2'])
+      allow(redis).to receive(:keys).with('type_balancer:456:*').and_return(['type_balancer:456:key1',
+                                                                             'type_balancer:456:key2'])
       allow(redis).to receive(:get).with('type_balancer:456:key1').and_return('{"foo":"bar"}')
       allow(redis).to receive(:get).with('type_balancer:456:key2').and_return('{"baz":"qux"}')
     end
@@ -128,9 +127,9 @@ RSpec.describe TypeBalancer::Rails::Strategies::RedisStrategy do
     it 'returns all values for scope' do
       result = subject.fetch_for_scope(scope)
       expect(result).to eq({
-        'type_balancer:456:key1' => { foo: 'bar' },
-        'type_balancer:456:key2' => { baz: 'qux' }
-      })
+                             'type_balancer:456:key1' => { foo: 'bar' },
+                             'type_balancer:456:key2' => { baz: 'qux' }
+                           })
     end
 
     context 'with empty scope' do
@@ -179,7 +178,7 @@ RSpec.describe TypeBalancer::Rails::Strategies::RedisStrategy do
     it 'returns non-hash/array values as is' do
       expect(subject.send(:deep_symbolize_keys, 'string')).to eq('string')
       expect(subject.send(:deep_symbolize_keys, 123)).to eq(123)
-      expect(subject.send(:deep_symbolize_keys, true)).to eq(true)
+      expect(subject.send(:deep_symbolize_keys, true)).to be(true)
     end
   end
-end 
+end

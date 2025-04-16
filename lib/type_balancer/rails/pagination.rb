@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module TypeBalancer
   module Rails
     class Pagination
@@ -14,7 +16,7 @@ module TypeBalancer
         return relation.none if @positions.empty?
 
         page_positions = @positions.slice(page_offset, @per_page)
-        record_ids = page_positions.map { |pos| pos[:id] }
+        record_ids = page_positions.pluck(:id)
 
         relation
           .where(id: record_ids)

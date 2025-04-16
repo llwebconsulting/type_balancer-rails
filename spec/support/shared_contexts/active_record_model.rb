@@ -25,35 +25,35 @@ RSpec.shared_context 'active_record_model' do
           'posts'
         end
 
-        def where(*args)
+        def where(*_args)
           self
         end
 
-        def order(*args)
+        def order(*_args)
           self
         end
 
-        def limit(*args)
+        def limit(*_args)
           self
         end
 
-        def offset(*args)
+        def offset(*_args)
           self
         end
 
-        def pluck(*args)
+        def pluck(*_args)
           []
         end
 
-        def count(*args)
+        def count(*_args)
           0
         end
 
-        def find_by(*args)
+        def find_by(*_args)
           nil
         end
 
-        def find_or_create_by(*args)
+        def find_or_create_by(*_args)
           new
         end
 
@@ -93,11 +93,11 @@ RSpec.shared_context 'active_record_model' do
         destroy!
       end
 
-      def update!(*args)
+      def update!(*_args)
         true
       end
 
-      def update(*args)
+      def update(*_args)
         true
       end
 

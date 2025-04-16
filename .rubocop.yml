@@ -1,6 +1,7 @@
 require:
-  - rubocop-rails
   - rubocop-rspec
+plugins:
+  - rubocop-rails
 
 AllCops:
   TargetRubyVersion: 3.2
@@ -68,4 +69,24 @@ RSpec/MultipleDescribes:
   Enabled: false  # We have intentionally structured our specs this way
 
 RSpec/RepeatedExampleGroupDescription:
-  Enabled: false  # We have intentionally structured our specs this way 
+  Enabled: false  # We have intentionally structured our specs this way
+
+Capybara:
+  Enabled: false
+
+Capybara/RSpec/CurrentPathExpectation:
+  Enabled: false
+Capybara/RSpec/MatchStyle:
+  Enabled: false
+Capybara/RSpec/NegationMatcher:
+  Enabled: false
+Capybara/RSpec/SpecificActions:
+  Enabled: false
+Capybara/RSpec/SpecificFinders:
+  Enabled: false
+Capybara/RSpec/SpecificMatcher:
+  Enabled: false
+Capybara/RSpec/VisibilityMatcher:
+  Enabled: false
+Capybara/RSpec/PredicateMatcher:
+  Enabled: false 

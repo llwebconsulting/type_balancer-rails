@@ -17,9 +17,9 @@ RSpec.describe TypeBalancer::Rails do
     end
 
     it 'cannot be modified' do
-      expect {
+      expect do
         TypeBalancer::Rails::VERSION << '.modified'
-      }.to raise_error(FrozenError)
+      end.to raise_error(FrozenError)
     end
   end
-end 
+end

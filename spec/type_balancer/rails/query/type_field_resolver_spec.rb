@@ -7,13 +7,13 @@ module TypeBalancer
     module Query
       RSpec.describe TypeFieldResolver do
         let(:model_class) do
-          class_double("ActiveRecord::Base").tap do |double|
+          class_double(ActiveRecord::Base).tap do |double|
             allow(double).to receive(:column_names).and_return([])
           end
         end
 
         let(:scope) do
-          double("ActiveRecord::Relation").tap do |double|
+          double('ActiveRecord::Relation').tap do |double|
             allow(double).to receive(:respond_to?).with(:type_field).and_return(false)
             allow(double).to receive(:klass).and_return(model_class)
           end
@@ -61,7 +61,7 @@ module TypeBalancer
             context 'with multiple common fields' do
               before do
                 allow(model_class).to receive(:column_names)
-                  .and_return(['type', 'media_type', 'other_column'])
+                  .and_return(%w[type media_type other_column])
               end
 
               it 'uses the first matching field' do
@@ -99,4 +99,4 @@ module TypeBalancer
       end
     end
   end
-end 
+end

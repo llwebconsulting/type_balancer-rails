@@ -11,15 +11,14 @@ module TypeBalancer
         let(:service) { described_class.new(collection, options) }
 
         before do
-          allow(collection).to receive(:count).and_return(100)
-          allow(collection).to receive(:respond_to?).and_return(false)
+          allow(collection).to receive_messages(count: 100, respond_to?: false)
           allow(collection).to receive(:respond_to?).with(:offset).and_return(true)
           allow(collection).to receive(:respond_to?).with(:limit).and_return(true)
           allow(collection).to receive(:respond_to?).with(:count).and_return(true)
         end
 
         describe '#initialize' do
-          it 'should use default values when no options provided' do
+          it 'uses default values when no options provided' do
             expect(service.send(:page)).to eq(1)
             expect(service.send(:per_page)).to eq(25)
           end
@@ -27,7 +26,7 @@ module TypeBalancer
           context 'with custom options' do
             let(:options) { { page: 2, per_page: 50 } }
 
-            it 'should use provided values' do
+            it 'uses provided values' do
               expect(service.send(:page)).to eq(2)
               expect(service.send(:per_page)).to eq(50)
             end
@@ -36,7 +35,7 @@ module TypeBalancer
           context 'with invalid values' do
             let(:options) { { page: 'invalid', per_page: 'invalid' } }
 
-            it 'should convert to integers and use defaults if invalid' do
+            it 'converts to integers and use defaults if invalid' do
               expect(service.send(:page)).to eq(0)
               expect(service.send(:per_page)).to eq(25)
             end
@@ -45,7 +44,7 @@ module TypeBalancer
           context 'with per_page exceeding maximum' do
             let(:options) { { per_page: 200 } }
 
-            it 'should cap at MAX_PER_PAGE' do
+            it 'caps at MAX_PER_PAGE' do
               expect(service.send(:per_page)).to eq(100)
             end
           end
@@ -55,7 +54,7 @@ module TypeBalancer
           context 'when pagination is disabled' do
             let(:options) { { paginate: false } }
 
-            it 'should return the original collection' do
+            it 'returns the original collection' do
               expect(service.paginate).to eq(collection)
             end
           end
@@ -66,7 +65,7 @@ module TypeBalancer
               allow(collection).to receive(:respond_to?).with(:paginate).and_return(false)
             end
 
-            it 'should apply offset and limit' do
+            it 'applies offset and limit' do
               expect(collection).to receive(:offset).with(0).ordered.and_return(collection)
               expect(collection).to receive(:limit).with(25).ordered.and_return(collection)
               service.paginate
@@ -75,7 +74,7 @@ module TypeBalancer
             context 'with custom page' do
               let(:options) { { page: 3, per_page: 10 } }
 
-              it 'should calculate correct offset' do
+              it 'calculates correct offset' do
                 expect(collection).to receive(:offset).with(20).ordered.and_return(collection)
                 expect(collection).to receive(:limit).with(10).ordered.and_return(collection)
                 service.paginate
@@ -93,7 +92,7 @@ module TypeBalancer
               allow(kaminari_collection).to receive(:per).and_return(kaminari_collection)
             end
 
-            it 'should use Kaminari pagination' do
+            it 'uses Kaminari pagination' do
               expect(collection).to receive(:page).with(1).and_return(kaminari_collection)
               expect(kaminari_collection).to receive(:per).with(25)
               service.paginate
@@ -107,7 +106,7 @@ module TypeBalancer
               allow(collection).to receive(:respond_to?).with(:paginate).and_return(true)
             end
 
-            it 'should use WillPaginate pagination' do
+            it 'uses WillPaginate pagination' do
               expect(collection).to receive(:paginate).with(page: 1, per_page: 25)
               service.paginate
             end
@@ -118,19 +117,17 @@ module TypeBalancer
               double('ActiveRecord::Relation').tap do |double|
                 allow(double).to receive(:respond_to?).with(:page).and_return(false)
                 allow(double).to receive(:respond_to?).with(:paginate).and_return(false)
-                allow(double).to receive(:offset).and_return(double)
-                allow(double).to receive(:limit).and_return(double)
-                allow(double).to receive(:count).and_return(100)
+                allow(double).to receive_messages(offset: double, limit: double, count: 100)
               end
             end
 
-            it 'should apply offset and limit correctly' do
+            it 'applies offset and limit correctly' do
               expect(collection).to receive(:offset).with(0).ordered.and_return(collection)
               expect(collection).to receive(:limit).with(25).ordered.and_return(collection)
               service.paginate
             end
 
-            it 'should cache the total count' do
+            it 'caches the total count' do
               expect(collection).to receive(:count).once.and_return(100)
               2.times { service.total_pages }
             end
@@ -139,7 +136,7 @@ module TypeBalancer
           context 'with negative page number' do
             let(:options) { { page: -1 } }
 
-            it 'should default to page 1' do
+            it 'defaults to page 1' do
               expect(collection).to receive(:offset).with(0).ordered.and_return(collection)
               expect(collection).to receive(:limit).with(25).ordered.and_return(collection)
               service.paginate
@@ -149,7 +146,7 @@ module TypeBalancer
           context 'with zero per_page' do
             let(:options) { { per_page: 0 } }
 
-            it 'should use default per_page' do
+            it 'uses default per_page' do
               expect(collection).to receive(:offset).with(0).ordered.and_return(collection)
               expect(collection).to receive(:limit).with(25).ordered.and_return(collection)
               service.paginate
@@ -161,7 +158,7 @@ module TypeBalancer
           context 'when there are more pages' do
             before { allow(collection).to receive(:count).and_return(30) }
 
-            it 'should return true' do
+            it 'returns true' do
               expect(service.next_page?).to be true
             end
           end
@@ -169,7 +166,7 @@ module TypeBalancer
           context 'when on the last page' do
             before { allow(collection).to receive(:count).and_return(20) }
 
-            it 'should return false' do
+            it 'returns false' do
               expect(service.next_page?).to be false
             end
           end
@@ -179,7 +176,7 @@ module TypeBalancer
           context 'on first page' do
             let(:options) { { page: 1 } }
 
-            it 'should return false' do
+            it 'returns false' do
               expect(service.prev_page?).to be false
             end
           end
@@ -187,7 +184,7 @@ module TypeBalancer
           context 'on subsequent pages' do
             let(:options) { { page: 2 } }
 
-            it 'should return true' do
+            it 'returns true' do
               expect(service.prev_page?).to be true
             end
           end
@@ -197,7 +194,7 @@ module TypeBalancer
           context 'with exact division' do
             before { allow(collection).to receive(:count).and_return(50) }
 
-            it 'should calculate correct number of pages' do
+            it 'calculates correct number of pages' do
               expect(service.total_pages).to eq(2)
             end
           end
@@ -205,7 +202,7 @@ module TypeBalancer
           context 'with remainder' do
             before { allow(collection).to receive(:count).and_return(55) }
 
-            it 'should round up to include partial page' do
+            it 'rounds up to include partial page' do
               expect(service.total_pages).to eq(3)
             end
           end
@@ -213,7 +210,7 @@ module TypeBalancer
           context 'with empty collection' do
             before { allow(collection).to receive(:count).and_return(0) }
 
-            it 'should return zero' do
+            it 'returns zero' do
               expect(service.total_pages).to eq(0)
             end
           end
@@ -222,13 +219,13 @@ module TypeBalancer
         describe '#current_page' do
           let(:options) { { page: 3 } }
 
-          it 'should return the current page number' do
+          it 'returns the current page number' do
             expect(service.current_page).to eq(3)
           end
         end
 
         describe '#total_count' do
-          it 'should cache the count result' do
+          it 'caches the count result' do
             expect(collection).to receive(:count).once.and_return(100)
             2.times { service.send(:total_count) }
           end
@@ -236,7 +233,7 @@ module TypeBalancer
           context 'when count returns nil' do
             before { allow(collection).to receive(:count).and_return(nil) }
 
-            it 'should handle nil count gracefully' do
+            it 'handles nil count gracefully' do
               expect(service.total_pages).to eq(0)
             end
           end
@@ -248,7 +245,7 @@ module TypeBalancer
               allow(collection).to receive(:respond_to?).with(:offset).and_return(false)
             end
 
-            it 'should raise an informative error' do
+            it 'raises an informative error' do
               expect { service.paginate }.to raise_error(NoMethodError)
             end
           end
@@ -256,4 +253,4 @@ module TypeBalancer
       end
     end
   end
-end 
+end

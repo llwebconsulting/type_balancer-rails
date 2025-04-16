@@ -8,11 +8,11 @@ RSpec.describe TypeBalancer::Rails::Query do
   # 2. Test only what this module is responsible for
   # 3. Use proper ActiveRecord test doubles
 
-  let(:scope) { instance_double('ActiveRecord::Relation') }
+  let(:scope) { instance_double(ActiveRecord::Relation) }
   let(:options) { { order: :created_at, conditions: { active: true } } }
-  
+
   let(:balanced_query) do
-    instance_double('TypeBalancer::Rails::Query::BalancedQuery').tap do |double|
+    instance_double(TypeBalancer::Rails::Query::BalancedQuery).tap do |double|
       allow(double).to receive(:build).and_return(scope)
     end
   end
@@ -59,4 +59,4 @@ RSpec.describe TypeBalancer::Rails::Query do
       end
     end
   end
-end 
+end

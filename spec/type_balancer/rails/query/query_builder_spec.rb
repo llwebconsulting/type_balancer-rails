@@ -7,9 +7,8 @@ module TypeBalancer
     module Query
       RSpec.describe QueryBuilder do
         let(:scope) do
-          instance_double("ActiveRecord::Relation").tap do |double|
-            allow(double).to receive(:where).and_return(double)
-            allow(double).to receive(:order).and_return(double)
+          instance_double(ActiveRecord::Relation).tap do |double|
+            allow(double).to receive_messages(where: double, order: double)
           end
         end
         let(:builder) { described_class.new(scope) }
@@ -44,8 +43,8 @@ module TypeBalancer
 
           context 'with array order' do
             it 'applies multiple order clauses as strings' do
-              builder.apply_order([:created_at, :updated_at])
-              expect(scope).to have_received(:order).with(['created_at', 'updated_at'])
+              builder.apply_order(%i[created_at updated_at])
+              expect(scope).to have_received(:order).with(%w[created_at updated_at])
             end
           end
 
@@ -89,4 +88,4 @@ module TypeBalancer
       end
     end
   end
-end 
+end

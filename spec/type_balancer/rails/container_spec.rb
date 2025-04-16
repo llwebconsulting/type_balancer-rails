@@ -22,21 +22,21 @@ RSpec.describe TypeBalancer::Rails::Container do
     it 'overwrites existing registration' do
       first_value = double('FirstService')
       second_value = double('SecondService')
-      
+
       described_class.register(:service, first_value)
       described_class.register(:service, second_value)
-      
+
       expect(described_class.resolve(:service)).to eq(second_value)
     end
 
     it 'clears cached value when re-registering' do
       first_value = double('FirstService')
       second_value = double('SecondService')
-      
+
       described_class.register(:service, first_value)
       described_class.resolve(:service) # Cache the first value
       described_class.register(:service, second_value)
-      
+
       expect(described_class.resolve(:service)).to eq(second_value)
     end
   end
@@ -72,9 +72,9 @@ RSpec.describe TypeBalancer::Rails::Container do
 
     context 'with unregistered service' do
       it 'raises KeyError' do
-        expect {
+        expect do
           described_class.resolve(:unregistered)
-        }.to raise_error(KeyError, 'Service not registered: unregistered')
+        end.to raise_error(KeyError, 'Service not registered: unregistered')
       end
     end
   end
@@ -87,15 +87,15 @@ RSpec.describe TypeBalancer::Rails::Container do
 
       described_class.reset!
 
-      expect {
+      expect do
         described_class.resolve(:service)
-      }.to raise_error(KeyError, 'Service not registered: service')
+      end.to raise_error(KeyError, 'Service not registered: service')
     end
 
     it 'clears the cache' do
       counter = 0
       described_class.register(:service) { counter += 1 }
-      
+
       first_resolve = described_class.resolve(:service)
       described_class.reset!
       described_class.register(:service) { counter += 1 }
@@ -106,4 +106,4 @@ RSpec.describe TypeBalancer::Rails::Container do
       expect(counter).to eq(2)
     end
   end
-end 
+end

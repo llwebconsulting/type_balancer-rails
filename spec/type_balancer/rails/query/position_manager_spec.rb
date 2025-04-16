@@ -3,20 +3,21 @@
 require 'spec_helper'
 
 RSpec.describe TypeBalancer::Rails::Query::PositionManager do
+  subject(:manager) { described_class.new(scope, 'model_type', storage_adapter, options) }
+
   let(:model_class) do
     mock_model_class('TestModel').tap do |klass|
-      allow(klass).to receive(:type_field).and_return('model_type')
-      allow(klass).to receive(:column_names).and_return(['id', 'model_type'])
+      allow(klass).to receive_messages(type_field: 'model_type', column_names: %w[id model_type])
     end
   end
 
   let(:scope) do
     mock_active_record_relation(model_class, []).tap do |relation|
       allow(relation).to receive(:pluck).with(:id, 'model_type').and_return([
-        [1, 'TypeA'],
-        [2, 'TypeB'],
-        [3, 'TypeA']
-      ])
+                                                                              [1, 'TypeA'],
+                                                                              [2, 'TypeB'],
+                                                                              [3, 'TypeA']
+                                                                            ])
       allow(relation).to receive(:pluck).with(:id).and_return([1, 2, 3])
       allow(relation).to receive(:find) do |id|
         instance = model_class.new
@@ -34,17 +35,12 @@ RSpec.describe TypeBalancer::Rails::Query::PositionManager do
   end
 
   let(:storage_adapter) do
-    instance_double('TypeBalancer::Rails::Config::ConfigStorageAdapter').tap do |adapter|
-      allow(adapter).to receive(:store).and_return(true)
-      allow(adapter).to receive(:fetch).and_return(nil)
-      allow(adapter).to receive(:delete).and_return(true)
-      allow(adapter).to receive(:exists?).and_return(false)
+    instance_double(TypeBalancer::Rails::Config::ConfigStorageAdapter).tap do |adapter|
+      allow(adapter).to receive_messages(store: true, fetch: nil, delete: true, exists?: false)
     end
   end
 
   let(:options) { {} }
-
-  subject(:manager) { described_class.new(scope, 'model_type', storage_adapter, options) }
 
   describe '#initialize' do
     context 'with valid parameters' do
@@ -62,7 +58,7 @@ RSpec.describe TypeBalancer::Rails::Query::PositionManager do
 
     context 'with nil scope' do
       let(:scope) { nil }
-      
+
       it 'raises an error' do
         expect { manager }.to raise_error(ArgumentError, 'Scope cannot be nil')
       end
@@ -70,10 +66,9 @@ RSpec.describe TypeBalancer::Rails::Query::PositionManager do
 
     context 'with nil type field and no model type field' do
       subject(:manager) { described_class.new(scope, nil, storage_adapter) }
-      
+
       before do
-        allow(model_class).to receive(:type_field).and_return(nil)
-        allow(model_class).to receive(:column_names).and_return(['id'])
+        allow(model_class).to receive_messages(type_field: nil, column_names: ['id'])
       end
 
       it 'raises an error' do
@@ -83,7 +78,7 @@ RSpec.describe TypeBalancer::Rails::Query::PositionManager do
 
     context 'with nil type field but model has type field' do
       subject(:manager) { described_class.new(scope, nil, storage_adapter) }
-      
+
       it 'uses the type field from the model class' do
         expect(manager.type_field).to eq('model_type')
       end
@@ -94,7 +89,7 @@ RSpec.describe TypeBalancer::Rails::Query::PositionManager do
     context 'with default ordering' do
       it 'calculates positions based on type and order' do
         positions = manager.calculate_positions
-        
+
         expect(positions[1]).to be < positions[2] # TypeA comes before TypeB
         expect(positions[1]).to be < positions[3] # Same type (TypeA), first comes before second
         expect(positions[2]).to be > positions[3] # TypeB comes after TypeA
@@ -102,11 +97,11 @@ RSpec.describe TypeBalancer::Rails::Query::PositionManager do
     end
 
     context 'with custom type order' do
-      let(:options) { { order: ['TypeB', 'TypeA'] } }
+      let(:options) { { order: %w[TypeB TypeA] } }
 
       it 'respects the custom order' do
         positions = manager.calculate_positions
-        
+
         expect(positions[1]).to be > positions[2] # TypeA comes after TypeB
         expect(positions[2]).to be < positions[3] # TypeB comes before TypeA
       end
@@ -117,7 +112,7 @@ RSpec.describe TypeBalancer::Rails::Query::PositionManager do
 
       it 'orders types alphabetically' do
         positions = manager.calculate_positions
-        
+
         expect(positions[1]).to be < positions[2] # TypeA comes before TypeB
         expect(positions[2]).to be > positions[3] # TypeB comes after TypeA
       end
@@ -176,12 +171,12 @@ RSpec.describe TypeBalancer::Rails::Query::PositionManager do
 
     it 'retrieves positions from storage' do
       positions = manager.fetch_positions
-      
+
       expect(positions).to eq({
-        1 => 1000.001,
-        2 => 2000.001,
-        3 => 1000.002
-      })
+                                1 => 1000.001,
+                                2 => 2000.001,
+                                3 => 1000.002
+                              })
     end
 
     context 'when some positions are missing' do
@@ -192,9 +187,9 @@ RSpec.describe TypeBalancer::Rails::Query::PositionManager do
       it 'only includes found positions' do
         positions = manager.fetch_positions
         expect(positions).to eq({
-          1 => 1000.001,
-          3 => 1000.002
-        })
+                                  1 => 1000.001,
+                                  3 => 1000.002
+                                })
       end
     end
   end
@@ -207,4 +202,4 @@ RSpec.describe TypeBalancer::Rails::Query::PositionManager do
       manager.clear_positions
     end
   end
-end 
+end

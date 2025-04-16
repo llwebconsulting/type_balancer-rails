@@ -107,7 +107,7 @@ module TypeBalancer
 
       def load!
         register_defaults
-        ActiveRecord::Base.include(CacheInvalidation)
+        ActiveSupport.on_load(:active_record) { include CacheInvalidation }
         self
       end
 
@@ -134,6 +134,6 @@ module TypeBalancer
 end
 
 # Include CacheInvalidation in ActiveRecord::Base for testing
-ActiveRecord::Base.include TypeBalancer::Rails::CacheInvalidation
+ActiveSupport.on_load(:active_record) { include TypeBalancer::Rails::CacheInvalidation }
 
 TypeBalancer::Rails.load!

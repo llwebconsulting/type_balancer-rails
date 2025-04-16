@@ -36,7 +36,7 @@ module TypeBalancer
           validate_redis!
           redis_key = cache_key(key)
 
-          return unless json_value = @redis.get(redis_key)
+          return unless (json_value = @redis.get(redis_key))
 
           deep_symbolize_keys(JSON.parse(json_value))
         end
@@ -69,7 +69,7 @@ module TypeBalancer
           return {} if keys.empty?
 
           keys.each_with_object({}) do |key, hash|
-            if value = @redis.get(key)
+            if (value = @redis.get(key))
               hash[key] = deep_symbolize_keys(JSON.parse(value))
             end
           end

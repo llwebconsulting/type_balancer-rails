@@ -207,7 +207,7 @@ module TypeBalancer
       end
 
       def validate_pagination_settings!(settings)
-        return if settings[:max_per_page].to_i > 0
+        return if settings[:max_per_page].to_i.positive?
 
         raise ArgumentError, 'max_per_page must be greater than 0'
       end

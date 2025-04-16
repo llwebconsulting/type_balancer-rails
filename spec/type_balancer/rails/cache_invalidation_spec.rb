@@ -3,8 +3,8 @@
 require 'spec_helper'
 
 RSpec.describe TypeBalancer::Rails::CacheInvalidation do
-  let(:test_class) { mock_model_class("TestModel") }
-  let(:storage_adapter) { instance_double('TypeBalancer::Rails::Config::ConfigStorageAdapter') }
+  let(:test_class) { mock_model_class('TestModel') }
+  let(:storage_adapter) { instance_double(TypeBalancer::Rails::Config::ConfigStorageAdapter) }
 
   before do
     allow(TypeBalancer::Rails).to receive(:storage_adapter).and_return(storage_adapter)
@@ -40,9 +40,9 @@ RSpec.describe TypeBalancer::Rails::CacheInvalidation do
       end
 
       it 'raises an error' do
-        expect {
+        expect do
           test_class.new.invalidate_type_balancer_cache
-        }.to raise_error(NoMethodError)
+        end.to raise_error(NoMethodError)
       end
     end
 
@@ -52,9 +52,9 @@ RSpec.describe TypeBalancer::Rails::CacheInvalidation do
       end
 
       it 'allows the error to propagate' do
-        expect {
+        expect do
           test_class.new.invalidate_type_balancer_cache
-        }.to raise_error(Redis::CannotConnectError)
+        end.to raise_error(Redis::CannotConnectError)
       end
     end
   end
@@ -67,12 +67,10 @@ RSpec.describe TypeBalancer::Rails::CacheInvalidation do
 
       5.times do
         threads << Thread.new do
-          begin
-            test_class.new.invalidate_type_balancer_cache
-            mutex.synchronize { results << :success }
-          rescue StandardError => e
-            mutex.synchronize { results << e }
-          end
+          test_class.new.invalidate_type_balancer_cache
+          mutex.synchronize { results << :success }
+        rescue StandardError => e
+          mutex.synchronize { results << e }
         end
       end
 
@@ -80,4 +78,4 @@ RSpec.describe TypeBalancer::Rails::CacheInvalidation do
       expect(results.count(:success)).to eq(5)
     end
   end
-end 
+end
