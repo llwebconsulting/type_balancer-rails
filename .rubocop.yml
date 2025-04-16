@@ -1,5 +1,6 @@
 require:
   - rubocop-rspec
+  - rubocop-capybara
 plugins:
   - rubocop-rails
 
@@ -74,19 +75,19 @@ RSpec/RepeatedExampleGroupDescription:
 Capybara:
   Enabled: false
 
-Capybara/RSpec/CurrentPathExpectation:
+Capybara/CurrentPathExpectation:
   Enabled: false
-Capybara/RSpec/MatchStyle:
+Capybara/MatchStyle:
   Enabled: false
-Capybara/RSpec/NegationMatcher:
+Capybara/NegationMatcher:
   Enabled: false
-Capybara/RSpec/SpecificActions:
+Capybara/SpecificActions:
   Enabled: false
-Capybara/RSpec/SpecificFinders:
+Capybara/SpecificFinders:
   Enabled: false
-Capybara/RSpec/SpecificMatcher:
+Capybara/SpecificMatcher:
   Enabled: false
-Capybara/RSpec/VisibilityMatcher:
+Capybara/VisibilityMatcher:
   Enabled: false
-Capybara/RSpec/PredicateMatcher:
+Capybara/PredicateMatcher:
   Enabled: false 
