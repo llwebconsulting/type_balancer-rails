@@ -2,8 +2,8 @@
 
 module TypeBalancer
   module Rails
-    # Background job for calculating and storing balanced positions
-    class BalanceCalculationJob < ApplicationJob
+    # Job to calculate balance for a given type
+    class BalanceCalculationJob < TypeBalancer::Rails::ApplicationJob
       queue_as :default
 
       def perform(relation, _options)

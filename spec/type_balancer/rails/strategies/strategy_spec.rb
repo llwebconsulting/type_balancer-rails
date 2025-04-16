@@ -3,7 +3,7 @@
 require 'spec_helper'
 
 RSpec.describe TypeBalancer::Rails::Strategies::Strategy do
-  let(:collection_query) { instance_double(TypeBalancer::Rails::Query::CollectionQuery) }
+  let(:collection_query) { instance_double(TypeBalancer::Rails::Query::BalancedQuery) }
   let(:strategy) { described_class.new(collection_query) }
 
   describe '#initialize' do
