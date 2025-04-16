@@ -3,15 +3,14 @@
 require_relative 'lib/type_balancer/rails/version'
 
 Gem::Specification.new do |spec|
-  spec.name = 'type_balancer-rails'
+  spec.name = 'type_balancer_rails'
   spec.version = TypeBalancer::Rails::VERSION
   spec.authors = ['Carl Zulauf']
   spec.email = ['carl@linkleaf.com']
 
-  spec.summary = 'Rails integration for the type_balancer gem'
-  spec.description = 'Extends type_balancer with Rails-specific features for ' \
-                     'ActiveRecord integration, caching, and pagination'
-  spec.homepage = 'https://github.com/carlzulauf/type_balancer-rails'
+  spec.summary = 'Rails integration for type_balancer'
+  spec.description = 'Provides Rails integration for the type_balancer gem'
+  spec.homepage = 'https://github.com/carlzulauf/type_balancer_rails'
   spec.license = 'MIT'
   spec.required_ruby_version = '>= 3.0.0'
 
@@ -22,22 +21,22 @@ Gem::Specification.new do |spec|
 
   # Specify which files should be added to the gem when it is released.
   # The `git ls-files -z` loads the files in the RubyGem that have been added into git.
-  File.basename(__FILE__)
-  spec.files = Dir.glob([
-                          'LICENSE.txt',
-                          'README.md',
-                          'CHANGELOG.md',
-                          'lib/**/*.rb',
-                          'sig/**/*.rbs'
-                        ])
+  spec.files = Dir.chdir(__dir__) do
+    `git ls-files -z`.split("\x0").reject do |f|
+      (File.expand_path(f) == __FILE__) ||
+        f.start_with?('bin/', 'test/', 'spec/', 'features/', '.git', '.circleci', 'appveyor', 'Gemfile')
+    end
+  end
   spec.bindir = 'exe'
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
   # Runtime dependencies
-  spec.add_dependency 'rails', '>= 6.1'
-  spec.add_dependency 'redis', '~> 5.0'
-  spec.add_dependency 'type_balancer', '~> 0.1.1'
+  spec.add_dependency 'activejob', '>= 6.0'
+  spec.add_dependency 'activerecord', '>= 6.0'
+  spec.add_dependency 'activesupport', '>= 6.0'
+  spec.add_dependency 'redis', '>= 4.0'
+  spec.add_dependency 'type_balancer', '>= 0.1.0'
 
   # Development dependencies
   spec.add_development_dependency 'bundler-audit', '~> 0.9.1'

@@ -2,7 +2,7 @@
 
 source 'https://rubygems.org'
 
-# Specify your gem's dependencies in type_balancer-rails.gemspec
+# Specify your gem's dependencies in type_balancer_rails.gemspec
 gemspec
 
 # Use local path for type_balancer during development
@@ -19,3 +19,8 @@ gem 'rubocop-rspec', '~> 2.27'
 gem 'simplecov', '~> 0.22.0'
 gem 'simplecov-cobertura', '~> 2.1' # XML format for CodeCov
 gem 'sqlite3', '~> 2.1' # Update to required version
+
+group :development, :test do
+  gem 'pry'
+  gem 'pry-byebug'
+end
