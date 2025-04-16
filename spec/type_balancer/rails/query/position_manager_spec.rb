@@ -23,11 +23,7 @@ RSpec.describe TypeBalancer::Rails::Query::PositionManager do
         instance = model_class.new
         allow(instance).to receive(:id).and_return(id)
         allow(instance).to receive(:public_send).with('model_type').and_return(
-          case id
-          when 1 then 'TypeA'
-          when 2 then 'TypeB'
-          when 3 then 'TypeA'
-          end
+          { 1 => 'TypeA', 2 => 'TypeB', 3 => 'TypeA' }[id]
         )
         instance
       end

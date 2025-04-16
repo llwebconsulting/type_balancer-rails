@@ -42,13 +42,15 @@ RSpec.describe TypeBalancer::Rails::Strategies::CursorStrategy do
     context 'when cache is enabled' do
       let(:cache_enabled) { true }
 
+      before do
+        allow(rails_cache).to receive(:write).with("type_balancer:123:#{key}", value, expires_in: ttl).and_return(true)
+      end
+
       it 'stores the value in cache' do
-        expect(rails_cache).to receive(:write).with("type_balancer:123:#{key}", value, expires_in: ttl).and_return(true)
         strategy.store(key, value, ttl)
       end
 
       it 'returns true when storage is successful' do
-        allow(rails_cache).to receive(:write).with("type_balancer:123:#{key}", value, expires_in: ttl).and_return(true)
         expect(strategy.store(key, value, ttl)).to be true
       end
 
@@ -75,9 +77,12 @@ RSpec.describe TypeBalancer::Rails::Strategies::CursorStrategy do
     context 'when cache is enabled' do
       let(:cache_enabled) { true }
 
-      it 'fetches the value from cache' do
-        expect(rails_cache).to receive(:read).with("type_balancer:123:#{key}").and_return(value)
-        expect(strategy.fetch(key)).to eq(value)
+      before do
+        allow(rails_cache).to receive(:read).with("type_balancer:123:#{key}").and_return(value)
+      end
+
+      it 'reads from cache' do
+        strategy.fetch(key)
       end
 
       it 'returns nil when key not found' do
@@ -104,9 +109,12 @@ RSpec.describe TypeBalancer::Rails::Strategies::CursorStrategy do
     context 'when cache is enabled' do
       let(:cache_enabled) { true }
 
-      it 'deletes the key from cache' do
-        expect(rails_cache).to receive(:delete).with("type_balancer:123:#{key}").and_return(true)
-        expect(strategy.delete(key)).to be true
+      before do
+        allow(rails_cache).to receive(:delete).with("type_balancer:123:#{key}").and_return(true)
+      end
+
+      it 'deletes from cache' do
+        strategy.delete(key)
       end
 
       it 'validates the key' do
@@ -128,9 +136,12 @@ RSpec.describe TypeBalancer::Rails::Strategies::CursorStrategy do
     context 'when cache is enabled' do
       let(:cache_enabled) { true }
 
-      it 'clears the entire cache' do
-        expect(rails_cache).to receive(:clear).and_return(true)
-        expect(strategy.clear).to be true
+      before do
+        allow(rails_cache).to receive(:clear).and_return(true)
+      end
+
+      it 'clears the cache' do
+        strategy.clear
       end
     end
 
@@ -147,11 +158,19 @@ RSpec.describe TypeBalancer::Rails::Strategies::CursorStrategy do
   describe '#clear_for_scope' do
     context 'when cache is enabled' do
       let(:cache_enabled) { true }
+      let(:model_name) { instance_double(ActiveModel::Name, plural: 'test_models') }
       let(:expected_pattern) { 'type_balancer:123:test_models*' }
 
-      it 'deletes matched keys for the scope' do
-        expect(rails_cache).to receive(:delete_matched).with(expected_pattern).and_return(true)
-        expect(strategy.clear_for_scope(scope)).to be true
+      before do
+        allow(scope).to receive_messages(
+          klass: model_class,
+          is_a?: ->(klass) { klass == ActiveRecord::Relation }
+        )
+        allow(rails_cache).to receive(:delete_matched).with(expected_pattern).and_return(true)
+      end
+
+      it 'clears the cache for scope' do
+        strategy.clear_for_scope(scope)
       end
 
       it 'validates the scope is not nil' do

@@ -39,52 +39,59 @@ module TypeBalancer
 
       def ar_class_double(class_name = 'ActiveRecord::Base')
         class_double(class_name).tap do |double|
-          # Common class methods
-          allow(double).to receive_messages(
-            table_name: 'test_table',
-            primary_key: 'id',
-            inheritance_column: 'type',
-            find_by: ar_instance_double,
-            find: ar_instance_double,
-            create: ar_instance_double,
-            create!: ar_instance_double
-          )
-
-          # Callback registration methods
-          allow(double).to receive(:after_commit)
-          allow(double).to receive(:before_commit)
-          allow(double).to receive(:after_save)
-          allow(double).to receive(:before_save)
+          setup_class_common_methods(double)
+          setup_class_callback_methods(double)
         end
       end
 
       def ar_relation_double(class_name = 'ActiveRecord::Base')
         instance_double(ActiveRecord::Relation).tap do |double|
-          # Common scope/query methods
+          setup_terminal_methods(double, class_name)
+          setup_query_methods(double)
+          setup_enumerable_methods(double, class_name)
+        end
+      end
 
-          # Terminal methods
-          allow(double).to receive(:find_each).and_yield(ar_instance_double(class_name))
-          allow(double).to receive(:find_in_batches).and_yield([ar_instance_double(class_name)])
+      private
 
-          # Enumerable methods
-          allow(double).to receive_messages(
-            where: double,
-            order: double,
-            limit: double,
-            offset: double,
-            includes: double,
-            joins: double,
-            left_joins: double,
-            group: double,
-            having: double,
-            first: ar_instance_double(class_name),
-            last: ar_instance_double(class_name),
-            count: 0,
-            exists?: false,
-            to_a: [ar_instance_double(class_name)],
-            empty?: true,
-            size: 0
-          )
+      def setup_terminal_methods(double, class_name)
+        allow(double).to receive(:find_each).and_yield(ar_instance_double(class_name))
+        allow(double).to receive(:find_in_batches).and_yield([ar_instance_double(class_name)])
+      end
+
+      def setup_query_methods(double)
+        [:where, :order, :limit, :offset, :includes, :joins, :left_joins, :group, :having].each do |method|
+          allow(double).to receive(method).and_return(double)
+        end
+      end
+
+      def setup_enumerable_methods(double, class_name)
+        allow(double).to receive_messages(
+          first: ar_instance_double(class_name),
+          last: ar_instance_double(class_name),
+          count: 0,
+          exists?: false,
+          to_a: [ar_instance_double(class_name)],
+          empty?: true,
+          size: 0
+        )
+      end
+
+      def setup_class_common_methods(double)
+        allow(double).to receive_messages(
+          table_name: 'test_table',
+          primary_key: 'id',
+          inheritance_column: 'type',
+          find_by: ar_instance_double,
+          find: ar_instance_double,
+          create: ar_instance_double,
+          create!: ar_instance_double
+        )
+      end
+
+      def setup_class_callback_methods(double)
+        [:after_commit, :before_commit, :after_save, :before_save].each do |callback|
+          allow(double).to receive(callback)
         end
       end
 

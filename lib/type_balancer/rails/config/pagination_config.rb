@@ -7,10 +7,8 @@ module TypeBalancer
       class PaginationConfig
         attr_reader :max_per_page
 
-        def initialize(max_per_page = 100)
-          value = max_per_page.is_a?(Hash) ? max_per_page[:max_per_page] : max_per_page
-          value = value.nil? ? 100 : value.to_i
-          @max_per_page = value.positive? ? value : 100
+        def initialize(max_per_page = nil)
+          @max_per_page = max_per_page
         end
 
         def configure
@@ -19,13 +17,11 @@ module TypeBalancer
         end
 
         def max_per_page=(value)
-          value = value.to_i
-          @max_per_page = value if value.positive?
-          self
+          @max_per_page = value&.to_i
         end
 
         def reset!
-          @max_per_page = 100
+          @max_per_page = nil
           self
         end
       end

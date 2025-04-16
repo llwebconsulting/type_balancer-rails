@@ -13,72 +13,101 @@
 module TypeBalancer
   module TestHelpers
     module ActiveRecordTestClasses
-      def mock_active_record_relation(model_class, records = [])
-        instance_double(
-          ActiveRecord::Relation,
-          klass: model_class,
-          to_a: records,
-          each: records.each,
-          map: records.map,
-          find_each: records.each,
-          pluck: records.map(&:id),
-          update_all: records.length,
-          transaction: ->(block) { block.call }
-        ).tap do |relation|
-          allow(relation).to receive(:is_a?).with(any_args).and_return(false)
-          allow(relation).to receive(:is_a?).with(ActiveRecord::Relation).and_return(true)
-          allow(relation).to receive(:klass).and_return(model_class)
+      module MockModelClassMethods
+        def name
+          _model_name
+        end
+
+        def base_class
+          self
+        end
+
+        def primary_key
+          'id'
+        end
+
+        def table_name
+          model_name.plural
+        end
+
+        def after_commit(*, &)
+          set_callback(:commit, :after, *, &)
+        end
+
+        def model_name
+          @model_name ||= begin
+            model_name = ActiveModel::Name.new(self, nil, _model_name)
+            def model_name.plural
+              @plural ||= ActiveSupport::Inflector.pluralize(name.underscore)
+            end
+            model_name
+          end
         end
       end
 
-      def mock_model_class(name)
-        klass = Class.new do
-          extend ActiveModel::Naming
-          include ActiveModel::Model
-          include ActiveModel::Callbacks
+      class MockModelBase
+        extend ActiveModel::Naming
+        include ActiveModel::Model
+        include ActiveModel::Callbacks
 
-          define_model_callbacks :commit
+        define_model_callbacks :commit
 
-          class << self
-            attr_accessor :_model_name
-
-            def name
-              _model_name
-            end
-
-            def base_class
-              self
-            end
-
-            def primary_key
-              'id'
-            end
-
-            def table_name
-              model_name.plural
-            end
-
-            def after_commit(*args, &block)
-              set_callback(:commit, :after, *args, &block)
-            end
-
-            def model_name
-              @model_name ||= begin
-                model_name = ActiveModel::Name.new(self, nil, _model_name)
-                def model_name.plural
-                  @plural ||= ActiveSupport::Inflector.pluralize(self.name.underscore)
-                end
-                model_name
-              end
-            end
-          end
-
-          attr_accessor :id
+        class << self
+          attr_accessor :_model_name
         end
 
+        attr_accessor :id
+      end
+
+      def mock_model_class(name)
+        klass = Class.new(MockModelBase)
+        klass.singleton_class.include(MockModelClassMethods)
         klass._model_name = name
         stub_const(name, klass)
         klass
+      end
+
+      private
+
+      def setup_relation_basics(mock_relation, model_class, records)
+        allow(mock_relation).to receive_messages(
+          to_a: records,
+          empty?: records.empty?,
+          size: records.size,
+          count: records.size,
+          klass: model_class,
+          is_a?: ->(klass) { klass == ActiveRecord::Relation }
+        )
+      end
+
+      def setup_relation_queries(mock_relation, records, &)
+        allow(mock_relation).to receive_messages(
+          find_each: records.each(&),
+          find_in_batches: records.each(&),
+          first: records.first,
+          last: records.last
+        )
+
+        [:where, :order, :limit, :offset, :includes, :joins, :left_joins, :group, :having].each do |method|
+          allow(mock_relation).to receive(method).and_return(mock_relation)
+        end
+      end
+
+      def setup_relation_enumerables(mock_relation, records, &)
+        allow(mock_relation).to receive_messages(
+          each: records.each(&),
+          map: records.map(&),
+          select: records.select(&),
+          reject: records.reject(&)
+        )
+      end
+
+      def mock_active_record_relation(model_class, records = [])
+        mock_relation = instance_double(ActiveRecord::Relation)
+        setup_relation_basics(mock_relation, model_class, records)
+        setup_relation_queries(mock_relation, records)
+        setup_relation_enumerables(mock_relation, records)
+        mock_relation
       end
     end
   end

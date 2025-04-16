@@ -22,6 +22,7 @@ require_relative 'rails/pagination'
 require_relative 'rails/position_manager'
 require_relative 'rails/background_processor'
 require_relative 'rails/config'
+require_relative 'rails/configuration_facade'
 require_relative 'rails/strategies/base_strategy'
 require_relative 'rails/strategies/redis_strategy'
 require_relative 'rails/query/position_manager'
@@ -32,7 +33,7 @@ module TypeBalancer
   # Rails integration for TypeBalancer
   module Rails
     extend ActiveSupport::Autoload
-    extend TypeBalancer::Rails::Core::ConfigurationFacade::ClassMethods
+    extend TypeBalancer::Rails::ConfigurationFacade
 
     DEFAULT_PER_PAGE = 25
     MAX_PER_PAGE = 100
@@ -68,26 +69,20 @@ module TypeBalancer
       end
 
       def configure_redis(&)
-        if block_given?
-          configuration.configure_redis(&)
-        else
-          configuration.configure_redis
-        end
-        self
+        return unless block_given?
+
+        configuration.configure_redis(&)
       end
 
       def configure_cache(&)
-        if block_given?
-          configuration.configure_cache(&)
-        else
-          configuration.configure_cache
-        end
-        self
+        return unless block_given?
+
+        configuration.configure_cache(&)
       end
 
-      def method_missing(method_name, *, &)
+      def method_missing(method_name, ...)
         if configuration.respond_to?(method_name)
-          configuration.public_send(method_name, *, &)
+          configuration.public_send(method_name, ...)
         else
           super
         end

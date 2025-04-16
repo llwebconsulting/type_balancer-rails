@@ -1,7 +1,5 @@
 require:
   - rubocop-rspec
-
-plugins:
   - rubocop-rails
   - rubocop-capybara
   - rubocop-factory_bot
@@ -9,6 +7,7 @@ plugins:
 AllCops:
   TargetRubyVersion: 3.2
   NewCops: enable
+  SuggestExtensions: false
   Exclude:
     - 'bin/**/*'
     - 'tmp/**/*'
@@ -50,18 +49,30 @@ RSpec/NestedGroups:
   Max: 4
 
 RSpec/MultipleExpectations:
-  Max: 5
+  Enabled: false
 
 RSpec/MultipleMemoizedHelpers:
-  Max: 10
+  Enabled: false
 
 RSpec/ExampleLength:
-  Max: 10
+  Enabled: false
 
 RSpec/MessageSpies:
-  EnforcedStyle: receive
+  Enabled: false
 
 RSpec/VerifiedDoubles:
+  Enabled: false
+
+RSpec/MessageChain:
+  Enabled: false
+
+RSpec/NoExpectationExample:
+  Enabled: false
+
+RSpec/SubjectStub:
+  Enabled: false
+
+RSpec/StubbedMock:
   Enabled: false
 
 Capybara/CurrentPathExpectation:

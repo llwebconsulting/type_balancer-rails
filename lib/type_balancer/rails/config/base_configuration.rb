@@ -17,6 +17,7 @@ module TypeBalancer
         def initialize
           @redis_enabled = false
           @cache_enabled = false
+          @cursor_buffer_multiplier = 2
           @storage_strategy_registry = TypeBalancer::Rails::Config::StrategyManager.new
           @pagination_config = TypeBalancer::Rails::Config::PaginationConfig.new
           register_default_storage_strategies
@@ -25,15 +26,27 @@ module TypeBalancer
         delegate :register_strategy, to: :TypeBalancer
 
         def redis_enabled?
-          @redis_enabled && !@redis_client.nil?
+          @redis_enabled
+        end
+
+        def cache_enabled?
+          @cache_enabled
         end
 
         def reset!
           @redis_enabled = false
           @cache_enabled = false
           @redis_client = nil
+          @redis_ttl = nil
+          @cache_store = nil
+          @cache_ttl = nil
+          @storage_strategy = nil
+          @cursor_buffer_multiplier = 2
+          @async_threshold = nil
+          @per_page_default = nil
+          @cache_duration = nil
           @storage_strategy_registry = TypeBalancer::Rails::Config::StrategyManager.new
-          @pagination_config.reset!
+          @pagination_config = TypeBalancer::Rails::Config::PaginationConfig.new
           register_default_storage_strategies
           self
         end

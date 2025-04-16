@@ -5,6 +5,7 @@ require_relative 'query/type_field_resolver'
 require_relative 'query/balanced_query'
 require_relative 'query/pagination_service'
 require_relative 'query/position_manager'
+require_relative 'query/cursor_service'
 
 module TypeBalancer
   module Rails
