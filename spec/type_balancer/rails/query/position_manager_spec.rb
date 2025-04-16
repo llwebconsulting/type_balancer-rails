@@ -7,7 +7,7 @@ RSpec.describe TypeBalancer::Rails::Query::PositionManager do
 
   let(:model_class) do
     mock_model_class('TestModel').tap do |klass|
-      allow(klass).to receive_messages(type_field: 'model_type', column_names: %w[id model_type])
+      allow(klass).to receive_messages(type_field: 'model_type', column_names: ['id', 'model_type'])
     end
   end
 
@@ -97,7 +97,7 @@ RSpec.describe TypeBalancer::Rails::Query::PositionManager do
     end
 
     context 'with custom type order' do
-      let(:options) { { order: %w[TypeB TypeA] } }
+      let(:options) { { order: ['TypeB', 'TypeA'] } }
 
       it 'respects the custom order' do
         positions = manager.calculate_positions

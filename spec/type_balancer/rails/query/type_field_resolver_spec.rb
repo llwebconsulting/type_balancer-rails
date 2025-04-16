@@ -61,7 +61,7 @@ module TypeBalancer
             context 'with multiple common fields' do
               before do
                 allow(model_class).to receive(:column_names)
-                  .and_return(%w[type media_type other_column])
+                  .and_return(['type', 'media_type', 'other_column'])
               end
 
               it 'uses the first matching field' do

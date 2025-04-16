@@ -112,7 +112,7 @@ RSpec.describe TypeBalancer::Rails::Strategies::MemoryStrategy do
   end
 
   describe '#clear' do
-    let(:keys) { %w[key1 key2] }
+    let(:keys) { ['key1', 'key2'] }
     let(:values) { { data1: 'test1', data2: 'test2' } }
 
     before do
@@ -131,7 +131,7 @@ RSpec.describe TypeBalancer::Rails::Strategies::MemoryStrategy do
 
   describe '#clear_for_scope' do
     let(:scope) { double('Scope', object_id: 456) }
-    let(:keys) { %w[key1 key2] }
+    let(:keys) { ['key1', 'key2'] }
     let(:values) { { data1: 'test1', data2: 'test2' } }
 
     before do
@@ -161,7 +161,7 @@ RSpec.describe TypeBalancer::Rails::Strategies::MemoryStrategy do
 
   describe '#fetch_for_scope' do
     let(:scope) { double('Scope', object_id: 456) }
-    let(:keys) { %w[key1 key2] }
+    let(:keys) { ['key1', 'key2'] }
     let(:values) { { data1: 'test1', data2: 'test2' } }
 
     before do

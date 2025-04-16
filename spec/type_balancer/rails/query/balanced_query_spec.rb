@@ -5,7 +5,7 @@ require 'spec_helper'
 RSpec.describe TypeBalancer::Rails::Query::BalancedQuery do
   let(:model_class) do
     class_double(ActiveRecord::Base).tap do |double|
-      allow(double).to receive(:column_names).and_return(%w[id model_type])
+      allow(double).to receive(:column_names).and_return(['id', 'model_type'])
     end
   end
 

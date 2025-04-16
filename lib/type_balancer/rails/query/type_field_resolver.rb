@@ -5,7 +5,7 @@ module TypeBalancer
     module Query
       # Handles resolution of type fields in ActiveRecord models
       class TypeFieldResolver
-        COMMON_TYPE_FIELDS = %w[type media_type content_type category].freeze
+        COMMON_TYPE_FIELDS = ['type', 'media_type', 'content_type', 'category'].freeze
 
         attr_reader :scope
 

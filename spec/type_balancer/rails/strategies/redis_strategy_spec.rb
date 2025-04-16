@@ -92,7 +92,7 @@ RSpec.describe TypeBalancer::Rails::Strategies::RedisStrategy do
 
   describe '#clear' do
     before do
-      allow(redis).to receive(:keys).with('type_balancer:123:*').and_return(%w[key1 key2])
+      allow(redis).to receive(:keys).with('type_balancer:123:*').and_return(['key1', 'key2'])
     end
 
     it 'removes all keys' do
@@ -105,7 +105,7 @@ RSpec.describe TypeBalancer::Rails::Strategies::RedisStrategy do
     let(:scope) { double('scope', object_id: 456) }
 
     before do
-      allow(redis).to receive(:keys).with('type_balancer:456:*').and_return(%w[key1 key2])
+      allow(redis).to receive(:keys).with('type_balancer:456:*').and_return(['key1', 'key2'])
     end
 
     it 'removes all keys for scope' do
