@@ -18,7 +18,7 @@ RSpec.describe TypeBalancer::Rails::Config::ConfigStorageAdapter do
     allow(strategy_manager).to receive(:validate!)
     allow(strategy_manager).to receive(:[]).with(:redis).and_return(double(configure_redis: true))
     allow(redis_client).to receive(:ping).and_return('PONG')
-    allow(cache_store).to receive(:read).with('test_key')
+    allow(cache_store).to receive(:read).with('test_key').and_return(nil)
   end
 
   describe '#store' do
@@ -28,13 +28,15 @@ RSpec.describe TypeBalancer::Rails::Config::ConfigStorageAdapter do
       end
 
       it 'stores value in redis with ttl' do
-        expect(redis_client).to receive(:set).with(test_key, test_value.to_json, ex: test_ttl)
+        allow(redis_client).to receive(:set).with(test_key, test_value.to_json, ex: test_ttl)
         adapter.store(key: test_key, value: test_value, ttl: test_ttl)
+        expect(redis_client).to have_received(:set).with(test_key, test_value.to_json, ex: test_ttl)
       end
 
       it 'stores value in redis without ttl' do
-        expect(redis_client).to receive(:set).with(test_key, test_value.to_json)
+        allow(redis_client).to receive(:set).with(test_key, test_value.to_json)
         adapter.store(key: test_key, value: test_value)
+        expect(redis_client).to have_received(:set).with(test_key, test_value.to_json)
       end
     end
 
@@ -44,13 +46,15 @@ RSpec.describe TypeBalancer::Rails::Config::ConfigStorageAdapter do
       end
 
       it 'stores value in cache with ttl' do
-        expect(cache_store).to receive(:write).with(test_key, test_value, expires_in: test_ttl)
+        allow(cache_store).to receive(:write).with(test_key, test_value, expires_in: test_ttl)
         adapter.store(key: test_key, value: test_value, ttl: test_ttl)
+        expect(cache_store).to have_received(:write).with(test_key, test_value, expires_in: test_ttl)
       end
 
       it 'stores value in cache without ttl' do
-        expect(cache_store).to receive(:write).with(test_key, test_value)
+        allow(cache_store).to receive(:write).with(test_key, test_value)
         adapter.store(key: test_key, value: test_value)
+        expect(cache_store).to have_received(:write).with(test_key, test_value)
       end
     end
   end
@@ -63,13 +67,13 @@ RSpec.describe TypeBalancer::Rails::Config::ConfigStorageAdapter do
 
       it 'fetches value from redis' do
         json_value = test_value.to_json
-        expect(redis_client).to receive(:get).with(test_key).and_return(json_value)
+        allow(redis_client).to receive(:get).with(test_key).and_return(json_value)
         result = adapter.fetch(key: test_key)
         expect(result).to eq JSON.parse(test_value.to_json, symbolize_names: true)
       end
 
       it 'returns nil when key not found' do
-        expect(redis_client).to receive(:get).with(test_key).and_return(nil)
+        allow(redis_client).to receive(:get).with(test_key).and_return(nil)
         expect(adapter.fetch(key: test_key)).to be_nil
       end
     end
@@ -82,13 +86,11 @@ RSpec.describe TypeBalancer::Rails::Config::ConfigStorageAdapter do
       it 'fetches value from cache' do
         allow(cache_store).to receive(:read).with(test_key).and_return(test_value)
         result = adapter.fetch(key: test_key)
-        puts "Expected: #{test_value.inspect}"
-        puts "Got: #{result.inspect}"
         expect(result).to eq test_value
       end
 
       it 'returns nil when key not found' do
-        expect(cache_store).to receive(:read).with(test_key).and_return(nil)
+        allow(cache_store).to receive(:read).with(test_key).and_return(nil)
         expect(adapter.fetch(key: test_key)).to be_nil
       end
     end
@@ -101,8 +103,9 @@ RSpec.describe TypeBalancer::Rails::Config::ConfigStorageAdapter do
       end
 
       it 'deletes value from redis' do
-        expect(redis_client).to receive(:del).with(test_key)
+        allow(redis_client).to receive(:del).with(test_key)
         adapter.delete(key: test_key)
+        expect(redis_client).to have_received(:del).with(test_key)
       end
     end
 
@@ -112,8 +115,9 @@ RSpec.describe TypeBalancer::Rails::Config::ConfigStorageAdapter do
       end
 
       it 'deletes value from cache' do
-        expect(cache_store).to receive(:delete).with(test_key)
+        allow(cache_store).to receive(:delete).with(test_key)
         adapter.delete(key: test_key)
+        expect(cache_store).to have_received(:delete).with(test_key)
       end
     end
   end
@@ -125,7 +129,7 @@ RSpec.describe TypeBalancer::Rails::Config::ConfigStorageAdapter do
       end
 
       it 'checks existence in redis' do
-        expect(redis_client).to receive(:exists?).with(test_key).and_return(true)
+        allow(redis_client).to receive(:exists?).with(test_key).and_return(true)
         expect(adapter.exists?(key: test_key)).to be true
       end
     end
@@ -136,7 +140,7 @@ RSpec.describe TypeBalancer::Rails::Config::ConfigStorageAdapter do
       end
 
       it 'checks existence in cache' do
-        expect(cache_store).to receive(:exist?).with(test_key).and_return(true)
+        allow(cache_store).to receive(:exist?).with(test_key).and_return(true)
         expect(adapter.exists?(key: test_key)).to be true
       end
     end
@@ -144,21 +148,21 @@ RSpec.describe TypeBalancer::Rails::Config::ConfigStorageAdapter do
 
   describe '#validate!' do
     it 'validates strategy manager' do
-      expect(strategy_manager).to receive(:validate!)
       adapter.configure_redis(redis_client)
       adapter.validate!
+      expect(strategy_manager).to have_received(:validate!)
     end
 
     it 'validates redis when enabled' do
-      expect(redis_client).to receive(:ping).and_return('PONG')
       adapter.configure_redis(redis_client)
       adapter.validate!
+      expect(redis_client).to have_received(:ping).twice
     end
 
     it 'validates cache when enabled' do
-      expect(cache_store).to receive(:read).with('test_key')
       adapter.configure_cache(cache_store)
       adapter.validate!
+      expect(cache_store).to have_received(:read).with('test_key').twice
     end
   end
 end

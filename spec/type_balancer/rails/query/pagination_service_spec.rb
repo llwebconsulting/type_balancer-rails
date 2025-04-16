@@ -66,18 +66,22 @@ module TypeBalancer
             end
 
             it 'applies offset and limit' do
-              expect(collection).to receive(:offset).with(0).ordered.and_return(collection)
-              expect(collection).to receive(:limit).with(25).ordered.and_return(collection)
+              allow(collection).to receive(:offset).with(0).ordered.and_return(collection)
+              allow(collection).to receive(:limit).with(25).ordered.and_return(collection)
               service.paginate
+              expect(collection).to have_received(:offset).with(0).ordered
+              expect(collection).to have_received(:limit).with(25).ordered
             end
 
             context 'with custom page' do
               let(:options) { { page: 3, per_page: 10 } }
 
               it 'calculates correct offset' do
-                expect(collection).to receive(:offset).with(20).ordered.and_return(collection)
-                expect(collection).to receive(:limit).with(10).ordered.and_return(collection)
+                allow(collection).to receive(:offset).with(20).ordered.and_return(collection)
+                allow(collection).to receive(:limit).with(10).ordered.and_return(collection)
                 service.paginate
+                expect(collection).to have_received(:offset).with(20).ordered
+                expect(collection).to have_received(:limit).with(10).ordered
               end
             end
           end
@@ -93,9 +97,11 @@ module TypeBalancer
             end
 
             it 'uses Kaminari pagination' do
-              expect(collection).to receive(:page).with(1).and_return(kaminari_collection)
-              expect(kaminari_collection).to receive(:per).with(25)
+              allow(collection).to receive(:page).with(1).and_return(kaminari_collection)
+              allow(kaminari_collection).to receive(:per).with(25)
               service.paginate
+              expect(collection).to have_received(:page).with(1)
+              expect(kaminari_collection).to have_received(:per).with(25)
             end
           end
 
@@ -107,8 +113,9 @@ module TypeBalancer
             end
 
             it 'uses WillPaginate pagination' do
-              expect(collection).to receive(:paginate).with(page: 1, per_page: 25)
+              allow(collection).to receive(:paginate).with(page: 1, per_page: 25)
               service.paginate
+              expect(collection).to have_received(:paginate).with(page: 1, per_page: 25)
             end
           end
 
@@ -122,14 +129,17 @@ module TypeBalancer
             end
 
             it 'applies offset and limit correctly' do
-              expect(collection).to receive(:offset).with(0).ordered.and_return(collection)
-              expect(collection).to receive(:limit).with(25).ordered.and_return(collection)
+              allow(collection).to receive(:offset).with(0).ordered.and_return(collection)
+              allow(collection).to receive(:limit).with(25).ordered.and_return(collection)
               service.paginate
+              expect(collection).to have_received(:offset).with(0).ordered
+              expect(collection).to have_received(:limit).with(25).ordered
             end
 
             it 'caches the total count' do
-              expect(collection).to receive(:count).once.and_return(100)
+              allow(collection).to receive(:count).once.and_return(100)
               2.times { service.total_pages }
+              expect(collection).to have_received(:count).once
             end
           end
 
@@ -137,9 +147,11 @@ module TypeBalancer
             let(:options) { { page: -1 } }
 
             it 'defaults to page 1' do
-              expect(collection).to receive(:offset).with(0).ordered.and_return(collection)
-              expect(collection).to receive(:limit).with(25).ordered.and_return(collection)
+              allow(collection).to receive(:offset).with(0).ordered.and_return(collection)
+              allow(collection).to receive(:limit).with(25).ordered.and_return(collection)
               service.paginate
+              expect(collection).to have_received(:offset).with(0).ordered
+              expect(collection).to have_received(:limit).with(25).ordered
             end
           end
 
@@ -147,9 +159,11 @@ module TypeBalancer
             let(:options) { { per_page: 0 } }
 
             it 'uses default per_page' do
-              expect(collection).to receive(:offset).with(0).ordered.and_return(collection)
-              expect(collection).to receive(:limit).with(25).ordered.and_return(collection)
+              allow(collection).to receive(:offset).with(0).ordered.and_return(collection)
+              allow(collection).to receive(:limit).with(25).ordered.and_return(collection)
               service.paginate
+              expect(collection).to have_received(:offset).with(0).ordered
+              expect(collection).to have_received(:limit).with(25).ordered
             end
           end
         end
@@ -226,8 +240,9 @@ module TypeBalancer
 
         describe '#total_count' do
           it 'caches the count result' do
-            expect(collection).to receive(:count).once.and_return(100)
+            allow(collection).to receive(:count).once.and_return(100)
             2.times { service.send(:total_count) }
+            expect(collection).to have_received(:count).once
           end
 
           context 'when count returns nil' do
