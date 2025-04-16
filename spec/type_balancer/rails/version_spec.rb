@@ -9,7 +9,10 @@ RSpec.describe TypeBalancer::Rails do
     end
 
     it 'follows semantic versioning format' do
-      expect(TypeBalancer::Rails::VERSION).to match(/^\d+\.\d+\.\d+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+)?$/)
+      version_pattern = /^\d+\.\d+\.\d+/ # Major.Minor.Patch
+      version_pattern = /#{version_pattern}(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?/ # Optional pre-release
+      version_pattern = /#{version_pattern}(?:\+[0-9A-Za-z-]+)?$/ # Optional build metadata
+      expect(TypeBalancer::Rails::VERSION).to match(version_pattern)
     end
 
     it 'is a frozen string' do

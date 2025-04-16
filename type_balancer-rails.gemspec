@@ -9,7 +9,8 @@ Gem::Specification.new do |spec|
   spec.email = ['carl@linkleaf.com']
 
   spec.summary = 'Rails integration for the type_balancer gem'
-  spec.description = 'Extends type_balancer with Rails-specific features for ActiveRecord integration, caching, and pagination'
+  spec.description = 'Extends type_balancer with Rails-specific features for ' \
+                     'ActiveRecord integration, caching, and pagination'
   spec.homepage = 'https://github.com/carlzulauf/type_balancer-rails'
   spec.license = 'MIT'
   spec.required_ruby_version = '>= 3.0.0'
@@ -22,12 +23,12 @@ Gem::Specification.new do |spec|
   # Specify which files should be added to the gem when it is released.
   # The `git ls-files -z` loads the files in the RubyGem that have been added into git.
   File.basename(__FILE__)
-  spec.files = Dir.glob(%w[
-                          LICENSE.txt
-                          README.md
-                          CHANGELOG.md
-                          lib/**/*.rb
-                          sig/**/*.rbs
+  spec.files = Dir.glob([
+                          'LICENSE.txt',
+                          'README.md',
+                          'CHANGELOG.md',
+                          'lib/**/*.rb',
+                          'sig/**/*.rbs'
                         ])
   spec.bindir = 'exe'
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }

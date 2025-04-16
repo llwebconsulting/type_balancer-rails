@@ -56,8 +56,12 @@ module TypeBalancer
         let(:config) { facade.instance_variable_get(:@config) }
 
         before do
-          allow(config).to receive_messages(redis_settings: { client: double, ttl: 3600, enabled: true },
-                                            cache_settings: { store: double, ttl: 3600, enabled: true }, storage_settings: { strategy: :redis }, pagination_settings: { max_per_page: 100, cursor_buffer_multiplier: 1.5 })
+          allow(config).to receive_messages(
+            redis_settings: { client: double, ttl: 3600, enabled: true },
+            cache_settings: { store: double, ttl: 3600, enabled: true },
+            storage_settings: { strategy: :redis },
+            pagination_settings: { max_per_page: 100, cursor_buffer_multiplier: 1.5 }
+          )
         end
 
         it 'returns redis client' do

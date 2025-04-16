@@ -8,7 +8,7 @@ module TestHelpers
       end
 
       def self.column_names
-        %w[id title media_type]
+        ['id', 'title', 'media_type']
       end
 
       def self.model_name
@@ -39,8 +39,20 @@ module TestHelpers
 
   def create_relation_double(post_class = create_post_class)
     double = instance_double(ActiveRecord::Relation)
-    allow(double).to receive_messages(klass: post_class, table_name: post_class.table_name,
-                                      column_names: post_class.column_names, count: 2000, cache_key_with_version: 'posts/all-123', none: double, where: double, order: double, to_sql: 'SELECT * FROM posts', model_name: post_class.model_name, base_class: post_class, primary_key: 'id')
+    allow(double).to receive_messages(
+      klass: post_class,
+      table_name: post_class.table_name,
+      column_names: post_class.column_names,
+      count: 2000,
+      cache_key_with_version: 'posts/all-123',
+      none: double,
+      where: double,
+      order: double,
+      to_sql: 'SELECT * FROM posts',
+      model_name: post_class.model_name,
+      base_class: post_class,
+      primary_key: 'id'
+    )
     double
   end
 end
