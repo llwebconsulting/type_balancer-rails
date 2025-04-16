@@ -2,8 +2,8 @@ module TypeBalancer
   module Rails
     module Config
       class BaseConfiguration
-        require_relative '../configuration/storage_strategy_registry'
-        require_relative '../configuration/pagination_config'
+        require_relative 'strategy_manager'
+        require_relative 'pagination_config'
         require_relative 'storage_adapter'
 
         attr_accessor :redis_client, :redis_enabled, :redis_ttl,
@@ -15,8 +15,8 @@ module TypeBalancer
         def initialize
           @redis_enabled = false
           @cache_enabled = false
-          @storage_strategy_registry = TypeBalancer::Rails::Configuration::StorageStrategyRegistry.new
-          @pagination_config = TypeBalancer::Rails::Configuration::PaginationConfig.new
+          @storage_strategy_registry = TypeBalancer::Rails::Config::StrategyManager.new
+          @pagination_config = TypeBalancer::Rails::Config::PaginationConfig.new
           register_default_storage_strategies
         end
 
@@ -30,7 +30,7 @@ module TypeBalancer
           @redis_enabled = false
           @cache_enabled = false
           @redis_client = nil
-          @storage_strategy_registry = TypeBalancer::Rails::Configuration::StorageStrategyRegistry.new
+          @storage_strategy_registry = TypeBalancer::Rails::Config::StrategyManager.new
           @pagination_config.reset!
           register_default_storage_strategies
           self

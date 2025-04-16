@@ -2,7 +2,7 @@
 
 module TypeBalancer
   module Rails
-    class Configuration
+    module Config
       # Configuration for pagination settings
       class PaginationConfig
         attr_accessor :max_per_page
