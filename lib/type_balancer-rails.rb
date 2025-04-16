@@ -4,7 +4,6 @@ require 'type_balancer'
 
 require 'type_balancer/rails/container'
 require 'type_balancer/rails/strategy_registry'
-require 'type_balancer/rails/configuration'
 require 'type_balancer/rails/strategies/base_strategy'
 require 'type_balancer/rails/strategies/cursor_strategy'
 require 'type_balancer/rails/strategies/redis_strategy'

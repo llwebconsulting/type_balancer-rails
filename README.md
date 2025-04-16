@@ -117,6 +117,26 @@ TypeBalancer::Rails.configure do |config|
 end
 ```
 
+## Advanced Configuration
+
+TypeBalancer Rails uses a unified configuration system under the `TypeBalancer::Rails::Config` namespace. This system is designed for flexibility and extensibility:
+
+- All configuration logic is managed by `TypeBalancer::Rails::Config::Configuration`.
+- You can extend or customize configuration by subclassing or including your own modules.
+- Advanced users can interact directly with configuration components (e.g., `StrategyManager`, `PaginationConfig`) for custom strategies or behaviors.
+
+Example (advanced):
+
+```ruby
+# Access the unified configuration class directly
+config = TypeBalancer::Rails::Config::Configuration.new
+config.storage_strategy = :memory
+config.max_per_page = 50
+# ...other advanced settings...
+```
+
+For most applications, the standard `TypeBalancer::Rails.configure` block is sufficient.
+
 ## Background Processing
 
 TypeBalancer supports background processing for balance calculations:
@@ -130,6 +150,20 @@ end
 # Trigger background balance calculation
 Post.calculate_balance_in_background
 ```
+
+**Why use background processing?**
+
+- For large collections, calculating balanced positions can be computationally expensive and may slow down web requests.
+- Enabling background processing offloads this work to a background job (using ActiveJob), improving response times for users.
+- This is especially useful for high-traffic applications or when balancing large datasets.
+
+**Where are the results available?**
+
+- Once the background job completes, the balanced positions are stored using your configured storage strategy (e.g., Redis or in-memory).
+- When you next call `Post.balance_by_type`, the results will be fetched from storage, providing fast access to the balanced collection.
+- You can monitor job status using your background job processor (e.g., Sidekiq, DelayedJob).
+
+**Note:** If you request a balance before the background job completes, you may get stale or unbalanced results until the job finishes and updates the storage.
 
 ## Pagination
 

@@ -26,7 +26,6 @@ require 'rspec/mocks'
 
 # Load our gem
 require 'type_balancer/rails'
-require 'type_balancer/rails/configuration'
 require 'type_balancer/rails/strategies'
 require 'type_balancer/rails/strategies/base_strategy'
 require 'type_balancer/rails/container'

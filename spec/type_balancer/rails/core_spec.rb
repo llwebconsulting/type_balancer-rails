@@ -3,6 +3,8 @@
 require 'spec_helper'
 
 RSpec.describe TypeBalancer::Rails::Core do
+  before(:each) { described_class.reset! if described_class.respond_to?(:reset!) }
+
   after(:each) { described_class.reset! if described_class.respond_to?(:reset!) }
 
   describe '.configure' do
@@ -14,7 +16,7 @@ RSpec.describe TypeBalancer::Rails::Core do
     end
 
     it 'yields configuration object when block given' do
-      expect { |b| described_class.configure(&b) }.to yield_with_args(TypeBalancer::Rails::Core::Configuration)
+      expect { |b| described_class.configure(&b) }.to yield_with_args(TypeBalancer::Rails::Config::RuntimeConfiguration)
     end
 
     it 'returns self when no block given' do
@@ -32,7 +34,7 @@ RSpec.describe TypeBalancer::Rails::Core do
   describe '.configuration' do
     context 'with default configuration' do
       it 'returns a Configuration instance' do
-        expect(described_class.configuration).to be_a(TypeBalancer::Rails::Core::Configuration)
+        expect(described_class.configuration).to be_a(TypeBalancer::Rails::Config::RuntimeConfiguration)
       end
 
       it 'memoizes the configuration instance' do
