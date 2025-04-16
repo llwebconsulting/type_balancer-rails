@@ -120,8 +120,6 @@ module TypeBalancer
           self
         end
 
-        attr_writer :redis_ttl, :cache_ttl, :per_page
-
         private
 
         def register_default_storage_strategies

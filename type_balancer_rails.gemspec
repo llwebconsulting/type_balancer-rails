@@ -38,17 +38,6 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'redis', '>= 4.0'
   spec.add_dependency 'type_balancer', '>= 0.1.0'
 
-  # Development dependencies
-  spec.add_development_dependency 'bundler-audit', '~> 0.9.1'
-  spec.add_development_dependency 'rspec', '~> 3.0'
-  spec.add_development_dependency 'rspec-rails', '~> 6.1'
-  spec.add_development_dependency 'rubocop', '~> 1.21'
-  spec.add_development_dependency 'rubocop-rails', '~> 2.24'
-  spec.add_development_dependency 'rubocop-rspec', '~> 2.27'
-  spec.add_development_dependency 'simplecov', '~> 0.22.0'
-  spec.add_development_dependency 'simplecov-cobertura', '~> 2.1'
-  spec.add_development_dependency 'sqlite3', '~> 1.7', '>= 1.7.3'
-
   # For more information and examples about making a new gem, check out our
   # guide at: https://bundler.io/guides/creating_gem.html
 end

@@ -5,7 +5,7 @@ module TypeBalancer
     module Config
       # Configuration for pagination settings
       class PaginationConfig
-        attr_accessor :max_per_page
+        attr_reader :max_per_page
 
         def initialize(max_per_page = 100)
           value = max_per_page.is_a?(Hash) ? max_per_page[:max_per_page] : max_per_page
@@ -18,7 +18,7 @@ module TypeBalancer
           self
         end
 
-        def set_max_per_page(value)
+        def max_per_page=(value)
           value = value.to_i
           @max_per_page = value if value.positive?
           self

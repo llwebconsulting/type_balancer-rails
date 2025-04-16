@@ -10,7 +10,7 @@ module TypeBalancer
 
         attr_accessor :redis_client, :redis_enabled, :redis_ttl,
                       :cache_enabled, :cache_ttl, :cache_store,
-                      :storage_strategy, :max_per_page, :cursor_buffer_multiplier,
+                      :storage_strategy, :cursor_buffer_multiplier,
                       :async_threshold, :per_page_default, :cache_duration
         attr_reader :strategy_manager, :storage_adapter, :storage_strategy_registry, :pagination_config
 
@@ -67,9 +67,9 @@ module TypeBalancer
           }
         end
 
-        def max_per_page=(value)
-          @pagination_config.set_max_per_page(value)
-        end
+        delegate :max_per_page=, to: :@pagination_config
+
+        delegate :max_per_page, to: :@pagination_config
 
         def redis
           yield(self) if block_given?

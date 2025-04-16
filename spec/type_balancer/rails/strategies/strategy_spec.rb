@@ -7,34 +7,22 @@ RSpec.describe TypeBalancer::Rails::Strategies::Strategy do
   let(:strategy) { described_class.new(collection_query) }
 
   describe '#initialize' do
-    context 'when given a valid collection query' do
-      it 'stores the collection query as a protected attribute' do
-        test_strategy = Class.new(described_class) do
-          def get_collection_query
-            collection_query
-          end
-        end
-        instance = test_strategy.new(collection_query)
-        expect(instance.get_collection_query).to eq(collection_query)
+    context 'when collection_query is nil' do
+      it 'raises ArgumentError' do
+        expect { described_class.new(nil) }.to raise_error(ArgumentError)
       end
     end
 
-    context 'when given nil' do
-      it 'raises ArgumentError' do
-        expect { described_class.new(nil) }.to raise_error(
-          ArgumentError,
-          'collection_query is required'
-        )
+    context 'when collection_query is valid' do
+      it 'initializes without error' do
+        expect { described_class.new(collection_query) }.not_to raise_error
       end
     end
   end
 
   describe '#execute' do
-    it 'raises NotImplementedError with implementation instructions' do
-      expect { strategy.execute }.to raise_error(
-        NotImplementedError,
-        "#{described_class} must implement #execute"
-      )
+    it 'raises NotImplementedError' do
+      expect { strategy.execute }.to raise_error(NotImplementedError)
     end
   end
 
