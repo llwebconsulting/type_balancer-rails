@@ -76,7 +76,7 @@ RSpec.describe TypeBalancer::Rails::Pagination do
         ]
       end
 
-      context 'on first page' do
+      context 'when on first page' do
         let(:pagination) { described_class.new(positions, page: 1, per_page: 2) }
 
         it 'selects first slice of positions' do
@@ -87,7 +87,7 @@ RSpec.describe TypeBalancer::Rails::Pagination do
         end
       end
 
-      context 'on second page' do
+      context 'when on second page' do
         let(:pagination) { described_class.new(positions, page: 2, per_page: 2) }
 
         it 'selects second slice of positions' do
@@ -102,7 +102,7 @@ RSpec.describe TypeBalancer::Rails::Pagination do
 
   describe 'private methods' do
     describe '#page_offset' do
-      context 'on first page' do
+      context 'when on first page' do
         let(:page) { 1 }
 
         it 'returns 0' do
@@ -110,7 +110,7 @@ RSpec.describe TypeBalancer::Rails::Pagination do
         end
       end
 
-      context 'on subsequent pages' do
+      context 'when on subsequent pages' do
         let(:page) { 3 }
         let(:per_page) { 5 }
 

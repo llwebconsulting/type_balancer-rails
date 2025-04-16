@@ -80,7 +80,7 @@ module TypeBalancer
             end
           end
 
-          context 'precedence order' do
+          context 'when testing precedence order' do
             before do
               allow(scope).to receive(:respond_to?).with(:type_field).and_return(true)
               allow(scope).to receive(:type_field).and_return('model_type')

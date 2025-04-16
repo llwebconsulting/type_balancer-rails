@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.shared_context 'active_record_model' do
+RSpec.shared_context 'with active record model' do
   let(:model_class) do
     Class.new do
       include ActiveModel::Model

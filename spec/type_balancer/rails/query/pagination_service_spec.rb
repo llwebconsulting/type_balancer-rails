@@ -173,7 +173,7 @@ module TypeBalancer
         end
 
         describe '#prev_page?' do
-          context 'on first page' do
+          context 'when on first page' do
             let(:options) { { page: 1 } }
 
             it 'returns false' do
@@ -181,7 +181,7 @@ module TypeBalancer
             end
           end
 
-          context 'on subsequent pages' do
+          context 'when on subsequent pages' do
             let(:options) { { page: 2 } }
 
             it 'returns true' do
