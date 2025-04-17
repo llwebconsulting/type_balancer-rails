@@ -18,7 +18,7 @@ jobs:
     strategy:
       matrix:
         ruby-version: ['3.2.8', '3.3.0']
-        rails-version: ['7.0', '7.1']
+        rails-version: ['7.0', '7.1', '8.0']
 
     steps:
       - uses: actions/checkout@v4
@@ -91,7 +91,7 @@ jobs:
           - 6379:6379
     strategy:
       matrix:
-        rails-version: ['7.0', '7.1']
+        rails-version: ['7.0', '7.1', '8.0']
     
     steps:
       - uses: actions/checkout@v4
