@@ -12,7 +12,11 @@ module TypeBalancer
       end
 
       def invalidate_type_balancer_cache
-        TypeBalancer::Rails.storage_adapter.clear
+        puts 'Invalidating type balancer cache...'
+        TypeBalancer::Rails.storage_adapter.clear if TypeBalancer::Rails.respond_to?(:storage_adapter)
+        puts "Cache enabled: #{TypeBalancer::Rails.configuration.cache_enabled}"
+        ::Rails.cache.clear if TypeBalancer::Rails.configuration.cache_enabled
+        puts 'Cache cleared!'
       end
     end
   end

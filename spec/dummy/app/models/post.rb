@@ -1,15 +1,14 @@
 # frozen_string_literal: true
 
 class Post < ApplicationRecord
+  include ActiveRecord::Callbacks
   include TypeBalancer::Rails::Pagination
+  include TypeBalancer::Rails::CacheInvalidation
 
   has_many :comments, dependent: :destroy
 
   validates :title, presence: true
   validates :content, presence: true
-
-  # Enable cursor-based pagination with default ordering
-  cursor_paginate order: { created_at: :desc, id: :desc }
 
   # Scope for testing complex queries
   scope :published, -> { where(published: true) }

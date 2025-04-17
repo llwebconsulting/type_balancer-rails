@@ -12,6 +12,23 @@ RSpec.describe TypeBalancer::Rails::Pagination do
   let(:reorder_relation) { instance_double(ActiveRecord::Relation) }
   let(:positions) { { 1 => 1.0, 2 => 2.0, 3 => 3.0, 4 => 4.0, 5 => 5.0 } }
 
+  let(:test_class) do
+    Class.new(ActiveRecord::Base) do
+      self.table_name = 'posts'
+      include TypeBalancer::Rails::Pagination
+    end
+  end
+
+  let(:position_manager) { instance_double(TypeBalancer::Rails::Query::PositionManager) }
+
+  before do
+    allow(TypeBalancer::Rails::Query::PositionManager).to receive(:new)
+      .with(test_class)
+      .and_return(position_manager)
+    allow(position_manager).to receive(:calculate_positions)
+      .and_return(positions)
+  end
+
   describe '#initialize' do
     context 'with default values' do
       subject(:pagination) { described_class.new }
@@ -125,6 +142,74 @@ RSpec.describe TypeBalancer::Rails::Pagination do
         record_ids = [1, 2, 3]
         sql = pagination.send(:position_order_clause, record_ids)
         expect(sql.to_s).to eq('FIELD(id, 1,2,3)')
+      end
+    end
+  end
+
+  describe '.paginate scope' do
+    context 'with default parameters' do
+      it 'uses default page and per_page values' do
+        expect(test_class).to receive(:where).with(id: [1, 2, 3, 4, 5])
+                                             .and_return(test_class)
+        expect(test_class).to receive(:reorder)
+          .with(Arel.sql('FIELD(id, 1,2,3,4,5)'))
+          .and_return(test_class)
+
+        test_class.paginate
+      end
+    end
+
+    context 'with custom page and per_page' do
+      it 'paginates correctly' do
+        expect(test_class).to receive(:where).with(id: [3, 4])
+                                             .and_return(test_class)
+        expect(test_class).to receive(:reorder)
+          .with(Arel.sql('FIELD(id, 3,4)'))
+          .and_return(test_class)
+
+        test_class.paginate(page: 2, per_page: 2)
+      end
+    end
+
+    context 'when per_page exceeds MAX_PER_PAGE' do
+      it 'caps per_page at MAX_PER_PAGE' do
+        expect(test_class).to receive(:where).with(id: [1, 2, 3, 4, 5])
+                                             .and_return(test_class)
+        expect(test_class).to receive(:reorder)
+          .with(Arel.sql('FIELD(id, 1,2,3,4,5)'))
+          .and_return(test_class)
+
+        test_class.paginate(per_page: TypeBalancer::Rails::Pagination::MAX_PER_PAGE + 100)
+      end
+    end
+
+    context 'with invalid page number' do
+      it 'uses page 1 for negative numbers' do
+        expect(test_class).to receive(:where).with(id: [1, 2, 3, 4, 5])
+                                             .and_return(test_class)
+        expect(test_class).to receive(:reorder)
+          .with(Arel.sql('FIELD(id, 1,2,3,4,5)'))
+          .and_return(test_class)
+
+        test_class.paginate(page: -1)
+      end
+    end
+
+    context 'with empty positions' do
+      before do
+        allow(position_manager).to receive(:calculate_positions).and_return({})
+      end
+
+      it 'returns none relation' do
+        expect(test_class).to receive(:none).and_return(test_class)
+        test_class.paginate
+      end
+    end
+
+    context 'when offset exceeds available records' do
+      it 'returns none relation' do
+        expect(test_class).to receive(:none).and_return(test_class)
+        test_class.paginate(page: 100)
       end
     end
   end

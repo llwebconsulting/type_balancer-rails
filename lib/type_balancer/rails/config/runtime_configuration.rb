@@ -3,18 +3,19 @@
 module TypeBalancer
   module Rails
     module Config
-      class RuntimeConfiguration
+      class RuntimeConfiguration < BaseConfiguration
+        include ValidationBehavior
+
         attr_accessor :redis_client, :cache_ttl, :redis_ttl
         attr_reader :strategy_manager, :storage_adapter, :redis_enabled, :cache_enabled
 
         def initialize
+          super
           @redis_enabled = true
           @cache_enabled = true
           @cache_ttl = 3600
           @redis_ttl = 3600
-          @redis_client = nil
-          @strategy_manager = TypeBalancer::Rails::Config::StrategyManager.new
-          @storage_adapter = TypeBalancer::Rails::Config::ConfigStorageAdapter.new(@strategy_manager)
+          setup_managers
         end
 
         def configure_redis(client = nil)
@@ -38,23 +39,25 @@ module TypeBalancer
         end
 
         def reset!
-          @redis_client = nil
-          @cache_ttl = 3600
-          @redis_ttl = 3600
-          @strategy_manager = TypeBalancer::Rails::Config::StrategyManager.new
-          @storage_adapter = TypeBalancer::Rails::Config::ConfigStorageAdapter.new(@strategy_manager)
+          super
+          setup_managers
           self
         end
 
         def validate!
           validate_strategy_manager!
           validate_storage_adapter!
-          validate_cache_ttl!
-          validate_redis_ttl!
+          validate_cache_ttl! if cache_enabled?
+          validate_redis_ttl! if redis_enabled?
           true
         end
 
         private
+
+        def setup_managers
+          @strategy_manager = TypeBalancer::Rails::Config::StrategyManager.new
+          @storage_adapter = TypeBalancer::Rails::Config::ConfigStorageAdapter.new(@strategy_manager)
+        end
 
         def validate_cache_ttl!
           unless @cache_ttl.is_a?(Integer)
@@ -79,15 +82,21 @@ module TypeBalancer
         end
 
         def validate_strategy_manager!
+          if @strategy_manager.nil?
+            raise TypeBalancer::Rails::Errors::ConfigurationError,
+                  'Strategy manager is not configured'
+          end
+
           @strategy_manager.validate!
-        rescue StandardError => e
-          raise TypeBalancer::Rails::Errors::ConfigurationError, "Invalid strategy: #{e.message}"
         end
 
         def validate_storage_adapter!
+          if @storage_adapter.nil?
+            raise TypeBalancer::Rails::Errors::ConfigurationError,
+                  'Storage adapter is not configured'
+          end
+
           @storage_adapter.validate!
-        rescue StandardError => e
-          raise TypeBalancer::Rails::Errors::ConfigurationError, "Invalid storage: #{e.message}"
         end
       end
     end

@@ -4,11 +4,12 @@ module TypeBalancer
   module Rails
     module Config
       class StrategyManager
-        attr_reader :strategies
+        attr_reader :strategies, :strategy_classes
 
         def initialize
           @strategies = {}
-          register_defaults
+          @strategy_classes = {}
+          register_default_classes
         end
 
         def register(name, strategy)
@@ -17,18 +18,25 @@ module TypeBalancer
           self
         end
 
+        def register_class(name, strategy_class)
+          @strategy_classes[name.to_sym] = strategy_class
+          self
+        end
+
         def [](name)
-          @strategies[name.to_sym]
+          name = name.to_sym
+          @strategies[name] ||= create_strategy(name)
         end
 
         def reset!
           @strategies.clear
-          register_defaults
+          @strategy_classes.clear
+          register_default_classes
           self
         end
 
         def validate!
-          raise TypeBalancer::Rails::Errors::ConfigurationError, 'No strategies registered' if @strategies.empty?
+          raise TypeBalancer::Rails::Errors::ConfigurationError, 'No strategies registered' if @strategy_classes.empty?
 
           @strategies.each_value { |strategy| validate_strategy!(strategy) }
           true
@@ -36,9 +44,18 @@ module TypeBalancer
 
         private
 
-        def register_defaults
-          register(:redis, Strategies::RedisStrategy.new)
-          register(:memory, Strategies::MemoryStrategy.new)
+        def register_default_classes
+          register_class(:redis, Strategies::RedisStrategy)
+          register_class(:memory, Strategies::MemoryStrategy)
+        end
+
+        def create_strategy(name)
+          strategy_class = @strategy_classes[name]
+          raise TypeBalancer::Rails::Errors::ConfigurationError, "Unknown strategy: #{name}" unless strategy_class
+
+          strategy = strategy_class.new
+          validate_strategy!(strategy)
+          strategy
         end
 
         def validate_strategy!(strategy)

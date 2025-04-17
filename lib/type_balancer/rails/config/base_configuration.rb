@@ -7,12 +7,15 @@ module TypeBalancer
         require_relative 'strategy_manager'
         require_relative 'pagination_config'
         require_relative 'storage_adapter'
+        require_relative 'validation_behavior'
 
-        attr_accessor :redis_client, :redis_enabled, :redis_ttl,
-                      :cache_enabled, :cache_ttl, :cache_store,
+        include ValidationBehavior
+
+        attr_accessor :redis_client, :redis_ttl, :cache_ttl, :cache_store,
                       :storage_strategy, :cursor_buffer_multiplier,
                       :async_threshold, :per_page_default, :cache_duration
-        attr_reader :strategy_manager, :storage_adapter, :storage_strategy_registry, :pagination_config
+        attr_reader :strategy_manager, :storage_adapter, :storage_strategy_registry,
+                    :pagination_config, :redis_enabled, :cache_enabled
 
         def initialize
           @redis_enabled = false
@@ -31,6 +34,28 @@ module TypeBalancer
 
         def cache_enabled?
           @cache_enabled
+        end
+
+        def enable_redis(client = nil)
+          @redis_enabled = true
+          @redis_client = client if client
+          self
+        end
+
+        def disable_redis
+          @redis_enabled = false
+          @redis_client = nil
+          self
+        end
+
+        def enable_cache
+          @cache_enabled = true
+          self
+        end
+
+        def disable_cache
+          @cache_enabled = false
+          self
         end
 
         def reset!
@@ -81,7 +106,6 @@ module TypeBalancer
         end
 
         delegate :max_per_page=, to: :@pagination_config
-
         delegate :max_per_page, to: :@pagination_config
 
         def redis
@@ -97,24 +121,6 @@ module TypeBalancer
         def pagination
           yield(@pagination_config) if block_given?
           self
-        end
-
-        def enable_redis(client = nil)
-          @redis_enabled = true
-          @redis_client = client
-        end
-
-        def disable_redis
-          @redis_enabled = false
-          @redis_client = nil
-        end
-
-        def enable_cache
-          @cache_enabled = true
-        end
-
-        def disable_cache
-          @cache_enabled = false
         end
 
         private

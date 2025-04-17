@@ -21,6 +21,8 @@ gem 'simplecov-cobertura', '~> 2.1' # XML format for CodeCov
 gem 'sqlite3', '~> 2.1' # Update to required version
 
 group :development, :test do
-  gem 'pry'
+  gem 'database_cleaner', '~> 2.0'
+  gem 'debug', '>= 1.0.0'
+  gem 'pry', '~> 0.14.2'
   gem 'pry-byebug'
 end

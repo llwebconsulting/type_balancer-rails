@@ -2,6 +2,8 @@
 
 require 'active_support'
 require 'type_balancer/rails/config/storage_adapter'
+require_relative 'config/base_configuration'
+require_relative 'config/validation_behavior'
 require_relative 'config/runtime_configuration'
 
 module TypeBalancer

@@ -13,7 +13,7 @@ module TypeBalancer
           config.storage_strategy = :cursor
 
           # Configure cache settings
-          config.cache_enabled = true
+          config.enable_cache = true
           config.cache_ttl = 3600 # 1 hour default
         end
 

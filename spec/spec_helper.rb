@@ -3,7 +3,11 @@
 require 'bundler/setup'
 require 'simplecov'
 require 'simplecov-cobertura'
+require 'timecop'
+require 'active_record'
+require 'yaml'
 
+# Configure SimpleCov
 SimpleCov.start do
   add_filter '/spec/'
   add_filter '/lib/type_balancer/rails/version'
@@ -21,38 +25,15 @@ SimpleCov.start do
                                                      ])
 end
 
-require 'rails'
-require 'active_support'
-require 'active_support/cache'
-require 'active_support/cache/memory_store'
-require 'redis'
-require 'rspec/mocks'
+ENV['RAILS_ENV'] = 'test'
 
-# Initialize test application
-class TestApplication < Rails::Application
-  config.eager_load = false
-end
-
-Rails.application = TestApplication.new
-Rails.application.config.root = File.dirname(__FILE__)
-Rails.application.config.eager_load = false
-Rails.logger = Logger.new($stdout)
-
-# Setup minimal Rails-like environment
-module Rails
-  class << self
-    def cache
-      @cache ||= ActiveSupport::Cache::MemoryStore.new(namespace: 'test')
-    end
-
-    attr_writer :cache
-  end
-end
+# Load the dummy Rails app first
+require File.expand_path('dummy/config/environment', __dir__)
 
 # Load our gem
 require 'type_balancer/rails'
 
-# Initialize TypeBalancer with test configuration
+# Initialize TypeBalancer
 TypeBalancer::Rails.initialize!
 
 # Load all support files
@@ -60,37 +41,52 @@ Dir[File.join(File.dirname(__FILE__), 'support', '**', '*.rb')].each { |f| requi
 
 # Configure RSpec
 RSpec.configure do |config|
-  config.define_derived_metadata do |meta|
-    meta[:aggregate_failures] = true unless meta.key?(:aggregate_failures)
+  config.expect_with :rspec do |expectations|
+    expectations.include_chain_clauses_in_custom_matcher_descriptions = true
   end
 
-  config.fail_fast = ENV['FAIL_FAST'] == 'true'
+  config.mock_with :rspec do |mocks|
+    mocks.verify_partial_doubles = true
+  end
+
+  config.shared_context_metadata_behavior = :apply_to_host_groups
+  config.filter_run_when_matching :focus
+  config.example_status_persistence_file_path = 'spec/examples.txt'
+  config.disable_monkey_patching!
+  config.warnings = true
   config.order = :random
   Kernel.srand config.seed
 
-  config.example_status_persistence_file_path = '.rspec_status'
-  config.disable_monkey_patching!
-
-  config.expect_with :rspec do |c|
-    c.syntax = :expect
-  end
-
-  config.filter_run_when_matching :focus
-
-  config.mock_with :rspec do |mocks|
-    mocks.allow_message_expectations_on_nil = true
-  end
-
   config.before(:suite) do
-    Rails.cache = ActiveSupport::Cache::MemoryStore.new(namespace: 'test')
+    # Set up in-memory SQLite database
+    ActiveRecord::Base.establish_connection(
+      adapter: 'sqlite3',
+      database: ':memory:'
+    )
+
+    # Load schema
+    ActiveRecord::Schema.define(version: 20_240_315_000_001) do
+      create_table :posts, force: :cascade do |t|
+        t.string :title, null: false
+        t.text :content
+        t.timestamps null: false
+        t.index :created_at
+        t.index :title
+      end
+    end
+  end
+
+  # Wrap each example in a transaction
+  config.around do |example|
+    ActiveRecord::Base.transaction do
+      example.run
+      raise ActiveRecord::Rollback
+    end
   end
 
   config.before do
     TypeBalancer::Rails.reset!
-  end
-
-  # Clear any stored data between tests
-  config.before do
     TypeBalancer::Rails.instance_variable_set(:@storage_adapter, nil)
+    Rails.cache.clear
   end
 end
