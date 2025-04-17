@@ -56,7 +56,7 @@ require 'type_balancer/rails'
 TypeBalancer::Rails.initialize!
 
 # Load all support files
-Dir[File.join(File.dirname(__FILE__), 'support', '**', '*.rb')].sort.each { |f| require f }
+Dir[File.join(File.dirname(__FILE__), 'support', '**', '*.rb')].each { |f| require f }
 
 # Configure RSpec
 RSpec.configure do |config|

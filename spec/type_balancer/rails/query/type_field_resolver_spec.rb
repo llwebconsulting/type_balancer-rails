@@ -7,13 +7,13 @@ module TypeBalancer
     module Query
       RSpec.describe TypeFieldResolver do
         let(:model_class) do
-          class_double("ActiveRecord::Base").tap do |double|
+          class_double(ActiveRecord::Base).tap do |double|
             allow(double).to receive(:column_names).and_return([])
           end
         end
 
         let(:scope) do
-          double("ActiveRecord::Relation").tap do |double|
+          double('ActiveRecord::Relation').tap do |double|
             allow(double).to receive(:respond_to?).with(:type_field).and_return(false)
             allow(double).to receive(:klass).and_return(model_class)
           end
@@ -80,7 +80,7 @@ module TypeBalancer
             end
           end
 
-          context 'precedence order' do
+          context 'when testing precedence order' do
             before do
               allow(scope).to receive(:respond_to?).with(:type_field).and_return(true)
               allow(scope).to receive(:type_field).and_return('model_type')
@@ -99,4 +99,4 @@ module TypeBalancer
       end
     end
   end
-end 
+end

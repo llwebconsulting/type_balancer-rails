@@ -9,22 +9,23 @@ RSpec.describe TypeBalancer::Rails::ActiveRecordExtension do
     Class.new do
       include ActiveModel::Model
       attr_accessor :id
-      def self.table_name; 'test_models'; end
-      def self.primary_key; 'id'; end
+
+      def self.table_name = 'test_models'
+      def self.primary_key = 'id'
       def self.after_commit(*args); end
     end
   end
 
   before do
     # Ensure Rails.logger is mocked
-    allow(Rails).to receive(:logger).and_return(double('Logger').as_null_object)
-    
+
     # Mock Rails.cache
-    allow(Rails).to receive(:cache).and_return(double('Cache').as_null_object)
-    
+    allow(Rails).to receive_messages(logger: double('Logger').as_null_object, cache: double('Cache').as_null_object)
+
     # Mock storage adapter
-    allow(TypeBalancer::Rails).to receive(:storage_adapter).and_return(double('TypeBalancer::Rails::Config::ConfigStorageAdapter').as_null_object)
-    
+    storage_adapter = double('TypeBalancer::Rails::Config::ConfigStorageAdapter').as_null_object
+    allow(TypeBalancer::Rails).to receive(:storage_adapter).and_return(storage_adapter)
+
     # Include the module properly
     test_class.include(described_class)
   end
@@ -65,4 +66,4 @@ RSpec.describe TypeBalancer::Rails::ActiveRecordExtension do
       expect(test_class).to respond_to(:after_commit)
     end
   end
-end 
+end

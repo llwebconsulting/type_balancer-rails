@@ -120,21 +120,6 @@ module TypeBalancer
           self
         end
 
-        def redis_ttl=(value)
-          @redis_ttl = value
-          self
-        end
-
-        def cache_ttl=(value)
-          @cache_ttl = value
-          self
-        end
-
-        def per_page=(value)
-          @per_page = value
-          self
-        end
-
         private
 
         def register_default_storage_strategies

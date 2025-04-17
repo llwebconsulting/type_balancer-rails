@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module TypeBalancer
   module Rails
     # Handles position calculation and caching for background jobs

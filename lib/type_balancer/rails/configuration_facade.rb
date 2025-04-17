@@ -4,212 +4,120 @@ module TypeBalancer
   module Rails
     # A facade that buries all configuration complexity
     # Once tested, this class should never need to change
-    class ConfigurationFacade
-      class << self
-        def redis(&)
-          configuration.redis(&)
-        end
+    module ConfigurationFacade
+      extend self
 
-        def cache(&)
-          configuration.cache(&)
-        end
-
-        def storage(&)
-          configuration.storage_strategy_registry.tap do |registry|
-            yield(registry) if block_given?
-          end
-        end
-
-        def pagination(&)
-          configuration.pagination(&)
-        end
-
-        delegate :reset!, to: :configuration
-
-        def configuration
-          @configuration ||= TypeBalancer::Rails::Config::BaseConfiguration.new
-        end
-
-        def validate!
-          validate_redis! if configuration.redis_settings[:enabled]
-          validate_cache! if configuration.cache_settings[:enabled]
-        end
-
-        private
-
-        def validate_redis!
-          client = configuration.redis_settings[:client]
-          unless client
-            raise TypeBalancer::Rails::Errors::ConfigurationError,
-                  'Redis client is not configured'
-          end
-
-          unless client.respond_to?(:get)
-            raise TypeBalancer::Rails::Errors::ConfigurationError,
-                  'Redis client must respond to :get'
-          end
-          unless client.respond_to?(:set)
-            raise TypeBalancer::Rails::Errors::ConfigurationError,
-                  'Redis client must respond to :set'
-          end
-          unless client.respond_to?(:del)
-            raise TypeBalancer::Rails::Errors::ConfigurationError,
-                  'Redis client must respond to :del'
-          end
-          return if client.respond_to?(:scan)
-
-          raise TypeBalancer::Rails::Errors::ConfigurationError,
-                'Redis client must respond to :scan'
-        end
-
-        def validate_cache!
-          store = ::Rails.cache
-          unless store
-            raise TypeBalancer::Rails::Errors::ConfigurationError,
-                  'Cache store is not configured'
-          end
-
-          unless store.respond_to?(:read)
-            raise TypeBalancer::Rails::Errors::ConfigurationError,
-                  'Cache store must respond to :read'
-          end
-          unless store.respond_to?(:write)
-            raise TypeBalancer::Rails::Errors::ConfigurationError,
-                  'Cache store must respond to :write'
-          end
-          return if store.respond_to?(:delete)
-
-          raise TypeBalancer::Rails::Errors::ConfigurationError,
-                'Cache store must respond to :delete'
-        end
-      end
-
-      def initialize
-        @config = TypeBalancer::Rails::Config::BaseConfiguration.new
+      def configuration
+        @configuration ||= Config::BaseConfiguration.new
       end
 
       def configure
-        yield(@config) if block_given?
+        yield(configuration)
         self
-      end
-
-      def redis
-        @config.redis_settings
-      end
-
-      def cache
-        @config.cache_settings
-      end
-
-      def storage
-        @config.storage_settings
-      end
-
-      def pagination
-        @config.pagination_settings
       end
 
       def reset!
-        @config.reset!
+        configuration.reset!
         self
       end
 
-      def redis_client
-        ensure_configured!
-        @config.redis_settings[:client]
+      def redis(&)
+        if block_given?
+          yield(configuration)
+        else
+          configuration.redis_settings
+        end
       end
 
-      def redis_ttl
-        ensure_configured!
-        @config.redis_settings[:ttl]
+      def cache(&)
+        if block_given?
+          yield(configuration)
+        else
+          configuration.cache_settings
+        end
       end
 
-      def redis_enabled?
-        ensure_configured!
-        @config.redis_settings[:enabled]
+      def storage(&)
+        if block_given?
+          yield(configuration)
+        else
+          configuration.storage_settings
+        end
       end
 
-      def cache_enabled?
-        ensure_configured!
-        @config.cache_settings[:enabled]
+      def pagination(&)
+        if block_given?
+          yield(configuration)
+        else
+          configuration.pagination_settings
+        end
       end
 
-      def cache_ttl
-        ensure_configured!
-        @config.cache_settings[:ttl]
+      def validate!
+        validate_storage_strategy!
+        validate_redis_settings! if redis_enabled?
+        validate_cache_settings! if cache_enabled?
+        validate_pagination_settings!
+        self
       end
 
-      def cache_store
-        ensure_configured!
-        @config.cache_settings[:store]
+      def storage_adapter
+        configuration.storage_strategy
       end
 
-      def storage_strategy
-        ensure_configured!
-        @config.storage_settings[:strategy]
-      end
+      delegate :redis_client, to: :configuration
 
-      def max_per_page
-        ensure_configured!
-        @config.pagination_settings[:max_per_page]
-      end
+      delegate :redis_ttl, to: :configuration
 
-      def cursor_buffer_multiplier
-        ensure_configured!
-        @config.pagination_settings[:cursor_buffer_multiplier]
-      end
+      delegate :cache_ttl, to: :configuration
 
-      def pagination_settings
-        {
-          max_per_page: @config.pagination_settings[:max_per_page]
-        }
-      end
+      delegate :cache_enabled?, to: :configuration
+
+      delegate :redis_enabled?, to: :configuration
+
+      delegate :max_per_page, to: :configuration
+
+      delegate :cursor_buffer_multiplier, to: :configuration
 
       private
 
-      def ensure_configured!
-        return if @config
-
-        reset!
+      def validate_storage_strategy!
+        raise ArgumentError, 'Storage strategy required' unless storage_adapter
       end
 
-      def validate_configuration!(config)
-        validate_redis!(config) if config.redis_settings[:enabled]
-        validate_cache!(config) if config.cache_settings[:enabled]
-        validate_storage!(config)
-        validate_pagination!(config)
+      def validate_redis_settings!
+        validate_redis_client!
+        raise ArgumentError, 'Redis TTL must be positive' unless redis_ttl&.positive?
       end
 
-      def validate_redis!(config)
-        settings = config.redis_settings
-        raise ArgumentError, 'Redis client required when Redis is enabled' unless settings[:client]
-        raise ArgumentError, 'Redis TTL must be positive' unless settings[:ttl].to_i.positive?
+      def validate_cache_settings!
+        validate_cache_store!
+        raise ArgumentError, 'Cache TTL must be positive' unless cache_ttl&.positive?
       end
 
-      def validate_cache!(config)
-        settings = config.cache_settings
-        raise ArgumentError, 'Cache TTL must be positive' unless settings[:ttl].to_i.positive?
+      def validate_pagination_settings!
+        raise ArgumentError, 'Max per page must be positive' unless max_per_page&.positive?
+        raise ArgumentError, 'Cursor buffer multiplier must be greater than 1' unless cursor_buffer_multiplier&.> 1
       end
 
-      def validate_storage!(config)
-        settings = config.storage_settings
-        raise ArgumentError, 'Storage strategy required' unless settings[:strategy]
+      def validate_redis_client!
+        client = redis_client
+        raise ArgumentError, 'Redis client required when Redis is enabled' unless client
+
+        required_methods = [:get, :set, :del, :scan]
+        required_methods.each do |method|
+          raise ArgumentError, "Redis client must respond to #{method}" unless client.respond_to?(method)
+        end
       end
 
-      def validate_pagination!(config)
-        settings = config.pagination_settings
-        raise ArgumentError, 'Max per page must be positive' unless settings[:max_per_page].to_i.positive?
+      def validate_cache_store!
+        store = configuration.cache_store
+        raise ArgumentError, 'Cache store must be set' unless store
 
-        return if settings[:cursor_buffer_multiplier].to_f > 1.0
-
-        raise ArgumentError,
-              'Cursor buffer multiplier must be greater than 1'
-      end
-
-      def validate_pagination_settings!(settings)
-        return if settings[:max_per_page].to_i > 0
-
-        raise ArgumentError, 'max_per_page must be greater than 0'
+        required_methods = [:read, :write, :delete]
+        required_methods.each do |method|
+          raise ArgumentError, "Cache store must respond to #{method}" unless store.respond_to?(method)
+        end
       end
     end
   end

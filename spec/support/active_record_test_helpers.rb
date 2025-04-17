@@ -21,19 +21,15 @@ module ActiveRecordTestHelpers
   end
 
   def ar_relation_double
-    instance_double('ActiveRecord::Relation').tap do |double|
+    instance_double(ActiveRecord::Relation).tap do |double|
       allow(double).to receive(:is_a?).with(any_args).and_return(false)
       allow(double).to receive(:is_a?).with(ActiveRecord::Relation).and_return(true)
-      allow(double).to receive(:klass).and_return(ar_test_class)
-      allow(double).to receive(:where).and_return(double)
-      allow(double).to receive(:order).and_return(double)
-      allow(double).to receive(:pluck).and_return([])
-      allow(double).to receive(:find).and_return(nil)
+      allow(double).to receive_messages(klass: ar_test_class, where: double, order: double, pluck: [], find: nil)
     end
   end
 
   def ar_instance_double
-    instance_double('ActiveRecord::Base').tap do |double|
+    instance_double(ActiveRecord::Base).tap do |double|
       allow(double).to receive(:is_a?).with(any_args).and_return(false)
       allow(double).to receive(:is_a?).with(ActiveRecord::Base).and_return(true)
       allow(double).to receive(:id).and_return(1)
@@ -43,4 +39,4 @@ end
 
 RSpec.configure do |config|
   config.include ActiveRecordTestHelpers
-end 
+end

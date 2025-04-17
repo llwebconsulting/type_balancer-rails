@@ -6,9 +6,9 @@ ActiveJob::Base.queue_adapter = :test
 
 RSpec.configure do |config|
   config.include ActiveJob::TestHelper
-  
-  config.before(:each) do
+
+  config.before do
     clear_enqueued_jobs
     clear_performed_jobs
   end
-end 
+end

@@ -75,4 +75,4 @@ RSpec.describe TypeBalancer::Rails::Errors do
       expect(described_class.name).to eq('TypeBalancer::Rails::Errors')
     end
   end
-end 
+end

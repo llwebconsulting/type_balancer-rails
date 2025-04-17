@@ -37,13 +37,7 @@ module TypeBalancer
         def paginate
           return collection unless @paginate
 
-          if collection.respond_to?(:page)
-            paginate_with_kaminari
-          elsif collection.respond_to?(:paginate)
-            paginate_with_will_paginate
-          else
-            paginate_manually
-          end
+          paginate_with_strategy
         end
 
         def next_page?
@@ -65,6 +59,43 @@ module TypeBalancer
         private
 
         attr_reader :collection, :options, :page, :per_page
+
+        def paginate_with_strategy
+          return paginate_with_cursor if options[:cursor_strategy]
+          return paginate_with_kaminari if collection.respond_to?(:page)
+          return paginate_with_will_paginate if collection.respond_to?(:paginate)
+
+          paginate_manually
+        end
+
+        def paginate_with_cursor
+          cursor_service = build_cursor_service
+          paginated_data = cursor_service.paginate(page: page, per_page: per_page)
+
+          build_cursor_response(cursor_service, paginated_data)
+        rescue StandardError => e
+          raise TypeBalancer::Rails::Errors::PaginationError, e.message
+        end
+
+        def build_cursor_service
+          TypeBalancer::Rails::Query::CursorService.new(
+            collection,
+            strategy: options[:cursor_strategy]
+          )
+        end
+
+        def build_cursor_response(cursor_service, paginated_data)
+          {
+            data: paginated_data,
+            metadata: {
+              total_count: cursor_service.total_count,
+              next_page: cursor_service.next_page,
+              prev_page: cursor_service.prev_page,
+              current_page: page,
+              per_page: per_page
+            }
+          }
+        end
 
         def paginate_with_kaminari
           collection.page(@page).per(@per_page)

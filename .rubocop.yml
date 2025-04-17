@@ -1,32 +1,37 @@
 require:
-  - rubocop-rails
   - rubocop-rspec
+  - rubocop-rails
+  - rubocop-capybara
+  - rubocop-factory_bot
 
 AllCops:
   TargetRubyVersion: 3.2
   NewCops: enable
   SuggestExtensions: false
   Exclude:
-    - 'bin/*'
-    - 'vendor/**/*'
+    - 'bin/**/*'
     - 'tmp/**/*'
-    - 'spec/dummy/**/*'
-
-Style/StringLiterals:
-  EnforcedStyle: single_quotes
+    - 'vendor/**/*'
+    - 'log/**/*'
+    - 'node_modules/**/*'
+    - 'db/schema.rb'
+    - 'db/migrate/*.rb'
+    - 'Gemfile.lock'
 
 Style/Documentation:
   Enabled: false
 
-Style/DocumentDynamicEvalDefinition:
+Style/FrozenStringLiteralComment:
   Enabled: false
 
-Metrics/BlockLength:
-  Enabled: true
-  Exclude:
-    - 'spec/**/*'
-    - 'Rakefile'
-    - '*.gemspec'
+Style/StringLiterals:
+  EnforcedStyle: single_quotes
+
+Style/SymbolArray:
+  EnforcedStyle: brackets
+
+Style/WordArray:
+  EnforcedStyle: brackets
 
 Metrics/MethodLength:
   Max: 20
@@ -34,38 +39,101 @@ Metrics/MethodLength:
 Metrics/AbcSize:
   Max: 20
 
-Metrics/CyclomaticComplexity:
-  Max: 10
+Metrics/ClassLength:
+  Max: 200
 
-Metrics/PerceivedComplexity:
-  Max: 10
-
-Rails/ApplicationRecord:
-  Enabled: false  # We don't want to force ApplicationRecord in examples
-
-Rails/SkipsModelValidations:
-  Enabled: false  # Allow update_all, etc. in our gem
-
-RSpec/ExampleLength:
-  Max: 15
-
-RSpec/MultipleExpectations:
-  Max: 5
+Metrics/ModuleLength:
+  Max: 200
 
 RSpec/NestedGroups:
   Max: 4
 
-RSpec/VerifiedDoubles:
+RSpec/MultipleExpectations:
   Enabled: false
 
 RSpec/MultipleMemoizedHelpers:
-  Max: 10
+  Enabled: false
 
-RSpec/RepeatedExample:
-  Enabled: false  # We have intentionally repeated examples
+RSpec/ExampleLength:
+  Enabled: false
 
-RSpec/MultipleDescribes:
-  Enabled: false  # We have intentionally structured our specs this way
+RSpec/MessageSpies:
+  Enabled: false
 
-RSpec/RepeatedExampleGroupDescription:
-  Enabled: false  # We have intentionally structured our specs this way 
+RSpec/VerifiedDoubles:
+  Enabled: false
+
+RSpec/MessageChain:
+  Enabled: false
+
+RSpec/NoExpectationExample:
+  Enabled: false
+
+RSpec/SubjectStub:
+  Enabled: false
+
+RSpec/StubbedMock:
+  Enabled: false
+
+Capybara/CurrentPathExpectation:
+  Enabled: false
+
+Capybara/MatchStyle:
+  Enabled: false
+
+Capybara/NegationMatcher:
+  Enabled: false
+
+Capybara/SpecificActions:
+  Enabled: false
+
+Capybara/SpecificFinders:
+  Enabled: false
+
+Capybara/SpecificMatcher:
+  Enabled: false
+
+Capybara/VisibilityMatcher:
+  Enabled: false
+
+FactoryBot/AttributeDefinedStatically:
+  Enabled: false
+
+FactoryBot/ConsistentParenthesesStyle:
+  Enabled: false
+
+FactoryBot/CreateList:
+  Enabled: false
+
+FactoryBot/FactoryClassName:
+  Enabled: false
+
+FactoryBot/FactoryNameStyle:
+  Enabled: false
+
+FactoryBot/SyntaxMethods:
+  Enabled: false
+
+RSpecRails/AvoidSetupHook:
+  Enabled: false
+
+RSpecRails/HaveHttpStatus:
+  Enabled: false
+
+RSpecRails/HttpStatus:
+  Enabled: false
+
+RSpecRails/InferredSpecType:
+  Enabled: false
+
+RSpecRails/MinitestAssertions:
+  Enabled: false
+
+RSpecRails/NegationBeValid:
+  Enabled: false
+
+RSpecRails/TravelAround:
+  Enabled: false
+
+Layout/LineLength:
+  Max: 120 

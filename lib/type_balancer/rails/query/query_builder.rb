@@ -19,7 +19,7 @@ module TypeBalancer
         end
 
         def apply_conditions(conditions)
-          return scope if conditions.nil? || conditions.empty?
+          return scope if conditions.blank?
 
           scope.where(conditions)
         end

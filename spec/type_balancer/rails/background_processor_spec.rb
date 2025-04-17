@@ -54,4 +54,4 @@ RSpec.describe TypeBalancer::Rails::BackgroundProcessor do
       end
     end
   end
-end 
+end

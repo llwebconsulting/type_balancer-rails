@@ -24,6 +24,9 @@ module TypeBalancer
 
       # Raised when a required dependency is missing
       class DependencyError < Error; end
+
+      # Raised when pagination operations fail
+      class PaginationError < Error; end
     end
   end
 end

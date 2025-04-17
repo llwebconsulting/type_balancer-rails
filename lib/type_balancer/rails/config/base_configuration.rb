@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module TypeBalancer
   module Rails
     module Config
@@ -8,13 +10,14 @@ module TypeBalancer
 
         attr_accessor :redis_client, :redis_enabled, :redis_ttl,
                       :cache_enabled, :cache_ttl, :cache_store,
-                      :storage_strategy, :max_per_page, :cursor_buffer_multiplier,
+                      :storage_strategy, :cursor_buffer_multiplier,
                       :async_threshold, :per_page_default, :cache_duration
         attr_reader :strategy_manager, :storage_adapter, :storage_strategy_registry, :pagination_config
 
         def initialize
           @redis_enabled = false
           @cache_enabled = false
+          @cursor_buffer_multiplier = 2
           @storage_strategy_registry = TypeBalancer::Rails::Config::StrategyManager.new
           @pagination_config = TypeBalancer::Rails::Config::PaginationConfig.new
           register_default_storage_strategies
@@ -23,15 +26,27 @@ module TypeBalancer
         delegate :register_strategy, to: :TypeBalancer
 
         def redis_enabled?
-          @redis_enabled && !@redis_client.nil?
+          @redis_enabled
+        end
+
+        def cache_enabled?
+          @cache_enabled
         end
 
         def reset!
           @redis_enabled = false
           @cache_enabled = false
           @redis_client = nil
+          @redis_ttl = nil
+          @cache_store = nil
+          @cache_ttl = nil
+          @storage_strategy = nil
+          @cursor_buffer_multiplier = 2
+          @async_threshold = nil
+          @per_page_default = nil
+          @cache_duration = nil
           @storage_strategy_registry = TypeBalancer::Rails::Config::StrategyManager.new
-          @pagination_config.reset!
+          @pagination_config = TypeBalancer::Rails::Config::PaginationConfig.new
           register_default_storage_strategies
           self
         end
@@ -65,9 +80,9 @@ module TypeBalancer
           }
         end
 
-        def max_per_page=(value)
-          @pagination_config.set_max_per_page(value)
-        end
+        delegate :max_per_page=, to: :@pagination_config
+
+        delegate :max_per_page, to: :@pagination_config
 
         def redis
           yield(self) if block_given?

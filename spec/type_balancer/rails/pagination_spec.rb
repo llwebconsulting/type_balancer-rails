@@ -6,10 +6,10 @@ RSpec.describe TypeBalancer::Rails::Pagination do
   let(:per_page) { 10 }
   let(:page) { 1 }
   let(:pagination) { described_class.new(per_page: per_page, page: page) }
-  let(:relation) { instance_double('ActiveRecord::Relation') }
-  let(:where_relation) { instance_double('ActiveRecord::Relation') }
-  let(:none_relation) { instance_double('ActiveRecord::Relation') }
-  let(:reorder_relation) { instance_double('ActiveRecord::Relation') }
+  let(:relation) { instance_double(ActiveRecord::Relation) }
+  let(:where_relation) { instance_double(ActiveRecord::Relation) }
+  let(:none_relation) { instance_double(ActiveRecord::Relation) }
+  let(:reorder_relation) { instance_double(ActiveRecord::Relation) }
   let(:positions) { { 1 => 1.0, 2 => 2.0, 3 => 3.0, 4 => 4.0, 5 => 5.0 } }
 
   describe '#initialize' do
@@ -76,7 +76,7 @@ RSpec.describe TypeBalancer::Rails::Pagination do
         ]
       end
 
-      context 'on first page' do
+      context 'when on first page' do
         let(:pagination) { described_class.new(positions, page: 1, per_page: 2) }
 
         it 'selects first slice of positions' do
@@ -87,7 +87,7 @@ RSpec.describe TypeBalancer::Rails::Pagination do
         end
       end
 
-      context 'on second page' do
+      context 'when on second page' do
         let(:pagination) { described_class.new(positions, page: 2, per_page: 2) }
 
         it 'selects second slice of positions' do
@@ -102,7 +102,7 @@ RSpec.describe TypeBalancer::Rails::Pagination do
 
   describe 'private methods' do
     describe '#page_offset' do
-      context 'on first page' do
+      context 'when on first page' do
         let(:page) { 1 }
 
         it 'returns 0' do
@@ -110,7 +110,7 @@ RSpec.describe TypeBalancer::Rails::Pagination do
         end
       end
 
-      context 'on subsequent pages' do
+      context 'when on subsequent pages' do
         let(:page) { 3 }
         let(:per_page) { 5 }
 
@@ -128,4 +128,4 @@ RSpec.describe TypeBalancer::Rails::Pagination do
       end
     end
   end
-end 
+end

@@ -1,10 +1,10 @@
-# TypeBalancer Rails
+# TypeBalancer Rails Integration
 
-A Ruby on Rails gem for balancing records by type in ActiveRecord collections.
+Rails integration for the TypeBalancer gem.
 
-[![Gem Version](https://badge.fury.io/rb/type_balancer-rails.svg)](https://badge.fury.io/rb/type_balancer-rails)
-[![Build Status](https://github.com/carl/type_balancer-rails/workflows/CI/badge.svg)](https://github.com/carl/type_balancer-rails/actions)
-[![Code Climate](https://codeclimate.com/github/carl/type_balancer-rails/badges/gpa.svg)](https://codeclimate.com/github/carl/type_balancer-rails)
+[![Gem Version](https://badge.fury.io/rb/type_balancer_rails.svg)](https://badge.fury.io/rb/type_balancer_rails)
+[![Build Status](https://github.com/carl/type_balancer_rails/workflows/CI/badge.svg)](https://github.com/carl/type_balancer_rails/actions)
+[![Code Climate](https://codeclimate.com/github/carl/type_balancer_rails/badges/gpa.svg)](https://codeclimate.com/github/carl/type_balancer_rails)
 
 ## Features
 
@@ -22,14 +22,16 @@ A Ruby on Rails gem for balancing records by type in ActiveRecord collections.
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'type_balancer-rails'
+gem 'type_balancer_rails'
 ```
 
-Then execute:
+And then execute:
 
-```bash
-$ bundle install
-```
+    $ bundle install
+
+Or install it yourself as:
+
+    $ gem install type_balancer_rails
 
 ## Quick Start
 
@@ -199,60 +201,15 @@ RSpec.describe Post do
 end
 ```
 
+## Development
+
+After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+
+To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+
 ## Contributing
 
-We welcome contributions to TypeBalancer Rails! Here's how you can help:
-
-1. Fork the repository
-   ```bash
-   git clone https://github.com/carl/type_balancer-rails.git
-   cd type_balancer-rails
-   ```
-
-2. Set up your development environment
-   ```bash
-   bundle install
-   ```
-
-3. Create a feature branch
-   ```bash
-   git checkout -b feature/my-new-feature
-   ```
-
-4. Make your changes following our coding standards:
-   - Follow SOLID principles
-   - Write tests for new functionality
-   - Update documentation as needed
-   - Keep commits focused and well-documented
-
-5. Run the test suite
-   ```bash
-   bundle exec rspec
-   ```
-
-6. Commit your changes
-   ```bash
-   git commit -am 'Add some feature'
-   ```
-
-7. Push to the branch
-   ```bash
-   git push origin feature/my-new-feature
-   ```
-
-8. Create a Pull Request
-   - Provide a clear description of your changes
-   - Reference any related issues
-   - Ensure all tests are passing
-
-### Development Guidelines
-
-- Follow the SOLID principles
-- Use the Façade pattern for complex functionality
-- Write unit tests for all new features
-- Keep documentation up to date
-- Use meaningful commit messages
-- Follow Ruby style guidelines
+Bug reports and pull requests are welcome on GitHub at https://github.com/carl/type_balancer_rails. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [code of conduct](https://github.com/carl/type_balancer_rails/blob/main/CODE_OF_CONDUCT.md).
 
 ## License
 
@@ -260,4 +217,4 @@ The gem is available as open source under the terms of the [MIT License](https:/
 
 ## Code of Conduct
 
-Everyone interacting in the TypeBalancer Rails project's codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](CODE_OF_CONDUCT.md).
+Everyone interacting in the TypeBalancer Rails project's codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/carl/type_balancer_rails/blob/main/CODE_OF_CONDUCT.md).

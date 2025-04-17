@@ -36,7 +36,7 @@ require 'active_support/cache/memory_store'
 Rails.cache = ActiveSupport::Cache::MemoryStore.new
 
 # Load support files after loading our gem
-Dir[File.join(File.dirname(__FILE__), 'support/**/*.rb')].sort.each { |f| require f }
+Dir[File.join(File.dirname(__FILE__), 'support/**/*.rb')].each { |f| require f }
 
 # Configure RSpec
 RSpec.configure do |config|

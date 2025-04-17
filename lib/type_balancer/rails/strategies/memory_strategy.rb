@@ -10,7 +10,7 @@ module TypeBalancer
           @store = {}
         end
 
-        def store(key, value, ttl = nil, scope: nil)
+        def store(key, value, _ttl = nil, scope: nil)
           validate_key!(key)
           validate_value!(value)
           key = scope ? cache_key(key, scope) : cache_key(key)
@@ -34,7 +34,7 @@ module TypeBalancer
 
         def clear_for_scope(scope)
           pattern = cache_pattern(scope)
-          @store.keys.each do |key|
+          @store.each_key do |key|
             @store.delete(key) if key.start_with?(pattern)
           end
         end

@@ -1,0 +1,61 @@
+Inspecting 80 files
+............................C..............................C......C.............
+
+Offenses:
+
+lib/type_balancer/rails/query/pagination_service.rb:37:9: C: Metrics/AbcSize: Assignment Branch Condition size for paginate is too high. [<3, 24, 6> 24.92/20]
+        def paginate ...
+        ^^^^^^^^^^^^
+lib/type_balancer/rails/query/pagination_service.rb:37:9: C: Metrics/MethodLength: Method has too many lines. [26/20]
+        def paginate ...
+        ^^^^^^^^^^^^
+spec/type_balancer/rails/configuration_facade_spec.rb:7:3: C: Metrics/ModuleLength: Module has too many lines. [227/200]
+  module Rails ...
+  ^^^^^^^^^^^^
+spec/type_balancer/rails/query/pagination_service_spec.rb:8:5: C: Metrics/ModuleLength: Module has too many lines. [269/200]
+    module Query ...
+    ^^^^^^^^^^^^
+spec/type_balancer/rails/query/pagination_service_spec.rb:70:15: C: [Correctable] RSpec/ReceiveMessages: Use receive_messages instead of multiple stubs on lines [71].
+              allow(collection).to receive(:offset).and_return(collection)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/type_balancer/rails/query/pagination_service_spec.rb:71:15: C: [Correctable] RSpec/ReceiveMessages: Use receive_messages instead of multiple stubs on lines [70].
+              allow(collection).to receive(:limit).and_return(collection)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/type_balancer/rails/query/pagination_service_spec.rb:81:17: C: [Correctable] RSpec/ReceiveMessages: Use receive_messages instead of multiple stubs on lines [82].
+                allow(collection).to receive(:offset).and_return(collection)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/type_balancer/rails/query/pagination_service_spec.rb:82:17: C: [Correctable] RSpec/ReceiveMessages: Use receive_messages instead of multiple stubs on lines [81].
+                allow(collection).to receive(:limit).and_return(collection)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/type_balancer/rails/query/pagination_service_spec.rb:133:15: C: [Correctable] RSpec/ReceiveMessages: Use receive_messages instead of multiple stubs on lines [134].
+              allow(collection).to receive(:offset).and_return(collection)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/type_balancer/rails/query/pagination_service_spec.rb:134:15: C: [Correctable] RSpec/ReceiveMessages: Use receive_messages instead of multiple stubs on lines [133].
+              allow(collection).to receive(:limit).and_return(collection)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/type_balancer/rails/query/pagination_service_spec.rb:151:15: C: [Correctable] RSpec/ReceiveMessages: Use receive_messages instead of multiple stubs on lines [152].
+              allow(collection).to receive(:offset).and_return(collection)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/type_balancer/rails/query/pagination_service_spec.rb:152:15: C: [Correctable] RSpec/ReceiveMessages: Use receive_messages instead of multiple stubs on lines [151].
+              allow(collection).to receive(:limit).and_return(collection)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/type_balancer/rails/query/pagination_service_spec.rb:163:15: C: [Correctable] RSpec/ReceiveMessages: Use receive_messages instead of multiple stubs on lines [164].
+              allow(collection).to receive(:offset).and_return(collection)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/type_balancer/rails/query/pagination_service_spec.rb:164:15: C: [Correctable] RSpec/ReceiveMessages: Use receive_messages instead of multiple stubs on lines [163].
+              allow(collection).to receive(:limit).and_return(collection)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/type_balancer/rails/query/pagination_service_spec.rb:186:121: C: Layout/LineLength: Line is too long. [138/120]
+                                                                                     strategy: cursor_strategy).and_return(cursor_service)
+                                                                                                                        ^^^^^^^^^^^^^^^^^^
+spec/type_balancer/rails/query/pagination_service_spec.rb:189:15: C: [Correctable] RSpec/ReceiveMessages: Use receive_messages instead of multiple stubs on lines [190, 191].
+              allow(cursor_service).to receive(:total_count).and_return(total_count)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/type_balancer/rails/query/pagination_service_spec.rb:190:15: C: [Correctable] RSpec/ReceiveMessages: Use receive_messages instead of multiple stubs on lines [189, 191].
+              allow(cursor_service).to receive(:next_page).and_return(next_page)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/type_balancer/rails/query/pagination_service_spec.rb:191:15: C: [Correctable] RSpec/ReceiveMessages: Use receive_messages instead of multiple stubs on lines [189, 190].
+              allow(cursor_service).to receive(:prev_page).and_return(prev_page)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+80 files inspected, 18 offenses detected, 13 offenses autocorrectable

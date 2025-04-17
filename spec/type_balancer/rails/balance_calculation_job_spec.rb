@@ -11,22 +11,21 @@ RSpec.describe TypeBalancer::Rails::BalanceCalculationJob do
       )
     end
   end
-  
+
   let(:relation) do
-    instance_double("ActiveRecord::Relation").tap do |double|
-      allow(double).to receive(:klass).and_return(model_class)
-      allow(double).to receive(:cache_key_with_version).and_return('posts/123-20230401')
+    instance_double(ActiveRecord::Relation).tap do |double|
+      allow(double).to receive_messages(klass: model_class, cache_key_with_version: 'posts/123-20230401')
     end
   end
 
   let(:position_manager) do
-    instance_double('TypeBalancer::Rails::BackgroundPositionManager').tap do |double|
+    instance_double(TypeBalancer::Rails::BackgroundPositionManager).tap do |double|
       allow(double).to receive(:fetch_or_calculate).with(relation).and_return({ 1 => 1, 2 => 2 })
     end
   end
 
   let(:storage_strategy) do
-    instance_double('TypeBalancer::Rails::Strategies::BaseStrategy').tap do |double|
+    instance_double(TypeBalancer::Rails::Strategies::BaseStrategy).tap do |double|
       allow(double).to receive(:store)
     end
   end
@@ -53,9 +52,9 @@ RSpec.describe TypeBalancer::Rails::BalanceCalculationJob do
       end
 
       it 'raises the error' do
-        expect {
+        expect do
           described_class.perform_now(relation, {})
-        }.to raise_error('Position calculation error')
+        end.to raise_error('Position calculation error')
       end
     end
 
@@ -65,9 +64,9 @@ RSpec.describe TypeBalancer::Rails::BalanceCalculationJob do
       end
 
       it 'raises the error' do
-        expect {
+        expect do
           described_class.perform_now(relation, {})
-        }.to raise_error('Storage error')
+        end.to raise_error('Storage error')
       end
     end
   end
@@ -79,4 +78,4 @@ RSpec.describe TypeBalancer::Rails::BalanceCalculationJob do
       expect(cache_key).to eq('type_balancer/posts/posts/123-20230401')
     end
   end
-end 
+end

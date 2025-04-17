@@ -3,6 +3,8 @@
 require 'spec_helper'
 
 RSpec.describe TypeBalancer::Rails::Strategies::BaseStrategy do
+  subject(:strategy) { described_class.new(collection, storage_adapter, options) }
+
   let(:collection) { double('collection') }
   let(:storage_adapter) { double('storage_adapter') }
   let(:options) { { ttl: 3600 } }
@@ -10,16 +12,15 @@ RSpec.describe TypeBalancer::Rails::Strategies::BaseStrategy do
   let(:configuration) { double('configuration') }
 
   before do
-    allow(TypeBalancer::Rails::Config::ConfigStorageAdapter).to receive(:new).with(strategy_manager).and_return(storage_adapter)
-    allow(storage_adapter).to receive(:cache_enabled?).and_return(true)
-    allow(storage_adapter).to receive(:redis_enabled?).and_return(true)
+    adapter_class = TypeBalancer::Rails::Config::ConfigStorageAdapter
+    allow(adapter_class).to receive(:new)
+      .with(strategy_manager)
+      .and_return(storage_adapter)
+    allow(storage_adapter).to receive_messages(cache_enabled?: true, redis_enabled?: true)
     allow(TypeBalancer::Rails).to receive(:configuration).and_return(configuration)
-    allow(configuration).to receive(:cache_ttl).and_return(7200)
-    allow(configuration).to receive(:redis_ttl).and_return(7200)
+    allow(configuration).to receive_messages(cache_ttl: 7200, redis_ttl: 7200)
     allow(collection).to receive(:object_id).and_return(6140)
   end
-
-  subject(:strategy) { described_class.new(collection, storage_adapter, options) }
 
   describe '#initialize' do
     it 'sets collection, storage_adapter and options' do
@@ -95,7 +96,7 @@ RSpec.describe TypeBalancer::Rails::Strategies::BaseStrategy do
 
   describe '#key_for' do
     it 'returns key with collection id' do
-      expect(strategy.key_for('test')).to eq("type_balancer:6140:test")
+      expect(strategy.key_for('test')).to eq('type_balancer:6140:test')
     end
 
     it 'raises error when key is nil' do
@@ -105,7 +106,7 @@ RSpec.describe TypeBalancer::Rails::Strategies::BaseStrategy do
 
   describe '#scope_key_for' do
     it 'returns key with collection id and scope' do
-      expect(strategy.scope_key_for('test', 'scope')).to eq("type_balancer:6140:scope:test")
+      expect(strategy.scope_key_for('test', 'scope')).to eq('type_balancer:6140:scope:test')
     end
 
     it 'raises error when key is nil' do
@@ -244,4 +245,4 @@ RSpec.describe TypeBalancer::Rails::Strategies::BaseStrategy do
       end
     end
   end
-end 
+end

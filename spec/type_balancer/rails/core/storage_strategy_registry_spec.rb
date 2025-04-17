@@ -4,7 +4,7 @@ require 'spec_helper'
 
 RSpec.describe TypeBalancer::Rails::Core::StorageStrategyRegistry do
   let(:registry) { described_class.new }
-  let(:strategy) { instance_double('TypeBalancer::Rails::Strategies::BaseStrategy') }
+  let(:strategy) { instance_double(TypeBalancer::Rails::Strategies::BaseStrategy) }
 
   describe '#initialize' do
     it 'creates an empty registry' do
@@ -24,11 +24,11 @@ RSpec.describe TypeBalancer::Rails::Core::StorageStrategyRegistry do
     end
 
     it 'overwrites existing strategy with same name' do
-      new_strategy = instance_double('TypeBalancer::Rails::Strategies::BaseStrategy')
-      
+      new_strategy = instance_double(TypeBalancer::Rails::Strategies::BaseStrategy)
+
       registry.register(:test, strategy)
       registry.register(:test, new_strategy)
-      
+
       expect(registry[:test]).to eq(new_strategy)
     end
   end
@@ -64,4 +64,4 @@ RSpec.describe TypeBalancer::Rails::Core::StorageStrategyRegistry do
       expect(registry.clear).to be_empty
     end
   end
-end 
+end

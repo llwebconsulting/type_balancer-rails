@@ -7,9 +7,8 @@ module TypeBalancer
     module Query
       RSpec.describe QueryBuilder do
         let(:scope) do
-          instance_double("ActiveRecord::Relation").tap do |double|
-            allow(double).to receive(:where).and_return(double)
-            allow(double).to receive(:order).and_return(double)
+          instance_double(ActiveRecord::Relation).tap do |double|
+            allow(double).to receive_messages(where: double, order: double)
           end
         end
         let(:builder) { described_class.new(scope) }
@@ -89,4 +88,4 @@ module TypeBalancer
       end
     end
   end
-end 
+end

@@ -3,12 +3,12 @@
 require 'spec_helper'
 
 RSpec.describe TypeBalancer::Rails::Strategies::MemoryStrategy do
+  subject(:strategy) { described_class.new(collection, options) }
+
   let(:collection) { double('Collection', object_id: 123) }
   let(:options) { { ttl: 3600 } }
-  let(:strategy_manager) { instance_double('TypeBalancer::Rails::Config::StrategyManager') }
-  let(:storage_adapter) { instance_double('TypeBalancer::Rails::Config::ConfigStorageAdapter') }
-  
-  subject(:strategy) { described_class.new(collection, options) }
+  let(:strategy_manager) { instance_double(TypeBalancer::Rails::Config::StrategyManager) }
+  let(:storage_adapter) { instance_double(TypeBalancer::Rails::Config::ConfigStorageAdapter) }
 
   before do
     allow(TypeBalancer::Rails::Config::ConfigStorageAdapter).to receive(:new).and_return(storage_adapter)
@@ -112,7 +112,7 @@ RSpec.describe TypeBalancer::Rails::Strategies::MemoryStrategy do
   end
 
   describe '#clear' do
-    let(:keys) { %w[key1 key2] }
+    let(:keys) { ['key1', 'key2'] }
     let(:values) { { data1: 'test1', data2: 'test2' } }
 
     before do
@@ -131,17 +131,15 @@ RSpec.describe TypeBalancer::Rails::Strategies::MemoryStrategy do
 
   describe '#clear_for_scope' do
     let(:scope) { double('Scope', object_id: 456) }
-    let(:keys) { %w[key1 key2] }
+    let(:keys) { ['key1', 'key2'] }
     let(:values) { { data1: 'test1', data2: 'test2' } }
 
     before do
       # Store some values with scope
       keys.each_with_index do |key, index|
         strategy.store(key, values[:"data#{index + 1}"], nil, scope: scope)
-      end
 
-      # Store some values without scope
-      keys.each_with_index do |key, index|
+        # Store some values without scope
         strategy.store(key, values[:"data#{index + 1}"])
       end
     end
@@ -163,7 +161,7 @@ RSpec.describe TypeBalancer::Rails::Strategies::MemoryStrategy do
 
   describe '#fetch_for_scope' do
     let(:scope) { double('Scope', object_id: 456) }
-    let(:keys) { %w[key1 key2] }
+    let(:keys) { ['key1', 'key2'] }
     let(:values) { { data1: 'test1', data2: 'test2' } }
 
     before do
@@ -174,12 +172,12 @@ RSpec.describe TypeBalancer::Rails::Strategies::MemoryStrategy do
 
     it 'returns hash of all values for scope' do
       result = strategy.fetch_for_scope(scope)
-      expected = keys.each_with_index.map do |key, index|
+      expected = keys.each_with_index.to_h do |key, index|
         [
           "type_balancer:456:#{key}",
           values[:"data#{index + 1}"]
         ]
-      end.to_h
+      end
 
       expect(result).to eq(expected)
     end
@@ -209,4 +207,4 @@ RSpec.describe TypeBalancer::Rails::Strategies::MemoryStrategy do
       end
     end
   end
-end 
+end
