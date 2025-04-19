@@ -2,6 +2,7 @@
 
 require 'redis'
 require 'mock_redis'
+require 'type_balancer/rails'
 
 # Configure Redis for the test environment
 if Rails.env.test?
@@ -15,6 +16,9 @@ else
   }
   $redis = Redis.new(redis_config)
 end
+
+# Initialize TypeBalancer::Rails configuration
+TypeBalancer::Rails.initialize!
 
 # Configure TypeBalancer to use Redis
 TypeBalancer::Rails.configure do |config|

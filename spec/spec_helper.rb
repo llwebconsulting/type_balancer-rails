@@ -7,6 +7,8 @@ require 'timecop'
 require 'yaml'
 require 'mock_redis'
 require 'database_cleaner'
+require 'action_cable'
+require 'action-cable-testing'
 
 # Configure SimpleCov
 SimpleCov.start do
@@ -25,6 +27,14 @@ SimpleCov.start do
                                                        SimpleCov::Formatter::CoberturaFormatter
                                                      ])
 end
+
+# Load Rails environment
+ENV['RAILS_ENV'] = 'test'
+require File.expand_path('../spec/dummy/config/environment.rb', __dir__)
+
+# Load schema
+ActiveRecord::Base.establish_connection(:test)
+load File.expand_path('../spec/dummy/db/schema.rb', __dir__)
 
 # Configure RSpec
 RSpec.configure do |config|
@@ -47,9 +57,19 @@ RSpec.configure do |config|
   config.order = :random
   Kernel.srand config.seed
 
+  config.before(:suite) do
+    DatabaseCleaner.strategy = :transaction
+    DatabaseCleaner.clean_with(:truncation)
+  end
+
   config.before do
+    DatabaseCleaner.start
     TypeBalancer::Rails.reset!
     TypeBalancer::Rails.instance_variable_set(:@storage_adapter, nil)
     Rails.cache.clear
+  end
+
+  config.after do
+    DatabaseCleaner.clean
   end
 end

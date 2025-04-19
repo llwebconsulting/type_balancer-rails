@@ -8,6 +8,8 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
+    action-cable-testing (0.6.1)
+      actioncable (>= 5.0)
     actioncable (8.0.2)
       actionpack (= 8.0.2)
       activesupport (= 8.0.2)
@@ -332,6 +334,7 @@ PLATFORMS
   x86_64-linux-musl
 
 DEPENDENCIES
+  action-cable-testing
   bundler-audit (~> 0.9.1)
   database_cleaner (~> 2.0)
   database_cleaner-active_record

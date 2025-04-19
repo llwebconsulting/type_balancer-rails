@@ -19,6 +19,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'rails', '>= 6.0'
   spec.add_dependency 'redis', '>= 4.0'
 
+  spec.add_development_dependency 'action-cable-testing'
   spec.add_development_dependency 'database_cleaner-active_record'
   spec.add_development_dependency 'mock_redis'
   spec.add_development_dependency 'rspec-rails'
