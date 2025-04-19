@@ -46,8 +46,14 @@ RSpec.describe 'Caching Integration', type: :integration do
 
     before do
       TypeBalancer::Rails.configure do |config|
+        # Configure cache
+        config.enable_cache
         config.configure_cache
         config.cache_ttl = 3600
+
+        # Configure pagination (required for validation)
+        config.max_per_page = 100
+        config.cursor_buffer_multiplier = 2
       end
 
       puts "\nDebug Info:"
