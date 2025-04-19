@@ -5,73 +5,59 @@ module TypeBalancer
     module Strategies
       # Cursor-based storage strategy
       class CursorStrategy < BaseStrategy
-        def initialize(collection, storage_adapter, options = {})
+        def initialize(collection = nil, options = {})
           super
+          @store = {}
         end
 
-        def execute
-          # Implementation for cursor-based execution
-          collection
-        end
-
-        def store(key, value, ttl = nil)
+        def store(key, value, _ttl = nil, scope: nil)
           validate_key!(key)
           validate_value!(value)
-          key = key_for(key)
-
-          if cache_enabled?
-            ::Rails.cache.write(key, value, expires_in: normalize_ttl(ttl))
-          else
-            value
-          end
+          key = scope ? cache_key(key, scope) : cache_key(key)
+          @store[key] = value
+          value
         end
 
-        def fetch(key)
+        def fetch(key, scope: nil)
           validate_key!(key)
-          key = key_for(key)
-
-          return unless cache_enabled?
-
-          ::Rails.cache.read(key)
+          key = scope ? cache_key(key, scope) : cache_key(key)
+          @store[key]
         end
 
-        def delete(key)
+        def execute(key, value = nil, ttl = nil)
+          return fetch(key) if value.nil?
+
+          store(key, value, ttl)
+        end
+
+        def delete(key, scope: nil)
           validate_key!(key)
-          key = key_for(key)
-
-          if cache_enabled?
-            ::Rails.cache.delete(key)
-          else
-            true
-          end
+          key = scope ? cache_key(key, scope) : cache_key(key)
+          @store.delete(key)
         end
 
-        def clear
-          ::Rails.cache.clear if cache_enabled?
-        end
+        delegate :clear, to: :@store
 
         def clear_for_scope(scope)
-          validate_scope!(scope)
-          key_pattern = key_for("#{scope.klass.model_name.plural}*")
-          if cache_enabled?
-            ::Rails.cache.delete_matched(key_pattern)
-          else
-            true
+          pattern = cache_pattern(scope)
+          @store.each_key do |key|
+            @store.delete(key) if key.start_with?(pattern)
           end
         end
 
         def fetch_for_scope(scope)
-          validate_scope!(scope)
-          return unless cache_enabled?
-
-          ::Rails.cache.read(key_for(scope.klass.model_name.plural))
+          pattern = cache_pattern(scope)
+          @store.select { |key, _| key.start_with?(pattern) }
         end
 
         private
 
-        def validate_scope!(scope)
-          raise ArgumentError, 'Scope cannot be nil' if scope.nil?
-          raise ArgumentError, 'Scope must be an ActiveRecord::Relation' unless scope.is_a?(ActiveRecord::Relation)
+        def cache_pattern(scope = @collection)
+          "type_balancer:#{scope.object_id}:"
+        end
+
+        def cache_key(key, scope = @collection)
+          "type_balancer:#{scope.object_id}:#{key}"
         end
       end
     end

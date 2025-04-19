@@ -7,80 +7,36 @@ module TypeBalancer
     module Strategies
       # Redis-based storage strategy
       class RedisStrategy < BaseStrategy
-        def initialize(collection = nil, options = {})
+        def initialize(collection = nil, storage_adapter = nil, options = {})
+          if storage_adapter.is_a?(Hash)
+            raise ArgumentError,
+                  'RedisStrategy requires a ConfigStorageAdapter instance, not a Hash'
+          end
+
           super
-          @options = options
-        end
-
-        def redis
-          @redis ||= @options[:redis] || TypeBalancer::Rails.configuration.redis_client
-        end
-
-        def default_ttl
-          @default_ttl ||= @options[:ttl] || TypeBalancer::Rails.configuration.redis_ttl
         end
 
         def store(key, value, ttl = nil)
           validate_key!(key)
           validate_value!(value)
-          validate_redis!
-          normalized_ttl = normalize_ttl(ttl)
-
-          redis_key = cache_key(key)
-          json_value = value.to_json
-
-          if normalized_ttl
-            redis.setex(redis_key, normalized_ttl, json_value)
-          else
-            redis.set(redis_key, json_value)
-          end
-
-          deep_symbolize_keys(value)
+          @storage_adapter.store(key_for(key), value, ttl)
         end
 
         def fetch(key)
           validate_key!(key)
-          validate_redis!
-          redis_key = cache_key(key)
-
-          return unless (json_value = redis.get(redis_key))
-
-          deep_symbolize_keys(JSON.parse(json_value))
+          @storage_adapter.fetch(key_for(key))
         end
 
         def delete(key)
           validate_key!(key)
-          validate_redis!
-          redis_key = cache_key(key)
-          redis.del(redis_key)
+          @storage_adapter.delete(key_for(key))
         end
 
-        def clear
-          validate_redis!
-          pattern = cache_key('*')
-          keys = redis.keys(pattern)
-          redis.del(*keys) if keys.any?
-        end
+        delegate :clear, to: :@storage_adapter
 
-        def clear_for_scope(scope)
-          validate_redis!
-          pattern = cache_pattern(scope)
-          keys = redis.keys(pattern)
-          redis.del(*keys) if keys.any?
-        end
+        delegate :clear_for_scope, to: :@storage_adapter
 
-        def fetch_for_scope(scope)
-          validate_redis!
-          pattern = cache_pattern(scope)
-          keys = redis.keys(pattern)
-          return {} if keys.empty?
-
-          keys.each_with_object({}) do |key, hash|
-            if (value = redis.get(key))
-              hash[key] = deep_symbolize_keys(JSON.parse(value))
-            end
-          end
-        end
+        delegate :fetch_for_scope, to: :@storage_adapter
 
         def execute(key, value = nil, ttl = nil)
           return fetch(key) if value.nil?
@@ -90,35 +46,14 @@ module TypeBalancer
 
         private
 
-        def validate_redis!
-          return if redis && TypeBalancer::Rails.configuration.redis_enabled?
-
-          raise ArgumentError, 'Redis client not configured'
+        def validate_key!(key)
+          raise ArgumentError, 'Key cannot be nil' if key.nil?
+          raise ArgumentError, 'Key must be a string or symbol' unless key.is_a?(String) || key.is_a?(Symbol)
         end
 
-        def cache_key(key)
-          "type_balancer:#{@collection.object_id}:#{key}"
-        end
-
-        def cache_pattern(scope = @collection)
-          "type_balancer:#{scope.object_id}:*"
-        end
-
-        def deep_symbolize_keys(value)
-          case value
-          when Hash
-            value.each_with_object({}) do |(k, v), result|
-              result[k.to_sym] = deep_symbolize_keys(v)
-            end
-          when Array
-            value.map { |v| deep_symbolize_keys(v) }
-          else
-            value
-          end
-        end
-
-        def normalize_ttl(ttl)
-          ttl || default_ttl
+        def validate_value!(value)
+          raise ArgumentError, 'Value cannot be nil' if value.nil?
+          raise ArgumentError, 'Value must be JSON serializable' unless value.respond_to?(:to_json)
         end
       end
     end

@@ -47,6 +47,7 @@ module TypeBalancer
         def register_default_classes
           register_class(:redis, Strategies::RedisStrategy)
           register_class(:memory, Strategies::MemoryStrategy)
+          register_class(:cursor, Strategies::CursorStrategy)
         end
 
         def create_strategy(name)

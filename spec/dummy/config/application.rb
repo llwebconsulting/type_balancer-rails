@@ -6,6 +6,7 @@ require 'active_support/railtie'
 require 'action_controller/railtie'
 require 'action_view/railtie'
 require 'active_job/railtie'
+require 'action_cable/engine'
 
 # Add the lib directory to the load path
 $LOAD_PATH.unshift File.expand_path('../../../lib', __dir__)
@@ -56,6 +57,7 @@ module Dummy
     config.type_balancer.enable_cache = true
     config.type_balancer.max_per_page = 100
     config.type_balancer.cursor_buffer_multiplier = 2
+    config.type_balancer.redis_enabled = true
 
     # Use memory store for testing
     config.cache_store = :memory_store, {

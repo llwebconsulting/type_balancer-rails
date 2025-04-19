@@ -3,104 +3,111 @@
 require 'spec_helper'
 
 RSpec.describe TypeBalancer::Rails::Strategies::RedisStrategy do
-  subject(:strategy) { described_class.new(collection, redis: redis_client, ttl: ttl) }
+  subject(:strategy) { described_class.new(collection, storage_adapter, options) }
 
-  let(:redis_client) { instance_double(Redis) }
-  let(:scope) { 'test_models' }
-  let(:ttl) { 3600 }
   let(:collection) { instance_double(Object, object_id: 123) }
+  let(:storage_adapter) { instance_double(TypeBalancer::Rails::Config::ConfigStorageAdapter) }
+  let(:redis_client) { instance_double(Redis) }
+  let(:options) { { ttl: 3600 } }
 
   before do
+    allow(storage_adapter).to receive_messages(
+      store: true,
+      fetch: nil,
+      delete: true,
+      clear: true,
+      clear_for_scope: true,
+      fetch_for_scope: {},
+      redis_client: redis_client
+    )
+
     allow(redis_client).to receive_messages(
       get: nil,
-      set: true,
+      setex: true,
       del: true,
-      scan: ['0', []]
+      keys: [],
+      ping: 'PONG'
     )
-    allow(TypeBalancer::Rails.configuration).to receive_messages(redis_client: redis_client, redis_enabled?: true)
-    allow(TypeBalancer::Rails::Config::ConfigStorageAdapter).to receive_messages(cache_ttl: 3600, redis_enabled: true)
-    allow(redis_client).to receive(:setex)
-    allow(redis_client).to receive(:keys).and_return([])
+  end
+
+  describe '#initialize' do
+    context 'with invalid storage adapter' do
+      it 'raises error when storage adapter is a hash' do
+        expect { described_class.new(collection, {}) }.to raise_error(
+          ArgumentError,
+          'RedisStrategy requires a ConfigStorageAdapter instance, not a Hash'
+        )
+      end
+    end
   end
 
   describe '#store' do
-    context 'with ttl' do
-      it 'stores value with expiration' do
-        expect(redis_client).to receive(:setex).with('type_balancer:123:key', 3600, '{"foo":"bar"}')
-        strategy.store('key', { foo: 'bar' })
+    let(:key) { 'test_key' }
+    let(:value) { { foo: 'bar' } }
+
+    it 'stores value through storage adapter' do
+      expect(storage_adapter).to receive(:store).with("type_balancer:123:#{key}", value, options[:ttl])
+      strategy.store(key, value)
+    end
+
+    context 'with invalid key' do
+      it 'raises error for nil key' do
+        expect { strategy.store(nil, value) }.to raise_error(ArgumentError, 'Key cannot be nil')
+      end
+
+      it 'raises error for non-string/symbol key' do
+        expect { strategy.store(123, value) }.to raise_error(ArgumentError, 'Key must be a string or symbol')
       end
     end
 
-    context 'without ttl' do
-      let(:ttl) { nil }
-
-      it 'stores value with default expiration' do
-        expect(redis_client).to receive(:setex).with('type_balancer:123:key', 3600, '{"foo":"bar"}')
-        strategy.store('key', { foo: 'bar' })
+    context 'with invalid value' do
+      it 'raises error for nil value' do
+        expect { strategy.store(key, nil) }.to raise_error(ArgumentError, 'Value cannot be nil')
       end
-    end
 
-    context 'with nil key' do
-      it 'raises error' do
-        expect { strategy.store(nil, { foo: 'bar' }) }.to raise_error(ArgumentError, 'Key cannot be nil')
-      end
-    end
-
-    context 'with nil value' do
-      it 'raises error' do
-        expect { strategy.store('key', nil) }.to raise_error(ArgumentError, 'Value cannot be nil')
+      it 'raises error for non-JSON-serializable value' do
+        non_serializable = Object.new
+        expect do
+          strategy.store(key, non_serializable)
+        end.to raise_error(ArgumentError, 'Value must be JSON serializable')
       end
     end
   end
 
   describe '#fetch' do
-    context 'when key exists' do
-      before do
-        allow(redis_client).to receive(:get).with('type_balancer:123:key').and_return('{"foo":"bar"}')
-      end
+    let(:key) { 'test_key' }
+    let(:value) { { foo: 'bar' } }
 
-      it 'returns stored value' do
-        expect(strategy.fetch('key')).to eq({ foo: 'bar' })
-      end
+    it 'fetches value through storage adapter' do
+      expect(storage_adapter).to receive(:fetch).with("type_balancer:123:#{key}")
+      strategy.fetch(key)
     end
 
-    context 'when key does not exist' do
-      before do
-        allow(redis_client).to receive(:get).with('type_balancer:123:key').and_return(nil)
-      end
-
-      it 'returns nil' do
-        expect(strategy.fetch('key')).to be_nil
-      end
-    end
-
-    context 'with nil key' do
-      it 'raises error' do
+    context 'with invalid key' do
+      it 'raises error for nil key' do
         expect { strategy.fetch(nil) }.to raise_error(ArgumentError, 'Key cannot be nil')
       end
     end
   end
 
   describe '#delete' do
-    it 'removes key' do
-      expect(redis_client).to receive(:del).with('type_balancer:123:key')
-      strategy.delete('key')
+    let(:key) { 'test_key' }
+
+    it 'deletes key through storage adapter' do
+      expect(storage_adapter).to receive(:delete).with("type_balancer:123:#{key}")
+      strategy.delete(key)
     end
 
-    context 'with nil key' do
-      it 'raises error' do
+    context 'with invalid key' do
+      it 'raises error for nil key' do
         expect { strategy.delete(nil) }.to raise_error(ArgumentError, 'Key cannot be nil')
       end
     end
   end
 
   describe '#clear' do
-    before do
-      allow(redis_client).to receive(:keys).with('type_balancer:123:*').and_return(['key1', 'key2'])
-    end
-
-    it 'removes all keys' do
-      expect(redis_client).to receive(:del).with('key1', 'key2')
+    it 'delegates to storage adapter' do
+      expect(storage_adapter).to receive(:clear)
       strategy.clear
     end
   end
@@ -108,12 +115,8 @@ RSpec.describe TypeBalancer::Rails::Strategies::RedisStrategy do
   describe '#clear_for_scope' do
     let(:scope) { double('scope', object_id: 456) }
 
-    before do
-      allow(redis_client).to receive(:keys).with('type_balancer:456:*').and_return(['key1', 'key2'])
-    end
-
-    it 'removes all keys for scope' do
-      expect(redis_client).to receive(:del).with('key1', 'key2')
+    it 'delegates to storage adapter' do
+      expect(storage_adapter).to receive(:clear_for_scope).with(scope)
       strategy.clear_for_scope(scope)
     end
   end
@@ -121,47 +124,27 @@ RSpec.describe TypeBalancer::Rails::Strategies::RedisStrategy do
   describe '#fetch_for_scope' do
     let(:scope) { double('scope', object_id: 456) }
 
-    before do
-      allow(redis_client).to receive(:keys).with('type_balancer:456:*').and_return(['type_balancer:456:key1',
-                                                                                    'type_balancer:456:key2'])
-      allow(redis_client).to receive(:get).with('type_balancer:456:key1').and_return('{"foo":"bar"}')
-      allow(redis_client).to receive(:get).with('type_balancer:456:key2').and_return('{"baz":"qux"}')
-    end
-
-    it 'returns all values for scope' do
-      result = strategy.fetch_for_scope(scope)
-      expect(result).to eq({
-                             'type_balancer:456:key1' => { foo: 'bar' },
-                             'type_balancer:456:key2' => { baz: 'qux' }
-                           })
-    end
-
-    context 'with empty scope' do
-      before do
-        allow(redis_client).to receive(:keys).with('type_balancer:456:*').and_return([])
-      end
-
-      it 'returns empty hash' do
-        expect(strategy.fetch_for_scope(scope)).to eq({})
-      end
+    it 'delegates to storage adapter' do
+      expect(storage_adapter).to receive(:fetch_for_scope).with(scope)
+      strategy.fetch_for_scope(scope)
     end
   end
 
   describe '#execute' do
+    let(:key) { 'test_key' }
+    let(:value) { { foo: 'bar' } }
+
     context 'with value' do
       it 'stores value' do
-        expect(redis_client).to receive(:setex).with('type_balancer:123:key', 3600, '{"foo":"bar"}')
-        strategy.execute('key', { foo: 'bar' })
+        expect(storage_adapter).to receive(:store).with("type_balancer:123:#{key}", value, options[:ttl])
+        strategy.execute(key, value)
       end
     end
 
     context 'without value' do
-      before do
-        allow(redis_client).to receive(:get).with('type_balancer:123:key').and_return('{"foo":"bar"}')
-      end
-
       it 'fetches value' do
-        expect(strategy.execute('key')).to eq({ foo: 'bar' })
+        expect(storage_adapter).to receive(:fetch).with("type_balancer:123:#{key}")
+        strategy.execute(key)
       end
     end
   end

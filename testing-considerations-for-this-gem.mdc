@@ -1,0 +1,17 @@
+# Testing Considerations for this Gem
+
+## Unit Tests
+- Do not use a database for unit tests in this application. We will mock any interactions that could use a database
+- Unit tests must achieve high coverage and pass reliably before moving to integration tests
+- Focus on testing one component at a time, mocking all external dependencies
+
+## Integration Tests
+- Integration tests should only be created after:
+  1. Unit tests have achieved high coverage
+  2. Unit tests are consistently passing
+  3. Explicit instruction has been given to begin integration testing
+- When working on integration tests:
+  - Real databases and services may be used as appropriate
+  - Follow the guidelines in rails-testing-environment.mdc for proper setup
+  - Ensure proper cleanup between tests
+  - Document any external service requirements (Redis, etc.) 

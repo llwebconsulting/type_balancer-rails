@@ -1,0 +1,47 @@
+# Writing Automated Tests
+
+## General Principles
+- Unit tests should only test what a class is responsible for
+- Never write tests to directly test private methods
+- Private methods should only be tested through the methods that call them
+- When fixing tests, focus on fixing and re-running one test at a time
+- When checking code coverage, run the entire suite first
+
+## Mocking Strategy
+- Use mocking for:
+  - External services (Redis, databases in unit tests)
+  - Time-dependent operations
+  - Network calls
+  - File system operations
+- Choose appropriate mocking approach:
+  - Stubs for simple return values
+  - Mocks for interaction verification
+  - Spies for complex behavior verification
+- Document mock setup and assumptions
+
+## Integration Tests
+- Only create when explicitly instructed
+- Focus on end-to-end functionality
+- Test real service interactions:
+  - Database operations
+  - Cache interactions
+  - Background jobs
+  - External service calls
+- Properly isolate test environments
+- Clean up all resources after tests
+
+## Test Data Management
+- Use factories or fixtures consistently
+- Avoid sharing mutable state between tests
+- Clean up test data appropriately:
+  - Database records
+  - Cache entries
+  - Uploaded files
+  - External service state
+
+## Coverage and Quality
+- Aim for high coverage but don't sacrifice test quality
+- Test edge cases and error conditions
+- Verify both positive and negative scenarios
+- Document complex test scenarios
+- Include performance considerations in tests 

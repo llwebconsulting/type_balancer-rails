@@ -12,21 +12,27 @@ module TypeBalancer
           @cache_store = nil
         end
 
-        def store(key:, value:, ttl: nil)
+        def store(key, value, ttl = nil)
           validate!
           if redis_enabled?
             store_in_redis(key, value, ttl)
-          else
+          elsif cache_enabled?
             store_in_cache(key, value, ttl)
+          else
+            raise TypeBalancer::Rails::Errors::ConfigurationError,
+                  'Neither Redis nor cache store is configured'
           end
         end
 
-        def fetch(key:)
+        def fetch(key)
           validate!
           if redis_enabled?
             fetch_from_redis(key)
-          else
+          elsif cache_enabled?
             fetch_from_cache(key)
+          else
+            raise TypeBalancer::Rails::Errors::ConfigurationError,
+                  'Neither Redis nor cache store is configured'
           end
         end
 
@@ -35,7 +41,8 @@ module TypeBalancer
 
           @redis_client = client
           validate_redis!
-          @strategy_manager[:redis].configure_redis(client) if @strategy_manager
+          redis_strategy = TypeBalancer::Rails::Strategies::RedisStrategy.new(nil, self)
+          @strategy_manager.register(:redis, redis_strategy) if @strategy_manager
           self
         end
 
@@ -56,14 +63,33 @@ module TypeBalancer
           validate_strategy_manager!
           validate_redis! if redis_enabled?
           validate_cache! if cache_enabled?
+          puts "[DEBUG] Redis enabled? #{redis_enabled?}, Cache enabled? #{cache_enabled?}"
+          puts "[DEBUG] Redis client: #{@redis_client.inspect}"
+          puts "[DEBUG] Cache store: #{@cache_store.inspect}"
+          puts "[DEBUG] Strategies registered: #{@strategy_manager.strategies.keys.inspect}"
           true
         end
 
         def clear
           if redis_enabled?
             clear_redis
-          else
+          elsif cache_enabled?
             clear_cache
+          else
+            raise TypeBalancer::Rails::Errors::ConfigurationError,
+                  'Neither Redis nor cache store is configured'
+          end
+        end
+
+        def clear_for_scope(scope)
+          validate!
+          if redis_enabled?
+            clear_scope_in_redis(scope)
+          elsif cache_enabled?
+            clear_scope_in_cache(scope)
+          else
+            raise TypeBalancer::Rails::Errors::ConfigurationError,
+                  'Neither Redis nor cache store is configured'
           end
         end
 
@@ -75,21 +101,27 @@ module TypeBalancer
           !@cache_store.nil?
         end
 
-        def delete(key:)
+        def delete(key)
           validate!
           if redis_enabled?
             delete_from_redis(key)
-          else
+          elsif cache_enabled?
             delete_from_cache(key)
+          else
+            raise TypeBalancer::Rails::Errors::ConfigurationError,
+                  'Neither Redis nor cache store is configured'
           end
         end
 
-        def exists?(key:)
+        def exists?(key)
           validate!
           if redis_enabled?
             exists_in_redis?(key)
-          else
+          elsif cache_enabled?
             exists_in_cache?(key)
+          else
+            raise TypeBalancer::Rails::Errors::ConfigurationError,
+                  'Neither Redis nor cache store is configured'
           end
         end
 
@@ -119,20 +151,14 @@ module TypeBalancer
         end
 
         def store_in_redis(key, value, ttl)
-          if ttl
-            @redis_client.set(key, value.to_json, ex: ttl)
-          else
-            @redis_client.set(key, value.to_json)
-          end
+          ttl ||= TypeBalancer::Rails.redis_ttl
+          @redis_client.setex(key, ttl, value.to_json)
           value
         end
 
         def store_in_cache(key, value, ttl)
-          if ttl
-            @cache_store.write(key, value, expires_in: ttl)
-          else
-            @cache_store.write(key, value)
-          end
+          ttl ||= TypeBalancer::Rails.cache_ttl
+          @cache_store.write(key, value, expires_in: ttl)
           value
         end
 
@@ -151,6 +177,18 @@ module TypeBalancer
 
         def clear_cache
           @cache_store.clear
+        end
+
+        def clear_scope_in_redis(scope)
+          pattern = "#{scope}:*"
+          keys = @redis_client.keys(pattern)
+          @redis_client.del(*keys) unless keys.empty?
+        end
+
+        def clear_scope_in_cache(scope)
+          pattern = "#{scope}:*"
+          keys = @cache_store.send(:search_for_keys, pattern)
+          keys.each { |key| @cache_store.delete(key) }
         end
 
         def delete_from_redis(key)

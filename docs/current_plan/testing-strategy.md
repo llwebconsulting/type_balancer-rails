@@ -79,4 +79,56 @@ spec/
 - Keep dependencies isolated
 
 ## Cross-reference
-This document complements `integration-testing.md`, which provides detailed implementation plans for integration tests. While that document focuses on "what" to test, this strategy document outlines "how" we approach testing and resolve conflicts between test types. 
+This document complements `integration-testing.md`, which provides detailed implementation plans for integration tests. While that document focuses on "what" to test, this strategy document outlines "how" we approach testing and resolve conflicts between test types.
+
+## Dummy Rails Application
+
+The gem includes a dummy Rails application in `spec/dummy/` for integration testing. This provides a realistic Rails environment for testing the gem's functionality.
+
+### Models
+- `Post`: Main test model that includes:
+  - TypeBalancer::Rails::Pagination
+  - TypeBalancer::Rails::CacheInvalidation
+  - Basic validations (title, content)
+  - Associations (has_many :comments)
+  - Test scopes (published, by_author)
+  - Cache invalidation hooks
+- `Comment`: Associated model for testing relationships
+- Uses standard `ApplicationRecord` as base class
+
+### Key Testing Areas
+1. Integration Tests
+   - Redis integration (using mock_redis)
+   - Caching behavior
+   - Pagination functionality
+   - Model callbacks and cache invalidation
+   - Concurrent access scenarios
+
+2. Configuration Tests
+   - Redis configuration
+   - Cache configuration
+   - Strategy configuration
+
+3. Performance Tests
+   - Load testing with larger datasets
+   - Concurrent operations
+   - Cache efficiency
+
+## Test Environment
+
+- Uses in-memory SQLite for database tests
+- MockRedis for Redis testing
+- Rails memory store for cache testing
+- Transaction wrapping for test isolation
+- Comprehensive RSpec configuration
+
+## Coverage and Quality
+
+- SimpleCov for coverage reporting
+- Branch coverage enabled
+- Organized coverage groups:
+  - Core
+  - ActiveRecord
+  - Storage
+  - Query
+  - Config 

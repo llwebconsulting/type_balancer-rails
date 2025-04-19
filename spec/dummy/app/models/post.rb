@@ -1,11 +1,8 @@
 # frozen_string_literal: true
 
 class Post < ApplicationRecord
-  include ActiveRecord::Callbacks
   include TypeBalancer::Rails::Pagination
   include TypeBalancer::Rails::CacheInvalidation
-
-  has_many :comments, dependent: :destroy
 
   validates :title, presence: true
   validates :content, presence: true
@@ -16,6 +13,10 @@ class Post < ApplicationRecord
 
   # Cache configuration for testing
   after_commit :invalidate_cache
+
+  def self.type_field
+    :title
+  end
 
   private
 

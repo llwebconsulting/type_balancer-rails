@@ -1,0 +1,46 @@
+# Code Style Guidelines
+
+## Ruby Style
+- Follow the Document RuboCop Ruby Style Guide
+- Use meaningful and descriptive names
+- Keep methods focused and small
+- Use Ruby idioms appropriately:
+  - Blocks for iteration and resource management
+  - Modules for shared behavior
+  - Class methods for utility functions
+  - Instance methods for object behavior
+
+## Rails Style
+- Follow Rails naming conventions
+- Use Rails idioms appropriately:
+  - Concerns for shared behavior
+  - Callbacks for model lifecycle
+  - Validations for data integrity
+  - Scopes for common queries
+- Keep controllers skinny, models fat
+- Use service objects for complex operations
+
+## Test Style
+- Use RSpec's expressive syntax
+- Write descriptive test names
+- Organize tests with describe and context
+- Use let for test setup
+- Use before blocks judiciously
+- Keep test files organized:
+  - Unit tests in spec/unit
+  - Integration tests in spec/integration
+  - Support files in spec/support
+
+## Documentation
+- Document public interfaces
+- Include usage examples
+- Document configuration options
+- Explain complex algorithms
+- Include performance considerations
+
+## Error Handling
+- Use custom error classes
+- Provide meaningful error messages
+- Handle edge cases explicitly
+- Log errors appropriately
+- Clean up resources in ensure blocks 

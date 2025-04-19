@@ -1,0 +1,51 @@
+# Rails Best Practices
+
+## ActiveRecord Extensions
+- Keep ActiveRecord extensions minimal and focused
+  - Use concerns for shared behavior
+  - Avoid monkey-patching core Rails classes unless absolutely necessary
+  - Document any modifications to Rails behavior clearly
+
+## Rails Conventions
+- Follow Rails naming conventions for files and classes
+- Follow the Rails autoloading path structure
+- Respect Rails initialization order:
+  1. Load framework dependencies
+  2. Configure Rails environment
+  3. Initialize ActiveRecord
+  4. Load application code
+  5. Configure test environment
+
+## Testing Rails Integrations
+- Test with multiple Rails versions in CI
+- Use dummy Rails applications for integration tests:
+  - Ensure proper Rails initialization
+  - Include only necessary Rails components
+  - Follow standard Rails directory structure
+- Test both development and production environments
+- Mock external services appropriately:
+  - Use mock Redis for unit tests
+  - Use real Redis for integration tests
+  - Document service requirements
+- Test with different Rails configurations:
+  - Different cache stores
+  - Different database adapters
+  - Various feature flags
+
+## Database Interactions
+- Use transactions for test cleanup
+- Avoid raw SQL unless necessary for performance
+- Test with different database adapters when relevant
+- Be mindful of connection pools and thread safety
+- Ensure proper database initialization in test environment:
+  - Load schema before tests
+  - Reset data between tests
+  - Use appropriate cleaning strategy
+
+## Caching and Performance
+- Document caching strategies clearly
+- Test with caching both enabled and disabled
+- Consider memory usage in long-running processes
+- Profile performance impact on Rails boot time
+- Monitor connection pool usage
+- Implement appropriate timeouts for external services 

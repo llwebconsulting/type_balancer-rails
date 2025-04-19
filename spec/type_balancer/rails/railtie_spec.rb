@@ -4,12 +4,12 @@ require 'spec_helper'
 
 RSpec.describe TypeBalancer::Rails::Railtie do
   describe 'initialization' do
-    let(:config) { double('config') }
+    let(:config) { instance_double('TypeBalancer::Rails::Configuration') }
     let(:active_record_base) { Class.new }
 
     before do
-      allow(TypeBalancer::Rails).to receive(:configure).and_yield(config)
-      allow(config).to receive(:register_strategy)
+      allow(TypeBalancer::Rails).to receive(:configuration).and_return(config)
+      allow(config).to receive(:register)
       allow(config).to receive(:storage_strategy=)
       allow(config).to receive(:cache_enabled=)
       allow(config).to receive(:cache_ttl=)
@@ -21,8 +21,8 @@ RSpec.describe TypeBalancer::Rails::Railtie do
     end
 
     it 'registers default strategies' do
-      expect(config).to receive(:register_strategy).with(:cursor, TypeBalancer::Rails::Strategies::CursorStrategy)
-      expect(config).to receive(:register_strategy).with(:redis, TypeBalancer::Rails::Strategies::RedisStrategy)
+      expect(config).to receive(:register).with(:cursor, TypeBalancer::Rails::Strategies::CursorStrategy)
+      expect(config).to receive(:register).with(:redis, TypeBalancer::Rails::Strategies::RedisStrategy)
 
       described_class.instance.initializers.first.run
     end

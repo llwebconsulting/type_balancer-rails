@@ -1,0 +1,50 @@
+# Rails Testing Environment Setup
+
+## Environment Configuration
+- Set RAILS_ENV to 'test'
+- Configure test-specific settings:
+  - Disable caching unless explicitly testing it
+  - Use test-appropriate queue adapters
+  - Configure test database settings
+  - Set up test-specific initializers
+
+## Framework Initialization
+- Load order is critical:
+  1. Load Rails framework components
+  2. Configure environment
+  3. Initialize ActiveRecord
+  4. Load application code
+  5. Configure test frameworks
+  6. Load test helpers and support files
+
+## Database Setup
+- Use in-memory SQLite for speed when appropriate
+- Configure database cleaner strategy:
+  - Transaction for most tests
+  - Truncation when needed (e.g., system tests)
+- Load schema before suite runs
+- Ensure proper connection pool settings
+
+## External Services
+- Configure test versions of services:
+  - Mock Redis for unit tests
+  - Real Redis for integration tests
+  - Test cache stores
+  - Test queue adapters
+- Set appropriate timeouts
+- Handle service availability in CI
+
+## Test Isolation
+- Reset global state between tests
+- Clean database between examples
+- Clear cache between runs
+- Reset mocked services
+- Clear uploaded files
+- Reset configuration to defaults
+
+## Performance Considerations
+- Use appropriate database cleaner strategy
+- Minimize framework reloading
+- Use factory optimization techniques
+- Profile slow tests
+- Configure parallel testing when appropriate 

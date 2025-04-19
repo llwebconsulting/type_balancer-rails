@@ -1,0 +1,52 @@
+# Integration Testing Guidelines
+
+## When to Create Integration Tests
+- Only after unit tests are:
+  - Passing consistently
+  - Have high coverage
+  - Are well documented
+- When explicitly instructed to do so
+- For critical end-to-end functionality
+- For complex service interactions
+
+## Service Integration
+- Real vs Mock Services:
+  - Use real services for true integration tests
+  - Document service requirements
+  - Handle service failures gracefully
+  - Clean up service state after tests
+- External Dependencies:
+  - Document version requirements
+  - Handle configuration differences
+  - Test timeout scenarios
+  - Verify error conditions
+
+## Database Requirements
+- Use appropriate database adapter
+- Handle schema migrations
+- Clean data between tests
+- Test with realistic data volumes
+- Verify database constraints
+- Test concurrent access
+
+## Test Organization
+- Group related scenarios
+- Use descriptive contexts
+- Document prerequisites
+- Handle setup and teardown
+- Isolate test environments
+- Clean up resources
+
+## Performance Considerations
+- Monitor test execution time
+- Use appropriate data volumes
+- Handle timeouts appropriately
+- Test under load when relevant
+- Profile resource usage
+
+## Documentation
+- Document service requirements
+- Specify environment setup
+- List prerequisites
+- Include troubleshooting guides
+- Explain test data setup 

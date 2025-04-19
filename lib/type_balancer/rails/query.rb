@@ -59,7 +59,7 @@ module TypeBalancer
         end
 
         def cache_enabled?
-          TypeBalancer::Rails.configuration.cache_enabled || false
+          TypeBalancer::Rails.configuration.enable_cache || false
         end
       end
     end

@@ -38,9 +38,28 @@ module TypeBalancer
           self
         end
 
+        def storage_strategy=(strategy)
+          @storage_strategy = strategy.to_sym
+          configure_redis(@redis_client) if @storage_strategy == :redis && redis_enabled? && @redis_client
+          self
+        end
+
         def reset!
+          # Store current Redis settings
+          old_redis_client = @redis_client
+          old_redis_enabled = @redis_enabled
+          old_redis_ttl = @redis_ttl
+
           super
           setup_managers
+
+          # Restore Redis settings if they were previously configured
+          if old_redis_enabled && old_redis_client
+            @redis_enabled = old_redis_enabled
+            @redis_ttl = old_redis_ttl
+            configure_redis(old_redis_client)
+          end
+
           self
         end
 
@@ -50,6 +69,46 @@ module TypeBalancer
           validate_cache_ttl! if cache_enabled?
           validate_redis_ttl! if redis_enabled?
           true
+        end
+
+        def redis(&block)
+          yield(self) if block
+          self
+        end
+
+        def enable_redis(client = nil)
+          @redis_enabled = true
+          configure_redis(client) if client
+          self
+        end
+
+        def disable_redis
+          @redis_enabled = false
+          @redis_client = nil
+          self
+        end
+
+        def redis_enabled?
+          @redis_enabled && !@redis_client.nil?
+        end
+
+        def cache(&block)
+          yield(self) if block
+          self
+        end
+
+        def enable_cache
+          @cache_enabled = true
+          self
+        end
+
+        def disable_cache
+          @cache_enabled = false
+          self
+        end
+
+        def cache_enabled?
+          @cache_enabled
         end
 
         private

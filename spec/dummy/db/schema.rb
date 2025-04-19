@@ -12,12 +12,11 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20_240_315_000_001) do
+ActiveRecord::Schema[7.1].define(version: 20_240_321_000_001) do
   create_table 'posts', force: :cascade do |t|
     t.string 'title', null: false
     t.text 'content'
-    t.datetime 'created_at', precision: 6, null: false
-    t.datetime 'updated_at', precision: 6, null: false
+    t.timestamps
     t.index ['created_at'], name: 'index_posts_on_created_at'
     t.index ['title'], name: 'index_posts_on_title'
   end

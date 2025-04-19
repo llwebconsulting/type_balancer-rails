@@ -1,20 +1,21 @@
 # frozen_string_literal: true
 
+require_relative 'config/runtime_configuration'
+require_relative 'active_record_extension'
+
 module TypeBalancer
   module Rails
     class Railtie < ::Rails::Railtie
-      initializer 'type_balancer.configure_rails_initialization' do
+      config.after_initialize do
         TypeBalancer::Rails.configure do |config|
-          # Register default strategies
-          config.register_strategy(:cursor, TypeBalancer::Rails::Strategies::CursorStrategy)
-          config.register_strategy(:redis, TypeBalancer::Rails::Strategies::RedisStrategy)
+          # First enable features
+          config.enable_cache
+          config.enable_redis
 
-          # Set default strategy
-          config.storage_strategy = :cursor
-
-          # Configure cache settings
-          config.enable_cache = true
-          config.cache_ttl = 3600 # 1 hour default
+          # Then set specific configuration values
+          config.cache_ttl = 3600
+          config.redis_ttl = 3600
+          config.storage_strategy = :redis
         end
 
         # Include the ActiveRecord extension

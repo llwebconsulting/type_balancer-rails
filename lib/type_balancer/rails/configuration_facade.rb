@@ -8,7 +8,7 @@ module TypeBalancer
       extend self
 
       def configuration
-        @configuration ||= Config::BaseConfiguration.new
+        @configuration
       end
 
       def configure
@@ -17,8 +17,36 @@ module TypeBalancer
       end
 
       def reset!
-        configuration.reset!
+        @configuration = Config::RuntimeConfiguration.new
         self
+      end
+
+      def initialize!
+        reset!
+        register_defaults
+        configuration.validate!
+        self
+      end
+
+      def register_defaults
+        # Register default strategies
+        cursor_strategy = TypeBalancer::Rails::Strategies::CursorStrategy.new(nil, configuration.storage_adapter)
+        redis_strategy = TypeBalancer::Rails::Strategies::RedisStrategy.new(nil, configuration.storage_adapter)
+
+        configuration.strategy_manager.register(:cursor, cursor_strategy)
+        configuration.strategy_manager.register(:redis, redis_strategy)
+
+        # Set default strategy if none configured
+        configuration.storage_strategy ||= :cursor
+
+        # Only set cache defaults if not already configured
+        configuration.enable_cache unless configuration.cache_enabled?
+        configuration.cache_ttl = 3600 unless configuration.cache_ttl # 1 hour default
+
+        # Include ActiveRecord extension
+        ActiveSupport.on_load(:active_record) do
+          include TypeBalancer::Rails::ActiveRecordExtension
+        end
       end
 
       def redis(&)
@@ -61,22 +89,13 @@ module TypeBalancer
         self
       end
 
-      def storage_adapter
-        configuration.storage_strategy
-      end
-
+      delegate :storage_adapter, to: :configuration
       delegate :redis_client, to: :configuration
-
       delegate :redis_ttl, to: :configuration
-
       delegate :cache_ttl, to: :configuration
-
       delegate :cache_enabled?, to: :configuration
-
       delegate :redis_enabled?, to: :configuration
-
       delegate :max_per_page, to: :configuration
-
       delegate :cursor_buffer_multiplier, to: :configuration
 
       private

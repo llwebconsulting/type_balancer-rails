@@ -123,7 +123,7 @@ end
 
 TypeBalancer Rails uses a unified configuration system under the `TypeBalancer::Rails::Config` namespace. This system is designed for flexibility and extensibility:
 
-- All configuration logic is managed by `TypeBalancer::Rails::Config::Configuration`.
+- All configuration logic is managed by `TypeBalancer::Rails::Config::RuntimeConfiguration`.
 - You can extend or customize configuration by subclassing or including your own modules.
 - Advanced users can interact directly with configuration components (e.g., `StrategyManager`, `PaginationConfig`) for custom strategies or behaviors.
 
@@ -131,7 +131,7 @@ Example (advanced):
 
 ```ruby
 # Access the unified configuration class directly
-config = TypeBalancer::Rails::Config::Configuration.new
+config = TypeBalancer::Rails::Config::RuntimeConfiguration.new
 config.storage_strategy = :memory
 config.max_per_page = 50
 # ...other advanced settings...
@@ -203,9 +203,66 @@ end
 
 ## Development
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+### Prerequisites
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+#### Redis
+Redis is required for running integration tests. Here's how to install it:
+
+**macOS:**
+```bash
+# Using Homebrew
+brew install redis
+
+# Start Redis
+brew services start redis
+
+# Verify Redis is running
+redis-cli ping
+# Should return "PONG"
+```
+
+**Ubuntu/Debian:**
+```bash
+# Install Redis
+sudo apt-get update
+sudo apt-get install redis-server
+
+# Start Redis
+sudo systemctl start redis-server
+
+# Verify Redis is running
+redis-cli ping
+# Should return "PONG"
+```
+
+**Windows:**
+We recommend using WSL2 (Windows Subsystem for Linux) and following the Ubuntu instructions above. Alternatively:
+1. Download the latest Redis release from https://github.com/microsoftarchive/redis/releases
+2. Run the installer
+3. Redis should start automatically
+4. Verify with `redis-cli ping`
+
+#### Running Tests
+The test suite includes both unit tests and integration tests. Integration tests require Redis to be running:
+
+```bash
+# Start Redis if not already running
+# macOS:
+brew services start redis
+# Ubuntu/Debian:
+sudo systemctl start redis-server
+
+# Run all tests
+bundle exec rspec
+
+# Run only unit tests (no Redis required)
+bundle exec rspec spec/unit
+
+# Run only integration tests (Redis required)
+bundle exec rspec spec/integration
+```
+
+Note: In CI environments, Redis is automatically provisioned as a service container, so no manual setup is required.
 
 ## Contributing
 

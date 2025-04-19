@@ -23,10 +23,11 @@ module TypeBalancer
           @cursor_buffer_multiplier = 2
           @storage_strategy_registry = TypeBalancer::Rails::Config::StrategyManager.new
           @pagination_config = TypeBalancer::Rails::Config::PaginationConfig.new
+          @storage_adapter = TypeBalancer::Rails::Config::ConfigStorageAdapter.new(@storage_strategy_registry)
           register_default_storage_strategies
         end
 
-        delegate :register_strategy, to: :TypeBalancer
+        delegate :register, to: :@storage_strategy_registry
 
         def redis_enabled?
           @redis_enabled
@@ -72,6 +73,7 @@ module TypeBalancer
           @cache_duration = nil
           @storage_strategy_registry = TypeBalancer::Rails::Config::StrategyManager.new
           @pagination_config = TypeBalancer::Rails::Config::PaginationConfig.new
+          @storage_adapter = TypeBalancer::Rails::Config::ConfigStorageAdapter.new(@storage_strategy_registry)
           register_default_storage_strategies
           self
         end
@@ -126,8 +128,7 @@ module TypeBalancer
         private
 
         def register_default_storage_strategies
-          @storage_strategy_registry.register(:memory, TypeBalancer::Rails::Strategies::MemoryStrategy)
-          @storage_strategy_registry.register(:redis, TypeBalancer::Rails::Strategies::RedisStrategy)
+          # Strategies are now registered in TypeBalancer::Rails::Core#register_defaults
         end
       end
     end

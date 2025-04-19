@@ -43,18 +43,6 @@ class ApplicationRecord
   end
 end
 
-class Post < ApplicationRecord
-  include TypeBalancer::Rails::CacheInvalidation
-
-  def self.type_field
-    :media_type
-  end
-
-  def media_type
-    'post'
-  end
-end
-
 class Article < ApplicationRecord
   include TypeBalancer::Rails::CacheInvalidation
 

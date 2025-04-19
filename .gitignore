@@ -45,3 +45,7 @@
 
 # Documentation requirements
 /docs/requirements
+
+# Test logs
+/log/*.log
+/spec/dummy/log/*.log

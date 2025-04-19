@@ -25,6 +25,31 @@ module TypeBalancer
             @configuration = TypeBalancer::Rails::Config::RuntimeConfiguration.new
             self
           end
+
+          def initialize!
+            register_defaults
+            configuration.validate!
+            self
+          end
+
+          def load!
+            register_defaults
+            ActiveSupport.on_load(:active_record) { include TypeBalancer::Rails::CacheInvalidation }
+            self
+          end
+
+          private
+
+          def register_defaults
+            # Register strategies as instances with proper dependencies
+            redis_strategy = TypeBalancer::Rails::Strategies::RedisStrategy.new(nil, configuration.storage_adapter)
+            memory_strategy = TypeBalancer::Rails::Strategies::MemoryStrategy.new(nil, configuration.storage_adapter)
+            cursor_strategy = TypeBalancer::Rails::Strategies::CursorStrategy.new(nil, configuration.storage_adapter)
+
+            configuration.strategy_manager.register(:redis, redis_strategy)
+            configuration.strategy_manager.register(:memory, memory_strategy)
+            configuration.strategy_manager.register(:cursor, cursor_strategy)
+          end
         end
       end
 
