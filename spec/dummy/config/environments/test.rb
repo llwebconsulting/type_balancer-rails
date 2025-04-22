@@ -39,4 +39,14 @@ Rails.application.configure do
 
   # Tell Active Support which deprecation messages to disallow.
   config.active_support.disallowed_deprecation_warnings = []
+
+  # Configure ActionCable for testing
+  config.action_cable.disable_request_forgery_protection = true
+  config.action_cable.allowed_request_origins = ['http://example.com']
+  config.action_cable.url = 'ws://example.com/cable'
+  config.action_cable.mount_path = '/cable'
+  config.action_cable.logger = Logger.new(nil)
+
+  # Use test adapter for ActionCable
+  config.action_cable.cable = { 'adapter' => 'test' }
 end

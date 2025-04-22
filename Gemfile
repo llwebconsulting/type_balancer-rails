@@ -9,6 +9,7 @@ gemspec
 gem 'type_balancer', '~> 0.1.2'
 
 # Development dependencies
+gem 'action-cable-testing', '~> 0.6.1'
 gem 'bundler-audit', '~> 0.9.1'
 gem 'rake', '~> 13.0'
 gem 'rspec', '~> 3.13'

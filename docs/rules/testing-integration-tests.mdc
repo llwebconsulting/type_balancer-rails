@@ -1,0 +1,77 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Integration Test Tracking Rules
+
+## Purpose
+Track integration test debugging progress to prevent circular debugging patterns and ensure systematic problem-solving.
+
+## Log File Location
+`docs/logs/testing-integration-tests.md`
+
+## Required Sections
+
+### Current Position
+Every log file must maintain a current position section at the top with:
+- Current Focus: What we're investigating
+- Last Change: What was modified
+- Current Issue: Problem we're solving
+- Next Action: Planned next step
+
+### Change Entries
+Each change must be documented with:
+- Timestamp (ISO 8601 format)
+- Files Modified
+- Change Description
+- Purpose
+- Result
+- Next Steps
+
+## Usage Rules
+
+### When to Review
+- Before making ANY changes to test-related code
+- When encountering a test failure
+- Before trying a new approach to fix a failing test
+- When resuming work after a break
+
+### How to Review
+- Read through all previous changes chronologically
+- Pay special attention to similar approaches tried before
+- Look for patterns in failed attempts
+- Note any insights or learnings from previous attempts
+
+### When to Log
+- After EVERY code change, no matter how small
+- When discovering new information about the problem
+- When tests reveal unexpected behavior
+- When changing approach or strategy
+
+### What to Log
+- All code changes with exact details
+- Test results, including error messages
+- Insights gained from debugging
+- Reasoning behind strategy changes
+- Links to relevant documentation or resources
+
+## Prevention Guidelines
+- Review log file before making changes to avoid repeating failed approaches
+- Ensure all changes are documented with required sections
+- Check log file for similar error patterns before proceeding
+
+## Change Planning
+1. Before making changes:
+   - Review this log file to understand previous attempts
+   - Ensure we're not repeating a failed approach
+   - Document any patterns or insights from previous attempts
+2. After making changes:
+   - Document the changes immediately
+   - Include specific details about what was changed
+   - Record the results and observations
+   - Note any new insights gained
+3. When planning next steps:
+   - Reference previous attempts
+   - Explain why the new approach might succeed where others failed
+   - Document the reasoning for the chosen direction

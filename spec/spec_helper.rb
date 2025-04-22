@@ -3,12 +3,6 @@
 require 'bundler/setup'
 require 'simplecov'
 require 'simplecov-cobertura'
-require 'timecop'
-require 'yaml'
-require 'mock_redis'
-require 'database_cleaner'
-require 'action_cable'
-require 'action-cable-testing'
 
 # Configure SimpleCov
 SimpleCov.start do
@@ -28,13 +22,31 @@ SimpleCov.start do
                                                      ])
 end
 
-# Load Rails environment
+# Load Rails and its components first
+require 'rails'
+require 'active_record'
+require 'action_controller/railtie'
+require 'action_view/railtie'
+require 'action_cable/engine'
+require 'active_job/railtie'
+
+# Load testing dependencies
+require 'rspec/rails'
+require 'action_cable/testing/rspec'
+require 'timecop'
+require 'yaml'
+require 'mock_redis'
+require 'database_cleaner'
+
+# Set up Rails environment
 ENV['RAILS_ENV'] = 'test'
 require File.expand_path('../spec/dummy/config/environment.rb', __dir__)
 
-# Load schema
-ActiveRecord::Base.establish_connection(:test)
-load File.expand_path('../spec/dummy/db/schema.rb', __dir__)
+# Load our gem
+require 'type_balancer/rails'
+
+# Load all support files
+Dir[File.join(__dir__, 'support/**/*.rb')].sort.each { |f| require f }
 
 # Configure RSpec
 RSpec.configure do |config|
@@ -53,7 +65,6 @@ RSpec.configure do |config|
   config.warnings = true
 
   config.default_formatter = 'doc' if config.files_to_run.one?
-
   config.order = :random
   Kernel.srand config.seed
 
