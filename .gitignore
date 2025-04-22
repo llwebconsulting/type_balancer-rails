@@ -49,3 +49,4 @@
 # Test logs
 /log/*.log
 /spec/dummy/log/*.log
+.idea/
