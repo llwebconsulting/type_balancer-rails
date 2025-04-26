@@ -1,6 +1,6 @@
 # TypeBalancer Rails
 
-[![Gem Version](https://badge.fury.io/rb/type_balancer-rails.svg)](https://badge.fury.io/rb/type_balancer-rails)
+[![Gem Version](https://badge.fury.io/rb/type_balancer_rails.svg)](https://badge.fury.io/rb/type_balancer_rails)
 [![Build Status](https://github.com/llwebconsulting/type_balancer-rails/workflows/CI/badge.svg)](https://github.com/llwebconsulting/type_balancer-rails/actions)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -11,7 +11,7 @@ Rails integration for the [TypeBalancer](https://github.com/llwebconsulting/type
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'type_balancer-rails'
+gem 'type_balancer_rails'
 ```
 
 And then execute:
@@ -23,7 +23,7 @@ $ bundle install
 Or install it yourself as:
 
 ```bash
-$ gem install type_balancer-rails
+$ gem install type_balancer_rails
 ```
 
 ## Usage
