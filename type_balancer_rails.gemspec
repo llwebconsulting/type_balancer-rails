@@ -5,12 +5,12 @@ require_relative 'lib/type_balancer/rails/version'
 Gem::Specification.new do |spec|
   spec.name = 'type_balancer_rails'
   spec.version = TypeBalancer::Rails::VERSION
-  spec.authors = ['Carl Zulauf']
-  spec.email = ['carl@linkleaf.com']
+  spec.authors = ['Carl Smith']
+  spec.email = ['carl@llwebconsulting.com']
 
   spec.summary = 'Rails integration for type_balancer'
   spec.description = 'Provides Rails integration for the type_balancer gem'
-  spec.homepage = 'https://github.com/carlzulauf/type_balancer_rails'
+  spec.homepage = 'https://github.com/llwebconsulting/type_balancer-rails'
   spec.license = 'MIT'
   spec.required_ruby_version = '>= 3.2.0'
 
@@ -27,15 +27,11 @@ Gem::Specification.new do |spec|
         f.start_with?('bin/', 'test/', 'spec/', 'features/', '.git', '.circleci', 'appveyor', 'Gemfile')
     end
   end
-  spec.bindir = 'exe'
-  spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
   # Runtime dependencies
-  spec.add_dependency 'activejob', '>= 6.0'
-  spec.add_dependency 'activerecord', '>= 6.0'
-  spec.add_dependency 'activesupport', '>= 6.0'
-  spec.add_dependency 'redis', '>= 4.0'
+  spec.add_dependency 'activerecord', '>= 7.0'
+  spec.add_dependency 'activesupport', '>= 7.0'
   spec.add_dependency 'type_balancer', '>= 0.1.0'
 
   # For more information and examples about making a new gem, check out our
