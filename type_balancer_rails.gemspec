@@ -30,8 +30,8 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   # Runtime dependencies
-  spec.add_dependency 'activerecord', '~> 7.0'
-  spec.add_dependency 'activesupport', '~> 7.0'
+  spec.add_dependency 'activerecord', '>= 7.0', '< 9.0'
+  spec.add_dependency 'activesupport', '>= 7.0', '< 9.0'
   spec.add_dependency 'type_balancer', '~> 0.1', '>= 0.1.0'
 
   # For more information and examples about making a new gem, check out our
