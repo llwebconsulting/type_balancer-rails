@@ -1,0 +1,31 @@
+
+Randomized with seed 325346
+...FF.
+
+Failures:
+
+  1) Basic Type Balancing #balance_by_type handles pagination after balancing
+     Failure/Error: result = relation.balance_by_type.limit(1).offset(1)
+
+     NoMethodError:
+       undefined method `limit' for [#<OpenStruct id=2, type="video", title="First Video">]:Array
+     # ./spec/integration/basic_type_balancing_spec.rb:55:in `block (3 levels) in <top (required)>'
+
+  2) Basic Type Balancing #balance_by_type balances records by type using default settings
+     Failure/Error: expect(result).to be_a(TestRelation)
+       expected [#<OpenStruct id=1, type="post", title="First Post">, #<OpenStruct id=2, type="video", title="First Video">, #<OpenStruct id=3, type="post", title="Second Post">] to be a kind of TestRelation
+     # ./spec/integration/basic_type_balancing_spec.rb:30:in `block (3 levels) in <top (required)>'
+
+Finished in 0.01867 seconds (files took 0.43223 seconds to load)
+6 examples, 2 failures
+
+Failed examples:
+
+rspec ./spec/integration/basic_type_balancing_spec.rb:51 # Basic Type Balancing #balance_by_type handles pagination after balancing
+rspec ./spec/integration/basic_type_balancing_spec.rb:23 # Basic Type Balancing #balance_by_type balances records by type using default settings
+
+Randomized with seed 325346
+
+Coverage report generated for RSpec to /Users/carl/gems/type_balancer-rails/coverage.
+Line Coverage: 78.57% (55 / 70)
+Branch Coverage: 45.0% (9 / 20)

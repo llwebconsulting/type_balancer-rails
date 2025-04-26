@@ -16,6 +16,7 @@ RSpec.describe 'Basic Type Balancing', :integration do
 
   before do
     allow(TypeBalancer).to receive(:balance).and_return(records)
+    TestModel.test_records = records
   end
 
   describe '#balance_by_type' do

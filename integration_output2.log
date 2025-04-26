@@ -1,0 +1,76 @@
+
+Randomized with seed 141136
+.FFFF.
+
+Failures:
+
+  1) Basic Type Balancing #balance_by_type balances records by type using default settings
+     Failure/Error: expect(result.to_a).to eq(records)
+
+       expected: [#<OpenStruct id=1, type="post", title="First Post">, #<OpenStruct id=2, type="video", title="First Video">, #<OpenStruct id=3, type="post", title="Second Post">]
+            got: []
+
+       (compared using ==)
+
+       Diff:
+       @@ -1,3 +1 @@
+       -[#<OpenStruct id=1, type="post", title="First Post">,
+       - #<OpenStruct id=2, type="video", title="First Video">,
+       - #<OpenStruct id=3, type="post", title="Second Post">]
+       +[]
+     # ./spec/integration/basic_type_balancing_spec.rb:30:in `block (3 levels) in <top (required)>'
+
+  2) Basic Type Balancing #balance_by_type handles pagination after balancing
+     Failure/Error: expect(result.to_a).to eq(paginated_records)
+
+       expected: [#<OpenStruct id=2, type="video", title="First Video">]
+            got: []
+
+       (compared using ==)
+
+       Diff:
+       @@ -1 +1 @@
+       -[#<OpenStruct id=2, type="video", title="First Video">]
+       +[]
+     # ./spec/integration/basic_type_balancing_spec.rb:55:in `block (3 levels) in <top (required)>'
+
+  3) Basic Type Balancing #balance_by_type handles pagination
+     Failure/Error: expect(result.to_a.length).to eq(1)
+
+       expected: 1
+            got: 0
+
+       (compared using ==)
+     # ./spec/integration/basic_type_balancing_spec.rb:72:in `block (3 levels) in <top (required)>'
+
+  4) Basic Type Balancing #balance_by_type preserves order of balanced records
+     Failure/Error: expect(result.to_a).to eq(ordered_records)
+
+       expected: [#<OpenStruct id=3, type="post", title="Second Post">, #<OpenStruct id=2, type="video", title="First Video">, #<OpenStruct id=1, type="post", title="First Post">]
+            got: []
+
+       (compared using ==)
+
+       Diff:
+       @@ -1,3 +1 @@
+       -[#<OpenStruct id=3, type="post", title="Second Post">,
+       - #<OpenStruct id=2, type="video", title="First Video">,
+       - #<OpenStruct id=1, type="post", title="First Post">]
+       +[]
+     # ./spec/integration/basic_type_balancing_spec.rb:47:in `block (3 levels) in <top (required)>'
+
+Finished in 0.01982 seconds (files took 0.51185 seconds to load)
+6 examples, 4 failures
+
+Failed examples:
+
+rspec ./spec/integration/basic_type_balancing_spec.rb:22 # Basic Type Balancing #balance_by_type balances records by type using default settings
+rspec ./spec/integration/basic_type_balancing_spec.rb:50 # Basic Type Balancing #balance_by_type handles pagination after balancing
+rspec ./spec/integration/basic_type_balancing_spec.rb:70 # Basic Type Balancing #balance_by_type handles pagination
+rspec ./spec/integration/basic_type_balancing_spec.rb:42 # Basic Type Balancing #balance_by_type preserves order of balanced records
+
+Randomized with seed 141136
+
+Coverage report generated for RSpec to /Users/carl/gems/type_balancer-rails/coverage.
+Line Coverage: 77.94% (53 / 68)
+Branch Coverage: 45.0% (9 / 20)

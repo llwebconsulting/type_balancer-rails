@@ -129,13 +129,24 @@ class TestModel < ActiveRecord::Base
 
   class << self
     def all
-      TestRelation.new([])
+      TestRelation.new(@test_records || [])
+    end
+
+    def where(conditions = {})
+      records = @test_records || []
+      if conditions[:id]
+        ids = Array(conditions[:id])
+        filtered = records.select { |r| ids.include?(r.id) }
+        TestRelation.new(filtered)
+      else
+        TestRelation.new(records)
+      end
     end
 
     def type_balancer_options
       @type_balancer_options ||= {}
     end
 
-    attr_writer :type_balancer_options
+    attr_writer :type_balancer_options, :test_records
   end
 end

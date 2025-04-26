@@ -19,9 +19,15 @@ module TypeBalancer
       end
 
       class_methods do
-        def balance_by_type(options = {})
+        # Accepts either a symbol (type field) or options hash
+        def balance_by_type(type_field = nil, **options)
+          if type_field.is_a?(Hash)
+            options = type_field
+            type_field = options[:type_field]
+          end
+
           self.type_balancer_options = {
-            type_field: options[:type_field] || :type
+            type_field: type_field || options[:type_field] || :type
           }
 
           return [] unless respond_to?(:all)
