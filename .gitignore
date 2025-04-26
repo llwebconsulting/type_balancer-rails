@@ -45,3 +45,5 @@
 
 # Documentation requirements
 /docs/requirements
+.idea/
+log/test.log

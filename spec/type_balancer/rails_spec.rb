@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe TypeBalancer::Rails do
+RSpec.describe TypeBalancer::Rails, :unit do
   describe 'VERSION' do
     it 'has a version number' do
       expect(TypeBalancer::Rails::VERSION).not_to be_nil

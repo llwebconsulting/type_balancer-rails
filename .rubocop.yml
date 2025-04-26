@@ -75,6 +75,10 @@ RSpec/SubjectStub:
 RSpec/StubbedMock:
   Enabled: false
 
+RSpec/DescribeClass:
+  Exclude:
+    - 'spec/integration/**/*_spec.rb'
+
 Capybara/CurrentPathExpectation:
   Enabled: false
 
@@ -136,4 +140,35 @@ RSpecRails/TravelAround:
   Enabled: false
 
 Layout/LineLength:
-  Max: 120 
+  Max: 120
+
+# Disable OpenStruct warnings in specs since we use it extensively for test data
+# and the performance impact isn't relevant in our test context
+Style/OpenStructUse:
+  Exclude:
+    - 'spec/**/*'
+
+Metrics/BlockLength:
+  Enabled: true
+  Exclude:
+    - 'spec/**/*'
+    - 'Rakefile'
+
+Metrics/CyclomaticComplexity:
+  Max: 10
+
+Metrics/PerceivedComplexity:
+  Max: 10
+
+RSpec/RepeatedExample:
+  Enabled: false # We have intentionally repeated examples
+
+RSpec/MultipleDescribes:
+  Enabled: false # We have intentionally structured our specs this way
+
+RSpec/RepeatedExampleGroupDescription:
+  Enabled: false # We have intentionally structured our specs this way
+
+# Disable Rails-specific cops since we're testing Rails integration
+Rails:
+  Enabled: false 

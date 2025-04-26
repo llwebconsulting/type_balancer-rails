@@ -1,20 +1,43 @@
 # frozen_string_literal: true
 
+require 'active_support/concern'
+
 module TypeBalancer
   module Rails
+    # Extension for ActiveRecord models to configure type balancing
     module ActiveRecordExtension
       extend ActiveSupport::Concern
 
       included do
-        class_attribute :type_balancer_options, instance_writer: false
+        class << self
+          def all
+            relation = super
+            relation.extend(TypeBalancer::Rails::CollectionMethods)
+            relation
+          end
+        end
       end
 
-      module ClassMethods
+      class_methods do
         def balance_by_type(options = {})
-          self.type_balancer_options = options.dup.freeze
-          include TypeBalancer::Rails::CacheInvalidation
-          include TypeBalancer::Rails::TypeBalancerCollection
+          self.type_balancer_options = {
+            type_field: options[:type_field] || :type
+          }
+
+          return [] unless respond_to?(:all)
+
+          relation = all
+          return [] unless relation.is_a?(ActiveRecord::Relation)
+
+          relation.extend(CollectionMethods)
+          relation.balance_by_type(options)
         end
+
+        def type_balancer_options
+          @type_balancer_options ||= {}
+        end
+
+        attr_writer :type_balancer_options
       end
     end
   end
