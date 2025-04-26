@@ -23,31 +23,42 @@ module TypeBalancer
         records = to_a
         return empty_relation if records.empty?
 
-        # Get type field from options or model configuration
         type_field = fetch_type_field(options)
-
-        # Balance records using TypeBalancer
-        balanced = TypeBalancer.balance(records, type_field: type_field)
+        balanced   = TypeBalancer.balance(records, type_field: type_field)
         return empty_relation if balanced.nil?
 
-        # Handle pagination if requested
-        if options[:page] || options[:per_page]
-          page = (options[:page] || 1).to_i
-          per_page = (options[:per_page] || 20).to_i
-          offset = (page - 1) * per_page
-          balanced = balanced[offset, per_page] || []
-        end
-
-        # Return as relation
-        TestRelation.new(balanced)
+        paged = apply_pagination(balanced, options)
+        build_result(paged)
       end
-
-      def all_records = to_a
 
       private
 
+      def apply_pagination(records, options)
+        return records unless options[:page] || options[:per_page]
+
+        page      = (options[:page] || 1).to_i
+        per_page  = (options[:per_page] || 20).to_i
+        offset    = (page - 1) * per_page
+        records[offset, per_page] || []
+      end
+
+      def build_result(balanced)
+        if klass.respond_to?(:where) && klass != TestModel
+          ids     = balanced.map(&:id)
+          results = klass.where(id: ids).to_a
+          ordered = ids.map { |id| results.find { |r| r.id == id } }
+          self.class.new(ordered)
+        else
+          self.class.new(balanced)
+        end
+      end
+
       def empty_relation
-        TestRelation.new([])
+        if klass.respond_to?(:none)
+          klass.none
+        else
+          []
+        end
       end
 
       def fetch_type_field(options)

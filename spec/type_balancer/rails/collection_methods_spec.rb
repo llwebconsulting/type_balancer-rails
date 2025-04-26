@@ -52,4 +52,38 @@ RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
       end
     end
   end
+
+  describe 'edge cases and coverage' do
+    it 'returns empty relation if records are empty' do
+      relation = TestRelation.new([])
+      result = relation.balance_by_type
+      expect(result).to be_empty
+    end
+
+    it 'returns empty relation if TypeBalancer.balance returns nil' do
+      relation = TestRelation.new([OpenStruct.new(id: 1, type: 'Post')])
+      allow(TypeBalancer).to receive(:balance).and_return(nil)
+      result = relation.balance_by_type
+      expect(result).to be_empty
+    end
+
+    it 'returns all records if no pagination options are given' do
+      records = [OpenStruct.new(id: 1, type: 'post', title: 'First Post')]
+      relation = TestRelation.new(records)
+      allow(TypeBalancer).to receive(:balance).and_return(records)
+      result = relation.balance_by_type
+      expect(result.to_a).to eq(records)
+    end
+
+    it 'returns paginated records if pagination options are given' do
+      records = [
+        OpenStruct.new(id: 1, type: 'post', title: 'First Post'),
+        OpenStruct.new(id: 2, type: 'video', title: 'First Video')
+      ]
+      relation = TestRelation.new(records)
+      allow(TypeBalancer).to receive(:balance).and_return(records)
+      result = relation.balance_by_type(page: 2, per_page: 1)
+      expect(result.to_a).to eq([records[1]])
+    end
+  end
 end
