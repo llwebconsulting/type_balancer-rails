@@ -46,7 +46,8 @@ module TypeBalancer
         if klass.respond_to?(:where) && klass != TestModel
           ids     = balanced.map(&:id)
           results = klass.where(id: ids).to_a
-          ordered = ids.map { |id| results.find { |r| r.id == id } }
+          results_by_id = results.index_by(&:id)
+          ordered = ids.map { |id| results_by_id[id] }
           self.class.new(ordered)
         else
           self.class.new(balanced)
