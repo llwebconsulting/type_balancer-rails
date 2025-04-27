@@ -47,20 +47,26 @@ module TypeBalancer
       end
 
       def build_result(balanced)
-        # Flatten in case balanced is a nested array
         ids = balanced.flatten.map { |h| h[:id] }
-        # Map back to original records (works for both AR and TestRelation)
-        records_by_id = to_a.index_by(&:id)
-        ordered = ids.map { |id| records_by_id[id] }
-        self.class.new(ordered)
+        unless klass.respond_to?(:where)
+          raise TypeError, 'balance_by_type can only be called on an ActiveRecord::Relation or compatible object'
+        end
+
+        relation = klass.where(id: ids)
+        if ids.any?
+          # PostgreSQL CASE statement for custom ordering
+          case_sql = 'CASE id ' + ids.each_with_index.map { |id, idx| "WHEN #{id} THEN #{idx}" }.join(' ') + ' END'
+          relation = relation.order(Arel.sql(case_sql))
+        end
+        relation
       end
 
       def empty_relation
-        if klass.respond_to?(:none)
-          klass.none
-        else
-          []
+        unless klass.respond_to?(:none)
+          raise TypeError, 'balance_by_type can only be called on an ActiveRecord::Relation or compatible object'
         end
+
+        klass.none
       end
 
       def fetch_type_field(options)
