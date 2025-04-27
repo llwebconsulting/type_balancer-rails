@@ -21,8 +21,9 @@ RSpec.describe 'Basic Type Balancing', :integration do
 
   describe '#balance_by_type' do
     it 'balances records by type using default settings' do
+      expected_hashes = records.map { |r| { id: r.id, type: r.type } }
       expect(TypeBalancer).to receive(:balance).with(
-        records,
+        expected_hashes,
         type_field: :type
       ).and_return(records)
 
@@ -32,12 +33,20 @@ RSpec.describe 'Basic Type Balancing', :integration do
     end
 
     it 'allows overriding the type field' do
+      custom_records = [
+        OpenStruct.new(id: 1, category: 'foo', title: 'First Post'),
+        OpenStruct.new(id: 2, category: 'bar', title: 'First Video'),
+        OpenStruct.new(id: 3, category: 'baz', title: 'Second Post')
+      ]
+      custom_relation = TestRelation.new(custom_records)
+      custom_relation.extend(relation.class.included_modules.find { |m| m.name&.include?('CollectionMethods') })
+      expected_hashes = custom_records.map { |r| { id: r.id, type: r.category } }
       expect(TypeBalancer).to receive(:balance).with(
-        records,
-        type_field: :category
-      ).and_return(records)
+        expected_hashes,
+        type_field: :type
+      ).and_return(custom_records)
 
-      relation.balance_by_type(type_field: :category)
+      custom_relation.balance_by_type(type_field: :category)
     end
 
     it 'preserves order of balanced records' do

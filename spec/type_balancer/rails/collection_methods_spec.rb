@@ -22,20 +22,59 @@ RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
     context 'with records' do
       let(:records) do
         [
-          OpenStruct.new(id: 1, type: 'Post'),
-          OpenStruct.new(id: 2, type: 'Article'),
-          OpenStruct.new(id: 3, type: 'Post')
+          OpenStruct.new(id: 1, type: 'Post', title: 'A', extra: 'foo'),
+          OpenStruct.new(id: 2, type: 'Article', title: 'B', extra: 'bar'),
+          OpenStruct.new(id: 3, type: 'Post', title: 'C', extra: 'baz')
         ]
       end
 
+      it 'sends only id and type to TypeBalancer.balance with default type field' do
+        expect(TypeBalancer).to receive(:balance) do |arg, type_field:|
+          expect(arg).to all(include(:id, :type))
+          expect(arg).to all(satisfy { |h| h.keys.sort == [:id, :type] })
+          expect(type_field).to eq(:type)
+        end
+        relation.balance_by_type
+      end
+
+      it 'sends only id and custom type field to TypeBalancer.balance' do
+        custom_records = [
+          OpenStruct.new(id: 1, category: 'foo', title: 'A'),
+          OpenStruct.new(id: 2, category: 'bar', title: 'B')
+        ]
+        custom_relation = TestRelation.new(custom_records)
+        custom_relation.extend(described_class)
+        expect(TypeBalancer).to receive(:balance) do |arg, type_field:|
+          expect(arg).to all(include(:id, :type))
+          expect(arg.map { |h| h[:type] }).to eq(custom_records.map { |r| r.category })
+          expect(type_field).to eq(:type)
+        end
+        custom_relation.balance_by_type(type_field: :category)
+      end
+
       it 'delegates to TypeBalancer.balance with default type field' do
-        expect(TypeBalancer).to receive(:balance).with(records, type_field: :type)
+        expect(TypeBalancer).to receive(:balance) do |arg, type_field:|
+          expect(arg).to all(include(:id, :type))
+          expect(arg).to all(satisfy { |h| h.keys.sort == [:id, :type] })
+          expect(type_field).to eq(:type)
+        end
         relation.balance_by_type
       end
 
       it 'allows overriding the type field' do
-        expect(TypeBalancer).to receive(:balance).with(records, type_field: :content_type)
-        relation.balance_by_type(type_field: :content_type)
+        custom_records = [
+          OpenStruct.new(id: 1, content_type: 'foo', title: 'A'),
+          OpenStruct.new(id: 2, content_type: 'bar', title: 'B'),
+          OpenStruct.new(id: 3, content_type: 'baz', title: 'C')
+        ]
+        custom_relation = TestRelation.new(custom_records)
+        custom_relation.extend(described_class)
+        expect(TypeBalancer).to receive(:balance) do |arg, type_field:|
+          expect(arg).to all(include(:id, :type))
+          expect(arg.map { |h| h[:type] }).to eq(custom_records.map { |r| r.content_type })
+          expect(type_field).to eq(:type)
+        end
+        custom_relation.balance_by_type(type_field: :content_type)
       end
 
       context 'with pagination' do
@@ -46,7 +85,11 @@ RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
         end
 
         it 'preserves pagination' do
-          expect(TypeBalancer).to receive(:balance).with(paginated_records, type_field: :type)
+          expect(TypeBalancer).to receive(:balance) do |arg, type_field:|
+            expect(arg).to all(include(:id, :type))
+            expect(arg).to all(satisfy { |h| h.keys.sort == [:id, :type] })
+            expect(type_field).to eq(:type)
+          end
           relation.limit(2).balance_by_type
         end
       end

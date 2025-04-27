@@ -24,7 +24,11 @@ module TypeBalancer
         return empty_relation if records.empty?
 
         type_field = fetch_type_field(options)
-        balanced   = TypeBalancer.balance(records, type_field: type_field)
+        # Map to array of hashes with only id and type
+        id_and_type_hashes = records.map do |record|
+          { id: record.id, type: record.send(type_field) }
+        end
+        balanced = TypeBalancer.balance(id_and_type_hashes, type_field: :type)
         return empty_relation if balanced.nil?
 
         paged = apply_pagination(balanced, options)
