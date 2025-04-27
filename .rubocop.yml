@@ -17,6 +17,7 @@ AllCops:
     - 'db/schema.rb'
     - 'db/migrate/*.rb'
     - 'Gemfile.lock'
+    - 'example/**/*'
 
 Style/Documentation:
   Enabled: false

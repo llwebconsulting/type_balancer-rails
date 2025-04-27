@@ -1,0 +1,16 @@
+# Skewed distribution for demoing balancing
+<% 1.upto(35) do |i| %>
+video_post_<%= i %>:
+  title: "Video Post <%= i %>"
+  media_type: video
+<% end %>
+<% 1.upto(10) do |i| %>
+article_post_<%= i %>:
+  title: "Article Post <%= i %>"
+  media_type: article
+<% end %>
+<% 1.upto(5) do |i| %>
+image_post_<%= i %>:
+  title: "Image Post <%= i %>"
+  media_type: image
+<% end %> 
