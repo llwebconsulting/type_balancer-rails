@@ -24,7 +24,11 @@ module TypeBalancer
         return empty_relation if records.empty?
 
         type_field = fetch_type_field(options)
-        balanced   = TypeBalancer.balance(records, type_field: type_field)
+        # Map to array of hashes with only id and type
+        id_and_type_hashes = records.map do |record|
+          { id: record.id, type: record.send(type_field) }
+        end
+        balanced = TypeBalancer.balance(id_and_type_hashes, type_field: :type)
         return empty_relation if balanced.nil?
 
         paged = apply_pagination(balanced, options)
@@ -43,15 +47,12 @@ module TypeBalancer
       end
 
       def build_result(balanced)
-        if klass.respond_to?(:where) && klass != TestModel
-          ids     = balanced.map(&:id)
-          results = klass.where(id: ids).to_a
-          results_by_id = results.index_by(&:id)
-          ordered = ids.map { |id| results_by_id[id] }
-          self.class.new(ordered)
-        else
-          self.class.new(balanced)
-        end
+        # Flatten in case balanced is a nested array
+        ids = balanced.flatten.map { |h| h[:id] }
+        # Map back to original records (works for both AR and TestRelation)
+        records_by_id = to_a.index_by(&:id)
+        ordered = ids.map { |id| records_by_id[id] }
+        self.class.new(ordered)
       end
 
       def empty_relation

@@ -35,8 +35,9 @@ RSpec.describe 'Model Configuration', :integration do
   end
 
   it 'uses model-level configuration' do
+    expected_hashes = records.map { |r| { id: r.id, type: r.type } }
     expect(TypeBalancer).to receive(:balance).with(
-      records,
+      expected_hashes,
       type_field: :type
     )
 
@@ -44,11 +45,19 @@ RSpec.describe 'Model Configuration', :integration do
   end
 
   it 'allows overriding model configuration per-query' do
+    # Simulate custom type field
+    custom_records = [
+      OpenStruct.new(id: 1, category: 'foo', title: 'First'),
+      OpenStruct.new(id: 2, category: 'bar', title: 'Second'),
+      OpenStruct.new(id: 3, category: 'baz', title: 'Third')
+    ]
+    custom_relation = TestModel.all.class.new(custom_records)
+    custom_relation.extend(TestModel.all.class.included_modules.find { |m| m.name&.include?('CollectionMethods') })
+    expected_hashes = custom_records.map { |r| { id: r.id, type: r.category } }
     expect(TypeBalancer).to receive(:balance).with(
-      records,
-      type_field: :category
+      expected_hashes,
+      type_field: :type
     )
-
-    TestModel.all.balance_by_type(type_field: :category)
+    custom_relation.balance_by_type(type_field: :category)
   end
 end
