@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+## [0.2.2] - 2024-04-27
+
+- Version sync release: Ensures the gem version and git tag match after a previous mismatch (v0.2.1 tag pointed to v0.2.0 code). No code changes from 0.2.1.
+
 ## [0.2.0] - 2024-04-27
 
 - Refactored `balance_by_type` to only send `id` and type field to TypeBalancer for efficiency and clarity
