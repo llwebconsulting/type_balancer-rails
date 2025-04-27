@@ -29,10 +29,12 @@ RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
       end
 
       it 'sends only id and type to TypeBalancer.balance with default type field' do
+        expected_hashes = records.map { |r| { id: r.id, type: r.type } }
         expect(TypeBalancer).to receive(:balance) do |arg, type_field:|
           expect(arg).to all(include(:id, :type))
           expect(arg).to all(satisfy { |h| h.keys.sort == [:id, :type] })
           expect(type_field).to eq(:type)
+          expected_hashes
         end
         relation.balance_by_type
       end
@@ -44,19 +46,23 @@ RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
         ]
         custom_relation = TestRelation.new(custom_records)
         custom_relation.extend(described_class)
+        expected_hashes = custom_records.map { |r| { id: r.id, type: r.category } }
         expect(TypeBalancer).to receive(:balance) do |arg, type_field:|
           expect(arg).to all(include(:id, :type))
           expect(arg.map { |h| h[:type] }).to eq(custom_records.map { |r| r.category })
           expect(type_field).to eq(:type)
+          expected_hashes
         end
         custom_relation.balance_by_type(type_field: :category)
       end
 
       it 'delegates to TypeBalancer.balance with default type field' do
+        expected_hashes = records.map { |r| { id: r.id, type: r.type } }
         expect(TypeBalancer).to receive(:balance) do |arg, type_field:|
           expect(arg).to all(include(:id, :type))
           expect(arg).to all(satisfy { |h| h.keys.sort == [:id, :type] })
           expect(type_field).to eq(:type)
+          expected_hashes
         end
         relation.balance_by_type
       end
@@ -69,10 +75,12 @@ RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
         ]
         custom_relation = TestRelation.new(custom_records)
         custom_relation.extend(described_class)
+        expected_hashes = custom_records.map { |r| { id: r.id, type: r.content_type } }
         expect(TypeBalancer).to receive(:balance) do |arg, type_field:|
           expect(arg).to all(include(:id, :type))
           expect(arg.map { |h| h[:type] }).to eq(custom_records.map { |r| r.content_type })
           expect(type_field).to eq(:type)
+          expected_hashes
         end
         custom_relation.balance_by_type(type_field: :content_type)
       end
@@ -85,13 +93,43 @@ RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
         end
 
         it 'preserves pagination' do
+          expected_hashes = paginated_records.map { |r| { id: r.id, type: r.type } }
           expect(TypeBalancer).to receive(:balance) do |arg, type_field:|
             expect(arg).to all(include(:id, :type))
             expect(arg).to all(satisfy { |h| h.keys.sort == [:id, :type] })
             expect(type_field).to eq(:type)
+            expected_hashes
           end
           relation.limit(2).balance_by_type
         end
+      end
+
+      it 'returns records in the order of ids returned by the balancer (flat array)' do
+        # Setup: balancer returns hashes in a custom order
+        balanced_hashes = [
+          { id: 2, type: 'Article' },
+          { id: 1, type: 'Post' },
+          { id: 3, type: 'Post' }
+        ]
+        allow(TypeBalancer).to receive(:balance).and_return(balanced_hashes)
+        # The original records are:
+        # 1: Post, 2: Article, 3: Post
+        expected_order = [records[1], records[0], records[2]]
+        result = relation.balance_by_type
+        expect(result.to_a).to eq(expected_order)
+      end
+
+      it 'returns records in the order of ids returned by the balancer (nested array)' do
+        # Setup: balancer returns nested arrays of hashes
+        balanced_hashes = [
+          [{ id: 3, type: 'Post' }],
+          [{ id: 1, type: 'Post' }, { id: 2, type: 'Article' }]
+        ]
+        allow(TypeBalancer).to receive(:balance).and_return(balanced_hashes)
+        # Flattened order: 3, 1, 2
+        expected_order = [records[2], records[0], records[1]]
+        result = relation.balance_by_type
+        expect(result.to_a).to eq(expected_order)
       end
     end
   end

@@ -47,15 +47,12 @@ module TypeBalancer
       end
 
       def build_result(balanced)
-        if klass.respond_to?(:where) && klass != TestModel
-          ids     = balanced.map(&:id)
-          results = klass.where(id: ids).to_a
-          results_by_id = results.index_by(&:id)
-          ordered = ids.map { |id| results_by_id[id] }
-          self.class.new(ordered)
-        else
-          self.class.new(balanced)
-        end
+        # Flatten in case balanced is a nested array
+        ids = balanced.flatten.map { |h| h[:id] }
+        # Map back to original records (works for both AR and TestRelation)
+        records_by_id = to_a.index_by(&:id)
+        ordered = ids.map { |id| records_by_id[id] }
+        self.class.new(ordered)
       end
 
       def empty_relation
