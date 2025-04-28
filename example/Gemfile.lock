@@ -80,6 +80,8 @@ GEM
       securerandom (>= 0.3)
       tzinfo (~> 2.0, >= 2.0.5)
       uri (>= 0.13.1)
+    addressable (2.8.7)
+      public_suffix (>= 2.0.2, < 7.0)
     ast (2.4.3)
     base64 (0.2.0)
     bcrypt_pbkdf (1.1.1)
@@ -93,6 +95,18 @@ GEM
     brakeman (7.0.2)
       racc
     builder (3.3.0)
+    capybara (3.40.0)
+      addressable
+      matrix
+      mini_mime (>= 0.1.3)
+      nokogiri (~> 1.11)
+      rack (>= 1.6.0)
+      rack-test (>= 0.6.3)
+      regexp_parser (>= 1.5, < 3.0)
+      xpath (~> 3.2)
+    childprocess (5.1.0)
+      logger (~> 1.5)
+    coderay (1.1.3)
     concurrent-ruby (1.3.5)
     connection_pool (2.5.2)
     crass (1.0.6)
@@ -143,6 +157,10 @@ GEM
       thor (~> 1.3)
       zeitwerk (>= 2.6.18, < 3.0)
     language_server-protocol (3.17.0.4)
+    launchy (3.1.1)
+      addressable (~> 2.8)
+      childprocess (~> 5.0)
+      logger (~> 1.6)
     lint_roller (1.1.0)
     logger (1.7.0)
     loofah (2.24.0)
@@ -154,6 +172,8 @@ GEM
       net-pop
       net-smtp
     marcel (1.0.4)
+    matrix (0.4.2)
+    method_source (1.1.0)
     mini_mime (1.1.5)
     minitest (5.25.5)
     msgpack (1.8.0)
@@ -202,9 +222,13 @@ GEM
       activesupport (>= 7.0.0)
       rack
       railties (>= 7.0.0)
+    pry (0.15.2)
+      coderay (~> 1.1)
+      method_source (~> 1.0)
     psych (5.2.3)
       date
       stringio
+    public_suffix (6.0.1)
     puma (6.6.0)
       nio4r (~> 2.0)
     raabro (1.4.0)
@@ -365,6 +389,8 @@ GEM
       base64
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.5)
+    xpath (3.2.0)
+      nokogiri (~> 1.8)
     zeitwerk (2.7.2)
 
 PLATFORMS
@@ -382,12 +408,15 @@ PLATFORMS
 DEPENDENCIES
   bootsnap
   brakeman
+  capybara
   database_cleaner-active_record (~> 2.2)
   debug
   importmap-rails
   jbuilder
   kamal
+  launchy
   propshaft
+  pry
   puma (>= 5.0)
   rails (~> 8.0.2)
   rails-controller-testing

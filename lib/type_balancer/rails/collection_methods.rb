@@ -26,9 +26,10 @@ module TypeBalancer
         type_field = fetch_type_field(options)
         # Map to array of hashes with only id and type
         id_and_type_hashes = records.map do |record|
-          { id: record.id, type: record.send(type_field) }
+          { id: record.id, type: record.send(type_field).to_s }
         end
-        balanced = TypeBalancer.balance(id_and_type_hashes, type_field: :type)
+        # Optionally, pass type_order: %w[article image video] if you want a specific order
+        balanced = TypeBalancer.balance(id_and_type_hashes, type_field: type_field)
         return empty_relation if balanced.nil?
 
         paged = apply_pagination(balanced, options)

@@ -77,7 +77,7 @@ RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
         expect(TypeBalancer).to receive(:balance) do |arg, type_field:|
           expect(arg).to all(include(:id, :type))
           expect(arg.map { |h| h[:type] }).to eq(custom_records.map(&:category))
-          expect(type_field).to eq(:type)
+          expect(type_field).to eq(:category)
           expected_hashes
         end
         custom_relation.balance_by_type(type_field: :category)
@@ -128,7 +128,7 @@ RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
         expect(TypeBalancer).to receive(:balance) do |arg, type_field:|
           expect(arg).to all(include(:id, :type))
           expect(arg.map { |h| h[:type] }).to eq(custom_records.map(&:content_type))
-          expect(type_field).to eq(:type)
+          expect(type_field).to eq(:content_type)
           expected_hashes
         end
         custom_relation.balance_by_type(type_field: :content_type)

@@ -47,6 +47,8 @@ group :development, :test do
   # Static analysis for security vulnerabilities [https://brakemanscanner.org/]
   gem "brakeman", require: false
 
+  gem "pry"
+
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
 
@@ -64,4 +66,6 @@ gem "database_cleaner-active_record", "~> 2.2", :group => :test
 
 group :test do
   gem 'rails-controller-testing'
+  gem 'capybara'
+  gem 'launchy'
 end

@@ -76,7 +76,7 @@ RSpec.describe 'Basic Type Balancing', :integration do
       expected_hashes = custom_records.map { |r| { id: r.id, type: r.category } }
       expect(TypeBalancer).to receive(:balance).with(
         expected_hashes,
-        type_field: :type
+        type_field: :category
       ).and_return(custom_records)
       allow(custom_klass).to receive(:where).with(id: [1, 2, 3]).and_return(custom_relation)
       allow(custom_relation).to receive(:order).and_return(custom_relation)
