@@ -47,3 +47,7 @@
 /docs/requirements
 .idea/
 /log/
+/example/.github/
+/example/log/
+/example/tmp/
+/example/public/
