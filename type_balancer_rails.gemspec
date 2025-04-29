@@ -32,7 +32,7 @@ Gem::Specification.new do |spec|
   # Runtime dependencies
   spec.add_dependency 'activerecord', '>= 7.0', '< 9.0'
   spec.add_dependency 'activesupport', '>= 7.0', '< 9.0'
-  spec.add_dependency 'type_balancer', '~> 0.1', '>= 0.1.0'
+  spec.add_dependency 'type_balancer', '~> 0.1', '>= 0.1.4'
 
   # For more information and examples about making a new gem, check out our
   # guide at: https://bundler.io/guides/creating_gem.html
