@@ -12,8 +12,11 @@ RSpec.describe TypeBalancer::Rails::ActiveRecordExtension, :unit do
       rel.extend(TypeBalancer::Rails::CollectionMethods)
       rel
     end
+    let(:model_class) { TestARModel }
+
     before do
-      class TestARModel
+      # Create a test model class that extends our module
+      test_ar_model = Class.new do
         extend TypeBalancer::Rails::ActiveRecordExtension::ClassMethods
         @type_balancer_options = {}
         class << self
@@ -23,11 +26,13 @@ RSpec.describe TypeBalancer::Rails::ActiveRecordExtension, :unit do
           def where(*); end
         end
       end
+
+      # Stub the constant rather than defining it directly
+      stub_const('TestARModel', test_ar_model)
+
       allow(TestARModel).to receive(:all).and_return(relation)
       allow(TestARModel).to receive(:where).and_return(relation)
     end
-
-    let(:model_class) { TestARModel }
 
     it 'stores type field configuration' do
       model_class.balance_by_type type_field: :content_type

@@ -7,9 +7,11 @@ inherit_mode:
     - Include
 
 plugins:
-  - rubocop-rspec
   - rubocop-capybara
   - rubocop-factory_bot
+
+require:
+  - rubocop-rspec
 
 # Overwrite or add rules to create your own house style
 #
@@ -39,6 +41,43 @@ RSpec/MultipleExpectations:
   Enabled: false
 
 RSpec/ExampleLength:
+  Enabled: false
+
+RSpec/NestedGroups:
+  Max: 4
+
+RSpec/MultipleMemoizedHelpers:
+  Enabled: false
+
+RSpec/MessageSpies:
+  Enabled: false
+
+RSpec/VerifiedDoubles:
+  Enabled: false
+
+RSpec/MessageChain:
+  Enabled: false
+
+RSpec/NoExpectationExample:
+  Enabled: false
+
+RSpec/SubjectStub:
+  Enabled: false
+
+RSpec/StubbedMock:
+  Enabled: false
+
+RSpec/DescribeClass:
+  Exclude:
+    - 'spec/integration/**/*_spec.rb'
+
+RSpec/RepeatedExample:
+  Enabled: false
+
+RSpec/MultipleDescribes:
+  Enabled: false
+
+RSpec/RepeatedExampleGroupDescription:
   Enabled: false
 
 Capybara/FindAllFirst:

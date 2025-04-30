@@ -2,6 +2,9 @@
 
 require 'spec_helper'
 
+# We're using string references for class_double and instance_double of 'MyModel'
+# throughout this file because it's a non-existent class used only for testing the interface
+# rubocop:disable RSpec/VerifiedDoubleReference
 RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
   describe '#balance_by_type' do
     context 'with an empty relation' do
@@ -9,7 +12,7 @@ RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
         records = []
         relation = instance_double(ActiveRecord::Relation)
         klass = class_double('MyModel', name: 'MyModel')
-        relation.extend(TypeBalancer::Rails::CollectionMethods)
+        relation.extend(described_class)
         allow(relation).to receive(:to_a).and_return(records)
         allow(relation).to receive(:klass).and_return(klass)
         allow(relation).to receive(:class).and_return(ActiveRecord::Relation)
@@ -44,7 +47,7 @@ RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
 
         relation = instance_double(ActiveRecord::Relation)
         klass = class_double('MyModel', name: 'MyModel')
-        relation.extend(TypeBalancer::Rails::CollectionMethods)
+        relation.extend(described_class)
         allow(relation).to receive(:to_a).and_return(custom_records)
         allow(relation).to receive(:klass).and_return(klass)
         allow(relation).to receive(:class).and_return(ActiveRecord::Relation)
@@ -73,7 +76,7 @@ RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
       it 'sends only id and type to TypeBalancer.balance with default type field' do
         relation = instance_double(ActiveRecord::Relation)
         klass = class_double('MyModel', name: 'MyModel')
-        relation.extend(TypeBalancer::Rails::CollectionMethods)
+        relation.extend(described_class)
         allow(relation).to receive(:to_a).and_return(records)
         allow(relation).to receive(:klass).and_return(klass)
         allow(relation).to receive(:class).and_return(ActiveRecord::Relation)
@@ -102,7 +105,7 @@ RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
         ]
         custom_relation = instance_double(ActiveRecord::Relation)
         custom_klass = class_double('MyModel', name: 'MyModel')
-        custom_relation.extend(TypeBalancer::Rails::CollectionMethods)
+        custom_relation.extend(described_class)
         allow(custom_relation).to receive(:to_a).and_return(custom_records)
         allow(custom_relation).to receive(:klass).and_return(custom_klass)
         allow(custom_relation).to receive(:class).and_return(ActiveRecord::Relation)
@@ -126,7 +129,7 @@ RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
       it 'delegates to TypeBalancer.balance with default type field' do
         relation = instance_double(ActiveRecord::Relation)
         klass = class_double('MyModel', name: 'MyModel')
-        relation.extend(TypeBalancer::Rails::CollectionMethods)
+        relation.extend(described_class)
         allow(relation).to receive(:to_a).and_return(records)
         allow(relation).to receive(:klass).and_return(klass)
         allow(relation).to receive(:class).and_return(ActiveRecord::Relation)
@@ -156,7 +159,7 @@ RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
         ]
         custom_relation = instance_double(ActiveRecord::Relation)
         custom_klass = class_double('MyModel', name: 'MyModel')
-        custom_relation.extend(TypeBalancer::Rails::CollectionMethods)
+        custom_relation.extend(described_class)
         allow(custom_relation).to receive(:to_a).and_return(custom_records)
         allow(custom_relation).to receive(:klass).and_return(custom_klass)
         allow(custom_relation).to receive(:class).and_return(ActiveRecord::Relation)
@@ -183,7 +186,7 @@ RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
         it 'preserves pagination' do
           relation = instance_double(ActiveRecord::Relation)
           klass = class_double('MyModel', name: 'MyModel')
-          relation.extend(TypeBalancer::Rails::CollectionMethods)
+          relation.extend(described_class)
           allow(relation).to receive(:to_a).and_return(records)
           allow(relation).to receive(:klass).and_return(klass)
           allow(relation).to receive(:class).and_return(ActiveRecord::Relation)
@@ -191,7 +194,7 @@ RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
           allow(relation).to receive(:kind_of?).with(ActiveRecord::Relation).and_return(true)
           allow(klass).to receive(:name).and_return('MyModel')
           paginated_relation = instance_double(ActiveRecord::Relation)
-          paginated_relation.extend(TypeBalancer::Rails::CollectionMethods)
+          paginated_relation.extend(described_class)
           allow(relation).to receive(:limit).and_return(paginated_relation)
           allow(paginated_relation).to receive(:to_a).and_return(paginated_records)
           allow(paginated_relation).to receive(:klass).and_return(klass)
@@ -229,7 +232,7 @@ RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
         ids = [2, 1, 3]
         ordered = [records[1], records[0], records[2]]
         relation = instance_double(ActiveRecord::Relation)
-        relation.extend(TypeBalancer::Rails::CollectionMethods)
+        relation.extend(described_class)
         allow(relation).to receive(:to_a).and_return(records)
         allow(relation).to receive(:klass).and_return(klass)
         allow(relation).to receive(:class).and_return(ActiveRecord::Relation)
@@ -259,7 +262,7 @@ RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
         ids = [3, 1, 2]
         ordered = [records[2], records[0], records[1]]
         relation = instance_double(ActiveRecord::Relation)
-        relation.extend(TypeBalancer::Rails::CollectionMethods)
+        relation.extend(described_class)
         allow(relation).to receive(:to_a).and_return(records)
         allow(relation).to receive(:klass).and_return(klass)
         allow(relation).to receive(:class).and_return(ActiveRecord::Relation)
@@ -305,7 +308,7 @@ RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
         end
         relation = double('Relation', klass: ar_model,
                                       to_a: [OpenStruct.new(id: 1), OpenStruct.new(id: 2), OpenStruct.new(id: 3)])
-        relation.extend(TypeBalancer::Rails::CollectionMethods)
+        relation.extend(described_class)
         allow(relation).to receive(:is_a?).with(ActiveRecord::Relation).and_return(true)
         allow(relation).to receive(:kind_of?).with(ActiveRecord::Relation).and_return(true)
         allow(TypeBalancer).to receive(:balance).and_return([
@@ -313,7 +316,7 @@ RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
                                                               { id: 1, type: 'bar' },
                                                               { id: 3, type: 'baz' }
                                                             ])
-        result = relation.balance_by_type
+        relation.balance_by_type
         expect(ar_model.called_where).to eq({ id: [2, 1, 3] })
         expect(ar_model.called_order.to_s).to include('CASE id')
       end
@@ -325,7 +328,7 @@ RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
       records = []
       relation = instance_double(ActiveRecord::Relation)
       klass = class_double('MyModel', name: 'MyModel')
-      relation.extend(TypeBalancer::Rails::CollectionMethods)
+      relation.extend(described_class)
       allow(relation).to receive(:to_a).and_return(records)
       allow(relation).to receive(:klass).and_return(klass)
       allow(relation).to receive(:class).and_return(ActiveRecord::Relation)
@@ -343,7 +346,7 @@ RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
       records = [instance_double('MyModel', id: 1, type: 'Post')]
       relation = instance_double(ActiveRecord::Relation)
       klass = class_double('MyModel', name: 'MyModel')
-      relation.extend(TypeBalancer::Rails::CollectionMethods)
+      relation.extend(described_class)
       allow(relation).to receive(:to_a).and_return(records)
       allow(relation).to receive(:klass).and_return(klass)
       allow(relation).to receive(:class).and_return(ActiveRecord::Relation)
@@ -352,7 +355,7 @@ RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
       allow(klass).to receive(:name).and_return('MyModel')
       allow(TypeBalancer).to receive(:balance).and_return(nil)
       empty_relation = instance_double(ActiveRecord::Relation)
-      empty_relation.extend(TypeBalancer::Rails::CollectionMethods)
+      empty_relation.extend(described_class)
       allow(empty_relation).to receive(:to_a).and_return([])
       allow(empty_relation).to receive(:klass).and_return(klass)
       allow(empty_relation).to receive(:class).and_return(ActiveRecord::Relation)
@@ -371,7 +374,7 @@ RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
       klass = class_double('MyModel', name: 'MyModel')
       ids = [1]
       relation = instance_double(ActiveRecord::Relation)
-      relation.extend(TypeBalancer::Rails::CollectionMethods)
+      relation.extend(described_class)
       allow(relation).to receive(:to_a).and_return(records)
       allow(relation).to receive(:klass).and_return(klass)
       allow(relation).to receive(:class).and_return(ActiveRecord::Relation)
@@ -396,7 +399,7 @@ RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
       ids = [2]
       paginated = [records[1]]
       relation = instance_double(ActiveRecord::Relation)
-      relation.extend(TypeBalancer::Rails::CollectionMethods)
+      relation.extend(described_class)
       allow(relation).to receive(:to_a).and_return(records)
       allow(relation).to receive(:klass).and_return(klass)
       allow(relation).to receive(:class).and_return(ActiveRecord::Relation)
@@ -413,3 +416,4 @@ RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
     end
   end
 end
+# rubocop:enable RSpec/VerifiedDoubleReference

@@ -1,8 +1,10 @@
 plugins:
-  - rubocop-rspec
   - rubocop-rails
   - rubocop-capybara
   - rubocop-factory_bot
+
+require:
+  - rubocop-rspec
 
 AllCops:
   TargetRubyVersion: 3.2
@@ -74,6 +76,9 @@ RSpec/SubjectStub:
   Enabled: false
 
 RSpec/StubbedMock:
+  Enabled: false
+
+RSpec/ReceiveMessages:
   Enabled: false
 
 RSpec/DescribeClass:
@@ -150,5 +155,5 @@ RSpec/RepeatedExampleGroupDescription:
   Enabled: false # We have intentionally structured our specs this way
 
 # Disable Rails-specific cops since we're testing Rails integration
-# Rails:
-#   Enabled: false 
+Rails:
+  Enabled: false 

@@ -12,7 +12,7 @@ RSpec.configure do |config|
     end
   end
 
-  config.fixture_path = "#{Rails.root}/test/fixtures"
+  config.fixture_path = Rails.root.join('test/fixtures').to_s
   config.use_transactional_fixtures = true
   config.include ActiveRecord::TestFixtures
 end

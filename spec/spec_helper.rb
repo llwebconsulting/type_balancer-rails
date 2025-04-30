@@ -33,9 +33,11 @@ end
 
 # Mock ActiveRecord::Base
 module ActiveRecord
+  # Mock of ActiveRecord::Base for testing without database connection
+  # Only implements the minimum interface needed for tests
   class Base
-    # def self.all
-    #   TestRelation.new([])
-    # end
+    def self.all
+      []
+    end
   end
 end

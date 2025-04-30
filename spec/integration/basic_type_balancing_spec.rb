@@ -3,6 +3,9 @@
 require 'spec_helper'
 require 'integration_helper'
 
+# We're using string references for class_double and instance_double of 'MyModel'
+# throughout this file because it's a non-existent class used only for testing the interface
+# rubocop:disable RSpec/VerifiedDoubleReference
 RSpec.describe 'Basic Type Balancing', :integration do
   let(:records) do
     [
@@ -123,3 +126,4 @@ RSpec.describe 'Basic Type Balancing', :integration do
     end
   end
 end
+# rubocop:enable RSpec/VerifiedDoubleReference

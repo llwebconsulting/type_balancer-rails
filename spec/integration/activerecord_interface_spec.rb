@@ -2,6 +2,9 @@
 
 require 'spec_helper'
 
+# We're using string references for class_double and instance_double of 'MyModel'
+# throughout this file because it's a non-existent class used only for testing the interface
+# rubocop:disable RSpec/VerifiedDoubleReference
 RSpec.describe 'ActiveRecord Interface', :integration do
   let(:records) do
     [
@@ -49,3 +52,4 @@ RSpec.describe 'ActiveRecord Interface', :integration do
     expect(result.order(:title)).to respond_to(:where)
   end
 end
+# rubocop:enable RSpec/VerifiedDoubleReference

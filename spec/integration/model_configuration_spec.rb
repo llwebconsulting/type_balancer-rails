@@ -2,6 +2,9 @@
 
 require 'spec_helper'
 
+# We're using string references for class_double and instance_double of 'MyModel'
+# throughout this file because it's a non-existent class used only for testing the interface
+# rubocop:disable RSpec/VerifiedDoubleReference
 RSpec.describe 'Model Configuration', :integration do
   let(:records) do
     [
@@ -68,3 +71,4 @@ RSpec.describe 'Model Configuration', :integration do
     custom_relation.balance_by_type(type_field: :category)
   end
 end
+# rubocop:enable RSpec/VerifiedDoubleReference
