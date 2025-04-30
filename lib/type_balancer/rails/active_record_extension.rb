@@ -9,13 +9,8 @@ module TypeBalancer
       extend ActiveSupport::Concern
 
       included do
-        class << self
-          def all
-            relation = super
-            relation.extend(TypeBalancer::Rails::CollectionMethods)
-            relation
-          end
-        end
+        # Extend all relations with our collection methods
+        ActiveRecord::Relation.include(TypeBalancer::Rails::CollectionMethods)
       end
 
       class_methods do
@@ -35,7 +30,6 @@ module TypeBalancer
           relation = all
           return [] unless relation.is_a?(ActiveRecord::Relation)
 
-          relation.extend(CollectionMethods)
           relation.balance_by_type(options)
         end
 

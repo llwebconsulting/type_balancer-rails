@@ -9,7 +9,7 @@ RSpec.describe TypeBalancer::Rails::ActiveRecordExtension, :unit do
       allow(rel).to receive(:to_a).and_return([])
       allow(rel).to receive(:klass).and_return(TestARModel)
       allow(rel).to receive(:class).and_return(ActiveRecord::Relation)
-      rel.extend(TypeBalancer::Rails::CollectionMethods)
+      allow(rel).to receive(:balance_by_type).and_return(rel)
       rel
     end
     let(:model_class) { TestARModel }
@@ -22,7 +22,16 @@ RSpec.describe TypeBalancer::Rails::ActiveRecordExtension, :unit do
         class << self
           attr_accessor :type_balancer_options
 
-          def all; end
+          def all
+            @relation ||= instance_double(ActiveRecord::Relation)
+            allow(@relation).to receive(:to_a).and_return([])
+            allow(@relation).to receive(:klass).and_return(self)
+            allow(@relation).to receive(:class).and_return(ActiveRecord::Relation)
+            allow(@relation).to receive(:balance_by_type).and_return(@relation)
+            allow(@relation).to receive(:is_a?).with(ActiveRecord::Relation).and_return(true)
+            @relation
+          end
+
           def where(*); end
         end
       end
@@ -30,8 +39,17 @@ RSpec.describe TypeBalancer::Rails::ActiveRecordExtension, :unit do
       # Stub the constant rather than defining it directly
       stub_const('TestARModel', test_ar_model)
 
-      allow(TestARModel).to receive(:all).and_return(relation)
+      # Mock ActiveRecord::Relation to include our module
+      allow(ActiveRecord::Relation).to receive(:include).with(TypeBalancer::Rails::CollectionMethods)
+
+      # Include our module to trigger the included hook
+      test_ar_model.include(TypeBalancer::Rails::ActiveRecordExtension)
+
       allow(TestARModel).to receive(:where).and_return(relation)
+    end
+
+    it 'extends ActiveRecord::Relation with CollectionMethods' do
+      expect(ActiveRecord::Relation).to have_received(:include).with(TypeBalancer::Rails::CollectionMethods)
     end
 
     it 'stores type field configuration' do
@@ -47,11 +65,6 @@ RSpec.describe TypeBalancer::Rails::ActiveRecordExtension, :unit do
     it 'uses default type field when called with no arguments (idiomatic API)' do
       model_class.balance_by_type
       expect(model_class.type_balancer_options[:type_field]).to eq(:type)
-    end
-
-    it 'returns a relation with collection methods' do
-      # This test is no longer needed, as balance_by_type should only be called on AR relations
-      # and will raise if called on an unsupported object.
     end
   end
 
