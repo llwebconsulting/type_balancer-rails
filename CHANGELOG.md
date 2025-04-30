@@ -1,5 +1,12 @@
 ## [Unreleased]
 
+## [0.2.4] - 2025-04-29
+
+- Fixed critical ActiveRecord extension compatibility issue with `all` method
+- Improved ActiveRecord integration by properly maintaining method signatures
+- Enhanced test coverage for ActiveRecord core functionality
+- Ensured compatibility with internal ActiveRecord operations like `reload`
+
 ## [0.2.3] - 2025-04-29
 
 - Fixed issue with returning correctly balance items
