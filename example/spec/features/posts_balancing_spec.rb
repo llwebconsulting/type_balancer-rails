@@ -13,4 +13,4 @@ RSpec.feature 'Posts balancing', type: :feature do
     # Check that the first 10 are not all the same (skewed fixture would be all video)
     expect(media_types.first(10).uniq.size).to be > 1
   end
-end 
+end

@@ -15,4 +15,4 @@ RSpec.feature 'Contents balancing', type: :feature do
     # Check that the first 10 are not all the same (skewed fixture would be all news)
     expect(categories.first(10).uniq.size).to be > 1
   end
-end 
+end

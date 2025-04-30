@@ -1,4 +1,4 @@
-require:
+plugins:
   - rubocop-rspec
   - rubocop-rails
   - rubocop-capybara
@@ -119,27 +119,6 @@ FactoryBot/FactoryNameStyle:
 FactoryBot/SyntaxMethods:
   Enabled: false
 
-RSpecRails/AvoidSetupHook:
-  Enabled: false
-
-RSpecRails/HaveHttpStatus:
-  Enabled: false
-
-RSpecRails/HttpStatus:
-  Enabled: false
-
-RSpecRails/InferredSpecType:
-  Enabled: false
-
-RSpecRails/MinitestAssertions:
-  Enabled: false
-
-RSpecRails/NegationBeValid:
-  Enabled: false
-
-RSpecRails/TravelAround:
-  Enabled: false
-
 Layout/LineLength:
   Max: 120
 
@@ -171,5 +150,5 @@ RSpec/RepeatedExampleGroupDescription:
   Enabled: false # We have intentionally structured our specs this way
 
 # Disable Rails-specific cops since we're testing Rails integration
-Rails:
-  Enabled: false 
+# Rails:
+#   Enabled: false 

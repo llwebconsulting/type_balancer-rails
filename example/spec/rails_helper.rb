@@ -21,7 +21,7 @@ end
 
 RSpec.configure do |config|
   # Use test/fixtures for Rails-style fixtures
-  config.fixture_paths = ["#{::Rails.root}/test/fixtures"]
+  config.fixture_paths = [ "#{::Rails.root}/test/fixtures" ]
   config.use_transactional_fixtures = true
   config.include ActiveRecord::TestFixtures
 

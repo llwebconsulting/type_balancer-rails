@@ -69,3 +69,9 @@ group :test do
   gem 'capybara'
   gem 'launchy'
 end
+
+gem "rubocop-rspec", "~> 3.6", :groups => [:development, :test]
+
+gem "rubocop-capybara", "~> 2.22", :groups => [:development, :test]
+
+gem "rubocop-factory_bot", "~> 2.27", :groups => [:development, :test]
