@@ -1,8 +1,10 @@
-require:
-  - rubocop-rspec
+plugins:
   - rubocop-rails
   - rubocop-capybara
   - rubocop-factory_bot
+
+require:
+  - rubocop-rspec
 
 AllCops:
   TargetRubyVersion: 3.2
@@ -17,6 +19,7 @@ AllCops:
     - 'db/schema.rb'
     - 'db/migrate/*.rb'
     - 'Gemfile.lock'
+    - 'example/**/*'
 
 Style/Documentation:
   Enabled: false
@@ -75,6 +78,9 @@ RSpec/SubjectStub:
 RSpec/StubbedMock:
   Enabled: false
 
+RSpec/ReceiveMessages:
+  Enabled: false
+
 RSpec/DescribeClass:
   Exclude:
     - 'spec/integration/**/*_spec.rb'
@@ -116,27 +122,6 @@ FactoryBot/FactoryNameStyle:
   Enabled: false
 
 FactoryBot/SyntaxMethods:
-  Enabled: false
-
-RSpecRails/AvoidSetupHook:
-  Enabled: false
-
-RSpecRails/HaveHttpStatus:
-  Enabled: false
-
-RSpecRails/HttpStatus:
-  Enabled: false
-
-RSpecRails/InferredSpecType:
-  Enabled: false
-
-RSpecRails/MinitestAssertions:
-  Enabled: false
-
-RSpecRails/NegationBeValid:
-  Enabled: false
-
-RSpecRails/TravelAround:
   Enabled: false
 
 Layout/LineLength:

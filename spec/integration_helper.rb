@@ -12,8 +12,6 @@ RSpec.shared_context 'with integration setup' do
     ]
   end
 
-  let(:relation) { TestRelation.new(records) }
-
   before do
     allow(TypeBalancer).to receive(:balance).and_return(records)
   end

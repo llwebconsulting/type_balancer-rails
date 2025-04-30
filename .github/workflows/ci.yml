@@ -7,8 +7,8 @@ on:
     branches: [ main ]
 
 jobs:
-  unit:
-    name: Unit Tests
+  test:
+    name: Tests
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -24,8 +24,8 @@ jobs:
       - name: Install Rails
         run: |
           gem install rails -v "~> ${{ matrix.rails-version }}.0"
-      - name: Run unit tests with coverage
-        run: bundle exec rspec --tag unit
+      - name: Run all tests with coverage
+        run: bundle exec rspec
         env:
           COVERAGE: true
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -34,12 +34,12 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: coverage-report-unit-ruby-${{ matrix.ruby-version }}-rails-${{ matrix.rails-version }}
+          name: coverage-report-ruby-${{ matrix.ruby-version }}-rails-${{ matrix.rails-version }}
           path: coverage
           retention-days: 14
 
-  integration:
-    name: Integration Tests
+  example-integration:
+    name: Example App Integration Tests
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -55,8 +55,11 @@ jobs:
       - name: Install Rails
         run: |
           gem install rails -v "~> ${{ matrix.rails-version }}.0"
-      - name: Run integration tests
-        run: bundle exec rspec --tag integration
+      - name: Run example app tests
+        run: |
+          cd example
+          bundle install
+          bundle exec rspec
 
   rubocop:
     name: RuboCop
@@ -70,5 +73,11 @@ jobs:
           ruby-version: '3.3.0'
           bundler-cache: true
       
-      - name: Run RuboCop
-        run: bundle exec rubocop 
+      - name: Run RuboCop on main gem
+        run: bundle exec rubocop
+        
+      - name: Run RuboCop on example app
+        run: |
+          cd example
+          bundle install
+          bundle exec rubocop --ignore-parent-exclusion 

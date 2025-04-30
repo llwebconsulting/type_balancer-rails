@@ -1,0 +1,27 @@
+<h1>Contents (Balanced by <%= params[:action] == 'balance_by_category' ? ':category' : ':content_type' %>)</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Title</th>
+      <th>Category</th>
+      <th>Content Type</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @contents.each do |content| %>
+      <tr>
+        <td><%= content.title %></td>
+        <td><%= content.category %></td>
+        <td><%= content.content_type %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<hr>
+<ul>
+  <li><%= link_to 'Back to Posts', posts_path %></li>
+  <li><%= link_to 'Balance by Category', balance_contents_by_category_path %></li>
+  <li><%= link_to 'Balance by Content Type', balance_contents_by_content_type_path %></li>
+</ul> 

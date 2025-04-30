@@ -1,0 +1,132 @@
+# Omakase Ruby styling for Rails
+inherit_gem: { rubocop-rails-omakase: rubocop.yml }
+
+inherit_mode:
+  override:
+    - Exclude
+    - Include
+
+plugins:
+  - rubocop-capybara
+  - rubocop-factory_bot
+
+require:
+  - rubocop-rspec
+
+# Overwrite or add rules to create your own house style
+#
+# # Use `[a, [b, c]]` not `[ a, [ b, c ] ]`
+# Layout/SpaceInsideArrayLiteralBrackets:
+#   Enabled: false
+
+AllCops:
+  NewCops: enable
+  Include:
+    - '**/*.rb'
+    - '**/*.rake'
+    - '**/Rakefile'
+    - '**/config.ru'
+  Exclude:
+    - 'bin/**/*'
+    - 'db/**/*'
+    - 'tmp/**/*'
+    - 'vendor/**/*'
+    - 'log/**/*'
+    - 'node_modules/**/*'
+
+RSpec/IncludeExamples:
+  Enabled: true
+
+RSpec/MultipleExpectations:
+  Enabled: false
+
+RSpec/ExampleLength:
+  Enabled: false
+
+RSpec/NestedGroups:
+  Max: 4
+
+RSpec/MultipleMemoizedHelpers:
+  Enabled: false
+
+RSpec/MessageSpies:
+  Enabled: false
+
+RSpec/VerifiedDoubles:
+  Enabled: false
+
+RSpec/MessageChain:
+  Enabled: false
+
+RSpec/NoExpectationExample:
+  Enabled: false
+
+RSpec/SubjectStub:
+  Enabled: false
+
+RSpec/StubbedMock:
+  Enabled: false
+
+RSpec/DescribeClass:
+  Exclude:
+    - 'spec/integration/**/*_spec.rb'
+
+RSpec/RepeatedExample:
+  Enabled: false
+
+RSpec/MultipleDescribes:
+  Enabled: false
+
+RSpec/RepeatedExampleGroupDescription:
+  Enabled: false
+
+Capybara/FindAllFirst:
+  Enabled: true
+
+Capybara/MatchStyle:
+  Enabled: true
+
+Capybara/NegationMatcher:
+  Enabled: true
+
+Capybara/NegationMatcherAfterVisit:
+  Enabled: true
+
+Capybara/RedundantWithinFind:
+  Enabled: true
+
+Capybara/SpecificActions:
+  Enabled: true
+
+Capybara/SpecificFinders:
+  Enabled: true
+
+Capybara/SpecificMatcher:
+  Enabled: true
+
+Capybara/RSpec/HaveSelector:
+  Enabled: true
+
+FactoryBot/AssociationStyle:
+  Enabled: true
+
+FactoryBot/ConsistentParenthesesStyle:
+  Enabled: true
+
+FactoryBot/ExcessiveCreateList:
+  Enabled: true
+
+FactoryBot/FactoryAssociationWithStrategy:
+  Enabled: true
+
+FactoryBot/FactoryNameStyle:
+  Enabled: true
+
+FactoryBot/IdSequence:
+  Enabled: true
+
+FactoryBot/RedundantFactoryOption:
+  Enabled: true
+
+FactoryBot/SyntaxMethods:
+  Enabled: true

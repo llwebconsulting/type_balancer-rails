@@ -1,0 +1,19 @@
+# Skewed distribution for demoing balancing on two fields
+<% 1.upto(30) do |i| %>
+news_video_<%= i %>:
+  title: "News Video <%= i %>"
+  category: news
+  content_type: video
+<% end %>
+<% 1.upto(15) do |i| %>
+blog_article_<%= i %>:
+  title: "Blog Article <%= i %>"
+  category: blog
+  content_type: article
+<% end %>
+<% 1.upto(5) do |i| %>
+tutorial_image_<%= i %>:
+  title: "Tutorial Image <%= i %>"
+  category: tutorial
+  content_type: image
+<% end %> 

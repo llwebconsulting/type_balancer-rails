@@ -28,6 +28,17 @@ $ gem install type_balancer_rails
 
 ## Usage
 
+To balance records by a given type field, use the following syntax:
+
+```ruby
+Post.balance_by_type(type_field: :media_type)
+Content.balance_by_type(type_field: :category)
+```
+
+> **Note:** Passing a symbol directly (e.g., `balance_by_type(:media_type)`) is not currently supported. Always use the options hash syntax as shown above.
+
+> **Note:** Type field values are automatically converted to strings, so you don't need to handle string conversion manually. For example, both `:article` and `"article"` as type values will work correctly.
+
 ### Basic Usage
 
 The gem adds a `balance_by_type` method to your ActiveRecord relations. Here's how to use it:
@@ -70,6 +81,10 @@ The `balance_by_type` method preserves the ActiveRecord query interface:
              .page(2)
              .per(20)
 ```
+
+## Planned Enhancements
+
+- Support for passing a symbol directly to `balance_by_type`, e.g., `balance_by_type(:media_type)`, for more ergonomic usage. This is planned for a future version.
 
 ## Development
 
