@@ -33,7 +33,11 @@ RSpec.describe 'ActiveRecord Interface', :integration do
 
   it 'preserves query interface while balancing' do
     expected_hashes = records.map { |r| { id: r.id, type: r.type } }
-    expect(TypeBalancer).to receive(:balance).with(expected_hashes, type_field: :type)
+    expect(TypeBalancer).to receive(:balance).with(
+      expected_hashes,
+      type_field: :type,
+      type_order: ['video', 'post']
+    )
     result = ordered_relation.balance_by_type(type_field: :type)
     expect(result).to respond_to(:where)
     expect(result).to respond_to(:order)

@@ -51,7 +51,8 @@ RSpec.describe 'Basic Type Balancing', :integration do
       expected_hashes = records.map { |r| { id: r.id, type: r.type } }
       expect(TypeBalancer).to receive(:balance).with(
         expected_hashes,
-        type_field: :type
+        type_field: :type,
+        type_order: ['video', 'post']
       ).and_return(records)
       allow(klass).to receive(:where).with(id: [1, 2, 3]).and_return(relation)
       allow(relation).to receive(:order).and_return(relation)
@@ -73,10 +74,11 @@ RSpec.describe 'Basic Type Balancing', :integration do
       allow(custom_relation).to receive(:class).and_return(ActiveRecord::Relation)
       allow(custom_klass).to receive(:name).and_return('MyModel')
       custom_relation.extend(TypeBalancer::Rails::CollectionMethods)
-      expected_hashes = custom_records.map { |r| { id: r.id, type: r.category } }
+      expected_hashes = custom_records.map { |r| { id: r.id, category: r.category } }
       expect(TypeBalancer).to receive(:balance).with(
         expected_hashes,
-        type_field: :category
+        type_field: :category,
+        type_order: ['foo', 'bar', 'baz']
       ).and_return(custom_records)
       allow(custom_klass).to receive(:where).with(id: [1, 2, 3]).and_return(custom_relation)
       allow(custom_relation).to receive(:order).and_return(custom_relation)

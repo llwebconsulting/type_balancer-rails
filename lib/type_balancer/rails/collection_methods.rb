@@ -101,7 +101,9 @@ module TypeBalancer
       end
 
       def build_result(balanced)
-        ids = balanced.map { |h| h[:id] }
+        # Handle both flat and nested arrays by flattening first
+        flattened = balanced.flatten(1)
+        ids = flattened.map { |h| h[:id] }
         unless klass.respond_to?(:where)
           raise TypeError, 'balance_by_type can only be called on an ActiveRecord::Relation or compatible object'
         end

@@ -33,6 +33,43 @@ RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
         ]
       end
 
+      it 'orders types by frequency (ascending)' do
+        custom_records = [
+          instance_double('MyModel', id: 1, content_type: 'article'),
+          instance_double('MyModel', id: 2, content_type: 'video'),
+          instance_double('MyModel', id: 3, content_type: 'image'),
+          instance_double('MyModel', id: 4, content_type: 'article'),
+          instance_double('MyModel', id: 5, content_type: 'article')
+        ]
+
+        relation = instance_double(ActiveRecord::Relation)
+        klass = class_double('MyModel', name: 'MyModel')
+        relation.extend(TypeBalancer::Rails::CollectionMethods)
+        allow(relation).to receive(:to_a).and_return(custom_records)
+        allow(relation).to receive(:klass).and_return(klass)
+        allow(relation).to receive(:class).and_return(ActiveRecord::Relation)
+        allow(relation).to receive(:is_a?).with(ActiveRecord::Relation).and_return(true)
+        allow(relation).to receive(:kind_of?).with(ActiveRecord::Relation).and_return(true)
+        allow(klass).to receive(:name).and_return('MyModel')
+        allow(klass).to receive(:where).with(id: [1, 2, 3, 4, 5]).and_return(relation)
+        allow(relation).to receive(:order).and_return(relation)
+        allow(klass).to receive(:none).and_return(relation)
+
+        expected_input = custom_records.map { |r| { id: r.id, content_type: r.content_type } }
+
+        # Type order should be based on frequency (ascending):
+        # video: 1 occurrence
+        # image: 1 occurrence
+        # article: 3 occurrences
+        expected_type_order = ['video', 'image', 'article']
+
+        expect(TypeBalancer).to receive(:balance)
+          .with(expected_input, type_field: :content_type, type_order: expected_type_order)
+          .and_return(expected_input)
+
+        relation.balance_by_type(type_field: :content_type)
+      end
+
       it 'sends only id and type to TypeBalancer.balance with default type field' do
         relation = instance_double(ActiveRecord::Relation)
         klass = class_double('MyModel', name: 'MyModel')
@@ -47,10 +84,12 @@ RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
         allow(relation).to receive(:order).and_return(relation)
         allow(klass).to receive(:none).and_return(relation)
         expected_hashes = records.map { |r| { id: r.id, type: r.type } }
-        expect(TypeBalancer).to receive(:balance) do |arg, type_field:|
+        expect(TypeBalancer).to receive(:balance) do |arg, type_field:, type_order:|
           expect(arg).to all(include(:id, :type))
           expect(arg).to all(satisfy { |h| h.keys.sort == [:id, :type] })
           expect(type_field).to eq(:type)
+          # Article appears once, Post appears twice, so Article should come first
+          expect(type_order).to eq(['Article', 'Post'])
           expected_hashes
         end
         relation.balance_by_type
@@ -73,11 +112,12 @@ RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
         allow(custom_klass).to receive(:where).with(id: [1, 2]).and_return(custom_relation)
         allow(custom_relation).to receive(:order).and_return(custom_relation)
         allow(custom_klass).to receive(:none).and_return(custom_relation)
-        expected_hashes = custom_records.map { |r| { id: r.id, type: r.category } }
-        expect(TypeBalancer).to receive(:balance) do |arg, type_field:|
-          expect(arg).to all(include(:id, :type))
-          expect(arg.map { |h| h[:type] }).to eq(custom_records.map(&:category))
+        expected_hashes = custom_records.map { |r| { id: r.id, category: r.category } }
+        expect(TypeBalancer).to receive(:balance) do |arg, type_field:, type_order:|
+          expect(arg).to all(include(:id, :category))
+          expect(arg.map { |h| h[:category] }).to eq(custom_records.map(&:category))
           expect(type_field).to eq(:category)
+          expect(type_order).to eq(['foo', 'bar'])
           expected_hashes
         end
         custom_relation.balance_by_type(type_field: :category)
@@ -97,10 +137,12 @@ RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
         allow(relation).to receive(:order).and_return(relation)
         allow(klass).to receive(:none).and_return(relation)
         expected_hashes = records.map { |r| { id: r.id, type: r.type } }
-        expect(TypeBalancer).to receive(:balance) do |arg, type_field:|
+        expect(TypeBalancer).to receive(:balance) do |arg, type_field:, type_order:|
           expect(arg).to all(include(:id, :type))
           expect(arg).to all(satisfy { |h| h.keys.sort == [:id, :type] })
           expect(type_field).to eq(:type)
+          # Article appears once, Post appears twice, so Article should come first
+          expect(type_order).to eq(['Article', 'Post'])
           expected_hashes
         end
         relation.balance_by_type
@@ -124,11 +166,12 @@ RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
         allow(custom_klass).to receive(:where).with(id: [1, 2, 3]).and_return(custom_relation)
         allow(custom_relation).to receive(:order).and_return(custom_relation)
         allow(custom_klass).to receive(:none).and_return(custom_relation)
-        expected_hashes = custom_records.map { |r| { id: r.id, type: r.content_type } }
-        expect(TypeBalancer).to receive(:balance) do |arg, type_field:|
-          expect(arg).to all(include(:id, :type))
-          expect(arg.map { |h| h[:type] }).to eq(custom_records.map(&:content_type))
+        expected_hashes = custom_records.map { |r| { id: r.id, content_type: r.content_type } }
+        expect(TypeBalancer).to receive(:balance) do |arg, type_field:, type_order:|
+          expect(arg).to all(include(:id, :content_type))
+          expect(arg.map { |h| h[:content_type] }).to eq(custom_records.map(&:content_type))
           expect(type_field).to eq(:content_type)
+          expect(type_order).to eq(['foo', 'bar', 'baz'])
           expected_hashes
         end
         custom_relation.balance_by_type(type_field: :content_type)
@@ -160,10 +203,11 @@ RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
           allow(paginated_relation).to receive(:order).and_return(paginated_relation)
           allow(klass).to receive(:none).and_return(relation)
           expected_hashes = paginated_records.map { |r| { id: r.id, type: r.type } }
-          expect(TypeBalancer).to receive(:balance) do |arg, type_field:|
+          expect(TypeBalancer).to receive(:balance) do |arg, type_field:, type_order:|
             expect(arg).to all(include(:id, :type))
             expect(arg).to all(satisfy { |h| h.keys.sort == [:id, :type] })
             expect(type_field).to eq(:type)
+            expect(type_order).to eq(['Post', 'Article'])
             expected_hashes
           end
           paginated_relation.balance_by_type
