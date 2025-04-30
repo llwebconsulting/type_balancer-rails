@@ -11,38 +11,40 @@ RSpec.describe Post, type: :model do
   end
 
   describe 'type balancing with real records' do
+    let(:video_post) { described_class.create!(title: 'Post 1', media_type: 'video') }
+    let(:article_post) { described_class.create!(title: 'Post 2', media_type: 'article') }
+    let(:another_video_post) { described_class.create!(title: 'Post 3', media_type: 'video') }
+
     before do
-      Post.delete_all
-      @post1 = Post.create!(title: 'Post 1', media_type: 'video')
-      @post2 = Post.create!(title: 'Post 2', media_type: 'article')
-      @post3 = Post.create!(title: 'Post 3', media_type: 'video')
+      described_class.delete_all
+      video_post; article_post; another_video_post  # Create the records
     end
 
     after do
-      Post.delete_all
+      described_class.delete_all
     end
 
     it 'works with basic ActiveRecord methods' do
       # Test .all
-      balanced = Post.all.balance_by_type
-      expect(balanced.map(&:media_type)).to eq(['article', 'video', 'video'])
+      balanced = described_class.all.balance_by_type
+      expect(balanced.map(&:media_type)).to eq([ 'article', 'video', 'video' ])
 
       # Test .where
-      videos = Post.where(media_type: 'video').balance_by_type
+      videos = described_class.where(media_type: 'video').balance_by_type
       expect(videos.count).to eq(2)
 
       # Test .order
-      ordered = Post.order(:title).balance_by_type
-      expect(ordered.map(&:title)).to match_array(['Post 1', 'Post 2', 'Post 3'])
+      ordered = described_class.order(:title).balance_by_type
+      expect(ordered.map(&:title)).to contain_exactly('Post 1', 'Post 2', 'Post 3')
     end
 
     it 'works with reload' do
-      post = @post1.reload
+      post = video_post.reload
       expect(post.media_type).to eq('video')
     end
 
     it 'works with complex queries' do
-      result = Post.where(media_type: ['video', 'article'])
+      result = described_class.where(media_type: [ 'video', 'article' ])
                   .order(:title)
                   .limit(2)
                   .balance_by_type
