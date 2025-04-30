@@ -9,8 +9,16 @@ module TypeBalancer
       extend ActiveSupport::Concern
 
       included do
-        # Extend all relations with our collection methods
-        ActiveRecord::Relation.include(TypeBalancer::Rails::CollectionMethods)
+        # TODO: Future Enhancement - Lazy Loading of CollectionMethods
+        # Currently, CollectionMethods is included globally as soon as any model extends ActiveRecordExtension.
+        # This could be optimized to only include CollectionMethods when balance_by_type is first called on a model.
+        # This would make the extension truly opt-in at the model level and prevent unnecessary inclusion
+        # in models that don't use type balancing.
+
+        # Only include CollectionMethods if it hasn't been included yet
+        unless ActiveRecord::Relation.included_modules.include?(TypeBalancer::Rails::CollectionMethods)
+          ActiveRecord::Relation.include(TypeBalancer::Rails::CollectionMethods)
+        end
       end
 
       class_methods do
