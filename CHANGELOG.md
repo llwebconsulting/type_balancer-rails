@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+## [0.2.5] - 2025-04-29
+
+- Updated type_balancer dependency to ~> 0.2.0 for improved performance and better position calculations
+
 ## [0.2.4] - 2025-04-29
 
 - Fixed critical ActiveRecord extension compatibility issue with `all` method
