@@ -6,7 +6,7 @@ source 'https://rubygems.org'
 gemspec
 
 # Use local path for type_balancer during development
-gem 'type_balancer', '~> 0.2.0'
+gem 'type_balancer', '~> 0.2.1'
 
 # Development dependencies
 gem 'bundler-audit', '~> 0.9.1'
