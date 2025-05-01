@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+## [0.2.6] - 2025-05-01
+
+- Updated type_balancer dependency to ~> 0.2.1 for improved performance
+
 ## [0.2.5] - 2025-04-30
 
 - Updated type_balancer dependency to ~> 0.2.0 for improved performance and better position calculations
