@@ -46,7 +46,7 @@ TypeBalancer is a Ruby gem that provides advanced algorithms for distributing it
 ## 3. Class & Module Documentation
 
 ### `TypeBalancer::Rails::CollectionMethods`
-- **Location:** `/Users/carl/gems/type_balancer-rails/lib/type_balancer/rails/collection_methods.rb`
+- **Location:** `lib/type_balancer/rails/collection_methods.rb`
 - **Purpose:**
   - Provides the `balance_by_type` method for ActiveRecord::Relation, enabling balanced selection and ordering of records by a type field.
   - Handles pagination and result ordering.
