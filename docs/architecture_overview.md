@@ -29,7 +29,7 @@ TypeBalancer is a Ruby gem that provides advanced algorithms for distributing it
 - Uses a sophisticated sliding window strategy by default, with support for custom window sizes and type orderings.
 - Extensible strategy system for future balancing algorithms.
 - Thread-safe, memory-efficient, and suitable for real-time processing of collections up to 10,000 items.
-- Zero dependencies and high performance across Ruby versions.
+- No external dependencies and high performance across Ruby versions.
 
 **Core API:**
 - `TypeBalancer.balance(items, type_field: :type, strategy: :sliding_window, window_size: 10, type_order: [...])`  
