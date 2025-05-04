@@ -6,26 +6,38 @@ module TypeBalancer
     # Provides collection methods for balancing by type
     # These methods are extended onto ActiveRecord::Relation
     module CollectionMethods
+      require 'digest/md5'
+
       def balance_by_type(options = {})
-        records = to_a
-        return empty_relation if records.empty?
-
         type_field = fetch_type_field(options).to_sym
-        type_counts = records.group_by { |r| r.send(type_field).to_s }.transform_values(&:count)
-        type_order = compute_type_order(type_counts)
-        items = build_items(records, type_field)
+        page     = (options[:page] || 1).to_i
+        per_page = (options[:per_page] || 20).to_i
+        offset   = (page - 1) * per_page
 
-        balanced = TypeBalancer.balance(
-          items,
-          type_field: type_field,
-          type_order: type_order
-        )
+        cache_key = [
+          'type_balancer',
+          klass.name,
+          type_field,
+          Digest::MD5.hexdigest(to_sql)
+        ].join(':')
 
-        return empty_relation if balanced.nil?
+        ids = TypeBalancer::Rails.cache_adapter.fetch(cache_key, expires_in: 10.minutes) do
+          items = select(:id, type_field).map { |r| { id: r.id, type_field => r.public_send(type_field) } }
+          type_counts = items.group_by { |h| h[type_field] }.transform_values(&:size)
+          type_order = type_counts.sort_by { |_, v| v }.map(&:first)
+          begin
+            balanced = TypeBalancer.balance(items, type_field: type_field, type_order: type_order)
+          rescue TypeBalancer::EmptyCollectionError
+            return empty_relation
+          end
+          balanced ? balanced.flatten(1).map { |h| h[:id] } : []
+        end
 
-        paged = apply_pagination(balanced, options)
+        page_ids = ids[offset, per_page] || []
+        return empty_relation if page_ids.empty?
 
-        build_result(paged)
+        case_sql = "CASE id #{page_ids.each_with_index.map { |id, idx| "WHEN #{id} THEN #{idx}" }.join(' ')} END"
+        klass.where(id: page_ids).order(Arel.sql(case_sql))
       end
 
       private

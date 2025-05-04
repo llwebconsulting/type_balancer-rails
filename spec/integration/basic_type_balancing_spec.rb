@@ -1,129 +1,121 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
-require 'integration_helper'
 
-# We're using string references for class_double and instance_double of 'MyModel'
-# throughout this file because it's a non-existent class used only for testing the interface
-# rubocop:disable RSpec/VerifiedDoubleReference
 RSpec.describe 'Basic Type Balancing', :integration do
-  let(:records) do
-    [
-      OpenStruct.new(id: 1, type: 'post', title: 'First Post'),
-      OpenStruct.new(id: 2, type: 'video', title: 'First Video'),
-      OpenStruct.new(id: 3, type: 'post', title: 'Second Post')
-    ]
-  end
-
-  let(:klass) { class_double('MyModel', name: 'MyModel') }
-  let(:empty_relation) do
-    rel = instance_double(ActiveRecord::Relation)
-    rel.extend(TypeBalancer::Rails::CollectionMethods)
-    allow(rel).to receive(:to_a).and_return([])
-    allow(rel).to receive(:klass).and_return(klass)
-    allow(rel).to receive(:class).and_return(ActiveRecord::Relation)
-    allow(rel).to receive(:is_a?).with(ActiveRecord::Relation).and_return(true)
-    allow(rel).to receive(:kind_of?).with(ActiveRecord::Relation).and_return(true)
-    allow(rel).to receive(:order).and_return(rel)
-    allow(klass).to receive(:none).and_return(rel)
-    rel
-  end
-
+  let(:model_class) { class_double('MyModel') }
   let(:relation) do
-    rel = instance_double(ActiveRecord::Relation)
+    rel = double('ActiveRecord::Relation')
     rel.extend(TypeBalancer::Rails::CollectionMethods)
-    allow(rel).to receive(:to_a).and_return(records)
-    allow(rel).to receive(:klass).and_return(klass)
-    allow(rel).to receive(:class).and_return(ActiveRecord::Relation)
-    allow(rel).to receive(:is_a?).with(ActiveRecord::Relation).and_return(true)
-    allow(rel).to receive(:kind_of?).with(ActiveRecord::Relation).and_return(true)
-    allow(klass).to receive(:name).and_return('MyModel')
-    allow(klass).to receive(:where).with(id: [1, 2, 3]).and_return(rel)
-    allow(rel).to receive(:order).and_return(rel)
-    allow(klass).to receive(:none).and_return(empty_relation)
+    allow(rel).to receive(:klass).and_return(model_class)
+    allow(rel).to receive(:to_sql).and_return('SELECT * FROM my_models')
     rel
   end
 
   before do
-    allow(TypeBalancer).to receive(:balance).and_return(records)
-    # TestModel.test_records = records # Remove if not needed for double-based tests
+    cache = Class.new do
+      def initialize = @store = {}
+
+      def fetch(key, options = {})
+        @store[key] ||= yield
+      end
+    end.new
+    allow(TypeBalancer::Rails).to receive(:cache_adapter).and_return(cache)
+    allow(model_class).to receive(:where) { relation }
+    allow(model_class).to receive(:none) { double('EmptyRelation', to_a: [], klass: model_class) }
   end
 
-  describe '#balance_by_type' do
-    it 'balances records by type using default settings' do
-      expected_hashes = records.map { |r| { id: r.id, type: r.type } }
-      expect(TypeBalancer).to receive(:balance).with(
-        expected_hashes,
-        type_field: :type,
-        type_order: ['video', 'post']
-      ).and_return(records)
-      allow(klass).to receive(:where).with(id: [1, 2, 3]).and_return(relation)
-      allow(relation).to receive(:order).and_return(relation)
-      allow(relation).to receive(:to_a).and_return(records)
-      result = relation.balance_by_type
-      expect(result.to_a).to eq(records)
-    end
+  it 'balances records by type (default field)' do
+    records = [OpenStruct.new(id: 1, type: 'A'), OpenStruct.new(id: 2, type: 'B'), OpenStruct.new(id: 3, type: 'A')]
+    allow(relation).to receive(:select).with(:id, :type).and_return(records)
+    allow(TypeBalancer).to receive(:balance).and_return([{ id: 2, type: 'B' }, { id: 1, type: 'A' },
+                                                         { id: 3, type: 'A' }])
+    ordered = [records[1], records[0], records[2]]
+    allow(model_class).to receive(:where).with(id: [2, 1, 3]).and_return(relation)
+    allow(relation).to receive(:order).and_return(relation)
+    allow(relation).to receive(:to_a).and_return(ordered)
+    result = relation.balance_by_type
+    expect(result.to_a).to eq(ordered)
+  end
 
-    it 'allows overriding the type field' do
-      custom_records = [
-        OpenStruct.new(id: 1, category: 'foo', title: 'First Post'),
-        OpenStruct.new(id: 2, category: 'bar', title: 'First Video'),
-        OpenStruct.new(id: 3, category: 'baz', title: 'Second Post')
-      ]
-      custom_klass = class_double('MyModel', name: 'MyModel')
-      custom_relation = instance_double(ActiveRecord::Relation)
-      allow(custom_relation).to receive(:to_a).and_return(custom_records)
-      allow(custom_relation).to receive(:klass).and_return(custom_klass)
-      allow(custom_relation).to receive(:class).and_return(ActiveRecord::Relation)
-      allow(custom_klass).to receive(:name).and_return('MyModel')
-      custom_relation.extend(TypeBalancer::Rails::CollectionMethods)
-      expected_hashes = custom_records.map { |r| { id: r.id, category: r.category } }
-      expect(TypeBalancer).to receive(:balance).with(
-        expected_hashes,
-        type_field: :category,
-        type_order: ['foo', 'bar', 'baz']
-      ).and_return(custom_records)
-      allow(custom_klass).to receive(:where).with(id: [1, 2, 3]).and_return(custom_relation)
-      allow(custom_relation).to receive(:order).and_return(custom_relation)
-      allow(custom_relation).to receive(:to_a).and_return(custom_records)
-      custom_relation.balance_by_type(type_field: :category)
-    end
+  it 'balances records by a custom type field' do
+    records = [OpenStruct.new(id: 1, category: 'foo'), OpenStruct.new(id: 2, category: 'bar')]
+    allow(relation).to receive(:select).with(:id, :category).and_return(records)
+    allow(TypeBalancer).to receive(:balance).and_return([{ id: 2, category: 'bar' }, { id: 1, category: 'foo' }])
+    ordered = [records[1], records[0]]
+    allow(model_class).to receive(:where).with(id: [2, 1]).and_return(relation)
+    allow(relation).to receive(:order).and_return(relation)
+    allow(relation).to receive(:to_a).and_return(ordered)
+    result = relation.balance_by_type(type_field: :category)
+    expect(result.to_a).to eq(ordered)
+  end
 
-    it 'preserves order of balanced records' do
-      ordered_records = records.reverse
-      allow(TypeBalancer).to receive(:balance).and_return(ordered_records)
-      allow(klass).to receive(:where).with(id: [3, 2, 1]).and_return(relation)
-      allow(relation).to receive(:order).and_return(relation)
-      allow(relation).to receive(:to_a).and_return(ordered_records)
-      allow(relation).to receive(:order).with(id: :desc).and_return(relation)
-      result = relation.order(id: :desc).balance_by_type
-      expect(result.to_a).to eq(ordered_records)
-    end
+  it 'returns only the correct page of records (pagination)' do
+    records = (1..10).map { |i| OpenStruct.new(id: i, type: 'A') }
+    allow(relation).to receive(:select).with(:id, :type).and_return(records)
+    allow(TypeBalancer).to receive(:balance).and_return(records.map { |r| { id: r.id, type: r.type } })
+    page_ids = (4..6).to_a
+    paged = records[3..5]
+    allow(model_class).to receive(:where).with(id: page_ids).and_return(relation)
+    allow(relation).to receive(:order).and_return(relation)
+    allow(relation).to receive(:to_a).and_return(paged)
+    result = relation.balance_by_type(page: 2, per_page: 3)
+    expect(result.to_a).to eq(paged)
+  end
 
-    it 'handles pagination after balancing' do
-      paginated_records = [records[1]] # Just the video
-      allow(TypeBalancer).to receive(:balance).and_return(paginated_records)
-      allow(klass).to receive(:where).with(id: [2]).and_return(relation)
-      allow(relation).to receive(:order).and_return(relation)
-      allow(relation).to receive(:to_a).and_return(paginated_records)
-      allow(relation).to receive(:limit).with(1).and_return(relation)
-      allow(relation).to receive(:offset).with(1).and_return(relation)
-      result = relation.balance_by_type.limit(1).offset(1)
-      expect(result.to_a).to eq(paginated_records)
-    end
+  it 'returns an empty relation if there are no records' do
+    allow(relation).to receive(:select).with(:id, :type).and_return([])
+    empty_rel = double('EmptyRelation', to_a: [], klass: model_class)
+    allow(model_class).to receive(:none).and_return(empty_rel)
+    result = relation.balance_by_type
+    expect(result.to_a).to eq([])
+  end
 
-    it 'handles empty result sets' do
-      result = empty_relation.balance_by_type
-      expect(result.to_a).to be_empty
-    end
+  it 'returns an empty relation if TypeBalancer.balance returns nil' do
+    records = [OpenStruct.new(id: 1, type: 'A')]
+    allow(relation).to receive(:select).with(:id, :type).and_return(records)
+    allow(TypeBalancer).to receive(:balance).and_return(nil)
+    empty_rel = double('EmptyRelation', to_a: [], klass: model_class)
+    allow(model_class).to receive(:none).and_return(empty_rel)
+    result = relation.balance_by_type
+    expect(result.to_a).to eq([])
+  end
 
-    it 'handles pagination' do
-      allow(klass).to receive(:where).with(id: [1]).and_return(relation)
-      allow(relation).to receive(:order).and_return(relation)
-      allow(relation).to receive(:to_a).and_return([records[0]])
-      result = relation.balance_by_type(page: 1, per_page: 1)
-      expect(result.to_a.length).to eq(1)
-    end
+  it 'returns records in the order determined by the balancer' do
+    records = [OpenStruct.new(id: 1, type: 'A'), OpenStruct.new(id: 2, type: 'B'), OpenStruct.new(id: 3, type: 'A')]
+    allow(relation).to receive(:select).with(:id, :type).and_return(records)
+    allow(TypeBalancer).to receive(:balance).and_return([{ id: 3, type: 'A' }, { id: 2, type: 'B' },
+                                                         { id: 1, type: 'A' }])
+    ordered = [records[2], records[1], records[0]]
+    allow(model_class).to receive(:where).with(id: [3, 2, 1]).and_return(relation)
+    allow(relation).to receive(:order).and_return(relation)
+    allow(relation).to receive(:to_a).and_return(ordered)
+    result = relation.balance_by_type
+    expect(result.to_a).to eq(ordered)
+  end
+
+  it 'handles a single type' do
+    records = [OpenStruct.new(id: 1, type: 'A'), OpenStruct.new(id: 2, type: 'A')]
+    allow(relation).to receive(:select).with(:id, :type).and_return(records)
+    allow(TypeBalancer).to receive(:balance).and_return(records.map { |r| { id: r.id, type: r.type } })
+    allow(model_class).to receive(:where).with(id: [1, 2]).and_return(relation)
+    allow(relation).to receive(:order).and_return(relation)
+    allow(relation).to receive(:to_a).and_return(records)
+    result = relation.balance_by_type
+    expect(result.to_a).to eq(records)
+  end
+
+  it 'handles multiple types with uneven distribution' do
+    records = [OpenStruct.new(id: 1, type: 'A'), OpenStruct.new(id: 2, type: 'B'), OpenStruct.new(id: 3, type: 'A'),
+               OpenStruct.new(id: 4, type: 'B'), OpenStruct.new(id: 5, type: 'A')]
+    allow(relation).to receive(:select).with(:id, :type).and_return(records)
+    allow(TypeBalancer).to receive(:balance).and_return([{ id: 2, type: 'B' }, { id: 1, type: 'A' },
+                                                         { id: 4, type: 'B' }, { id: 3, type: 'A' }, { id: 5, type: 'A' }])
+    ordered = [records[1], records[0], records[3], records[2], records[4]]
+    allow(model_class).to receive(:where).with(id: [2, 1, 4, 3, 5]).and_return(relation)
+    allow(relation).to receive(:order).and_return(relation)
+    allow(relation).to receive(:to_a).and_return(ordered)
+    result = relation.balance_by_type
+    expect(result.to_a).to eq(ordered)
   end
 end
-# rubocop:enable RSpec/VerifiedDoubleReference

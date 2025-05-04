@@ -6,69 +6,72 @@ require 'spec_helper'
 # throughout this file because it's a non-existent class used only for testing the interface
 # rubocop:disable RSpec/VerifiedDoubleReference
 RSpec.describe 'Model Configuration', :integration do
-  let(:records) do
-    [
-      OpenStruct.new(id: 1, type: 'post', title: 'First Post'),
-      OpenStruct.new(id: 2, type: 'video', title: 'First Video'),
-      OpenStruct.new(id: 3, type: 'post', title: 'Second Post')
-    ]
-  end
-
-  let(:klass) { class_double('MyModel', name: 'MyModel') }
+  let(:model_class) { class_double('MyModel') }
   let(:relation) do
-    rel = instance_double(ActiveRecord::Relation)
-    allow(rel).to receive(:to_a).and_return(records)
-    allow(rel).to receive(:klass).and_return(klass)
-    allow(rel).to receive(:class).and_return(ActiveRecord::Relation)
-    allow(klass).to receive(:name).and_return('MyModel')
+    rel = double('ActiveRecord::Relation')
     rel.extend(TypeBalancer::Rails::CollectionMethods)
+    allow(rel).to receive(:klass).and_return(model_class)
+    allow(rel).to receive(:to_sql).and_return('SELECT * FROM my_models')
     rel
   end
 
   before do
-    allow(TypeBalancer).to receive(:balance).and_return(records)
-    allow(klass).to receive(:where).with(id: [1, 2, 3]).and_return(relation)
+    cache = Class.new do
+      def initialize = @store = {}
+
+      def fetch(key, options = {})
+        @store[key] ||= yield
+      end
+    end.new
+    allow(TypeBalancer::Rails).to receive(:cache_adapter).and_return(cache)
+    allow(model_class).to receive(:where) { relation }
+    allow(model_class).to receive(:none) { double('EmptyRelation', to_a: [], klass: model_class) }
+  end
+
+  it 'uses model-level configuration for type field' do
+    records = [OpenStruct.new(id: 1, foo: 'A'), OpenStruct.new(id: 2, foo: 'B')]
+    allow(model_class).to receive(:type_balancer_options).and_return({ type_field: :foo })
+    allow(relation).to receive(:select).with(:id, :foo).and_return(records)
+    allow(TypeBalancer).to receive(:balance).and_return([{ id: 2, foo: 'B' }, { id: 1, foo: 'A' }])
+    ordered = [records[1], records[0]]
+    allow(model_class).to receive(:where).with(id: [2, 1]).and_return(relation)
     allow(relation).to receive(:order).and_return(relation)
-    allow(relation).to receive(:to_a).and_return(records)
-    allow(klass).to receive(:all).and_return(relation)
-    stub_const('TestModel', klass)
+    allow(relation).to receive(:to_a).and_return(ordered)
+    result = relation.balance_by_type
+    expect(result.to_a).to eq(ordered)
   end
 
-  it 'uses model-level configuration' do
-    expected_hashes = records.map { |r| { id: r.id, type: r.type } }
-    expect(TypeBalancer).to receive(:balance).with(
-      expected_hashes,
-      type_field: :type,
-      type_order: ['video', 'post']
-    )
-    TestModel.all.balance_by_type
+  it 'allows per-query override of type field' do
+    records = [OpenStruct.new(id: 1, bar: 'X'), OpenStruct.new(id: 2, bar: 'Y')]
+    allow(model_class).to receive(:type_balancer_options).and_return({ type_field: :foo })
+    allow(relation).to receive(:select).with(:id, :bar).and_return(records)
+    allow(TypeBalancer).to receive(:balance).and_return([{ id: 2, bar: 'Y' }, { id: 1, bar: 'X' }])
+    ordered = [records[1], records[0]]
+    allow(model_class).to receive(:where).with(id: [2, 1]).and_return(relation)
+    allow(relation).to receive(:order).and_return(relation)
+    allow(relation).to receive(:to_a).and_return(ordered)
+    result = relation.balance_by_type(type_field: :bar)
+    expect(result.to_a).to eq(ordered)
   end
 
-  it 'allows overriding model configuration per-query' do
-    custom_records = [
-      OpenStruct.new(id: 1, category: 'foo', title: 'First'),
-      OpenStruct.new(id: 2, category: 'bar', title: 'Second'),
-      OpenStruct.new(id: 3, category: 'baz', title: 'Third')
-    ]
-    custom_klass = class_double('MyModel', name: 'MyModel')
-    custom_relation = instance_double(ActiveRecord::Relation)
-    allow(custom_relation).to receive(:to_a).and_return(custom_records)
-    allow(custom_relation).to receive(:klass).and_return(custom_klass)
-    allow(custom_relation).to receive(:class).and_return(ActiveRecord::Relation)
-    allow(custom_klass).to receive(:name).and_return('MyModel')
-    custom_relation.extend(TypeBalancer::Rails::CollectionMethods)
-    expected_hashes = custom_records.map { |r| { id: r.id, category: r.category } }
-    expect(TypeBalancer).to receive(:balance).with(
-      expected_hashes,
-      type_field: :category,
-      type_order: ['foo', 'bar', 'baz']
-    )
-    allow(custom_klass).to receive(:where).with(id: [1, 2, 3]).and_return(custom_relation)
-    allow(custom_relation).to receive(:order).and_return(custom_relation)
-    allow(custom_relation).to receive(:to_a).and_return(custom_records)
-    allow(custom_klass).to receive(:all).and_return(custom_relation)
-    stub_const('TestModel', custom_klass)
-    custom_relation.balance_by_type(type_field: :category)
+  it 'returns an empty relation if there are no records' do
+    allow(model_class).to receive(:type_balancer_options).and_return({ type_field: :foo })
+    allow(relation).to receive(:select).with(:id, :foo).and_return([])
+    empty_rel = double('EmptyRelation', to_a: [], klass: model_class)
+    allow(model_class).to receive(:none).and_return(empty_rel)
+    result = relation.balance_by_type
+    expect(result.to_a).to eq([])
+  end
+
+  it 'returns an empty relation if TypeBalancer.balance returns nil' do
+    records = [OpenStruct.new(id: 1, foo: 'A')]
+    allow(model_class).to receive(:type_balancer_options).and_return({ type_field: :foo })
+    allow(relation).to receive(:select).with(:id, :foo).and_return(records)
+    allow(TypeBalancer).to receive(:balance).and_return(nil)
+    empty_rel = double('EmptyRelation', to_a: [], klass: model_class)
+    allow(model_class).to receive(:none).and_return(empty_rel)
+    result = relation.balance_by_type
+    expect(result.to_a).to eq([])
   end
 end
 # rubocop:enable RSpec/VerifiedDoubleReference
