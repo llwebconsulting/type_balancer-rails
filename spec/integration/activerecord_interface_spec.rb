@@ -33,7 +33,7 @@ RSpec.describe 'ActiveRecord Interface', :integration do
     allow(rel).to receive(:order).with(any_args).and_return(rel)
     allow(rel).to receive(:where).with(type: 'post').and_return(rel)
     allow(rel).to receive(:to_sql).and_return('SELECT * FROM my_models')
-    allow(rel).to receive(:select) { |*args| rel }
+    allow(rel).to receive(:select) { |*_args| rel }
     allow(rel).to receive(:map) do |&block|
       if block
         records.map { |r| block.call(r) }
@@ -52,7 +52,7 @@ RSpec.describe 'ActiveRecord Interface', :integration do
     cache = Class.new do
       def initialize = @store = {}
 
-      def fetch(key, options = {})
+      def fetch(key, _options = {})
         @store[key] ||= yield
       end
 

@@ -2,6 +2,7 @@
 
 require 'spec_helper'
 
+# rubocop:disable RSpec/VerifiedDoubleReference
 RSpec.describe 'Basic Type Balancing', :integration do
   let(:model_class) { class_double('MyModel') }
   let(:relation) do
@@ -16,7 +17,7 @@ RSpec.describe 'Basic Type Balancing', :integration do
     cache = Class.new do
       def initialize = @store = {}
 
-      def fetch(key, options = {})
+      def fetch(key, _options = {})
         @store[key] ||= yield
       end
     end.new
@@ -109,8 +110,14 @@ RSpec.describe 'Basic Type Balancing', :integration do
     records = [OpenStruct.new(id: 1, type: 'A'), OpenStruct.new(id: 2, type: 'B'), OpenStruct.new(id: 3, type: 'A'),
                OpenStruct.new(id: 4, type: 'B'), OpenStruct.new(id: 5, type: 'A')]
     allow(relation).to receive(:select).with(:id, :type).and_return(records)
-    allow(TypeBalancer).to receive(:balance).and_return([{ id: 2, type: 'B' }, { id: 1, type: 'A' },
-                                                         { id: 4, type: 'B' }, { id: 3, type: 'A' }, { id: 5, type: 'A' }])
+    allow(TypeBalancer).to receive(:balance)
+      .and_return(
+        [
+          { id: 2, type: 'B' }, { id: 1, type: 'A' },
+          { id: 4, type: 'B' }, { id: 3, type: 'A' },
+          { id: 5, type: 'A' }
+        ]
+      )
     ordered = [records[1], records[0], records[3], records[2], records[4]]
     allow(model_class).to receive(:where).with(id: [2, 1, 4, 3, 5]).and_return(relation)
     allow(relation).to receive(:order).and_return(relation)
@@ -119,3 +126,4 @@ RSpec.describe 'Basic Type Balancing', :integration do
     expect(result.to_a).to eq(ordered)
   end
 end
+# rubocop:enable RSpec/VerifiedDoubleReference

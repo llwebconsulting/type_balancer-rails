@@ -3,7 +3,9 @@
 require 'spec_helper'
 
 RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
+  # rubocop:disable RSpec/VerifiedDoubleReference
   let(:model_class) { class_double('MyModel') }
+  # rubocop:enable RSpec/VerifiedDoubleReference
   let(:relation) do
     rel = double('ActiveRecord::Relation')
     rel.extend(described_class)
@@ -17,7 +19,7 @@ RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
     cache = Class.new do
       def initialize = @store = {}
 
-      def fetch(key, options = {})
+      def fetch(key, _options = {})
         @store[key] ||= yield
       end
     end.new
@@ -122,10 +124,20 @@ RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
     records = [OpenStruct.new(id: 1, type: 'A'), OpenStruct.new(id: 2, type: 'B'), OpenStruct.new(id: 3, type: 'A'),
                OpenStruct.new(id: 4, type: 'B'), OpenStruct.new(id: 5, type: 'A')]
     allow(relation).to receive(:select).with(:id, :type).and_return(records)
-    allow(TypeBalancer).to receive(:balance).and_return([{ id: 2, type: 'B' }, { id: 1, type: 'A' },
-                                                         { id: 4, type: 'B' }, { id: 3, type: 'A' }, { id: 5, type: 'A' }])
+    allow(TypeBalancer).to receive(:balance)
+                       .and_return(
+                         [
+                           { id: 2, type: 'B' },
+                           { id: 1, type: 'A' },
+                           { id: 4, type: 'B' },
+                           { id: 3, type: 'A' },
+                           { id: 5, type: 'A' }
+                         ]
+                       )
     ordered = [records[1], records[0], records[3], records[2], records[4]]
-    allow(model_class).to receive(:where).with(id: [2, 1, 4, 3, 5]).and_return(relation)
+    allow(model_class).to receive(:where)
+                      .with(id: [2, 1, 4, 3, 5])
+      .and_return(relation)
     allow(relation).to receive(:order).and_return(relation)
     allow(relation).to receive(:to_a).and_return(ordered)
     result = relation.balance_by_type

@@ -19,7 +19,7 @@ RSpec.describe 'Model Configuration', :integration do
     cache = Class.new do
       def initialize = @store = {}
 
-      def fetch(key, options = {})
+      def fetch(key, _options = {})
         @store[key] ||= yield
       end
     end.new
