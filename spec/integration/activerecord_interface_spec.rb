@@ -63,10 +63,6 @@ RSpec.describe 'ActiveRecord Interface', :integration do
 
   it 'preserves query interface while balancing' do
     expected_hashes = records.map { |r| { id: r.id, type: r.type } }
-    allow(TypeBalancer).to receive(:balance).and_wrap_original do |m, *args|
-      puts "TypeBalancer.balance called with: #{args.inspect}"
-      m.call(*args)
-    end
     expect(TypeBalancer).to receive(:balance).with(
       satisfy { |actual| records_match_expected?(actual, expected_hashes) },
       type_field: :type,
