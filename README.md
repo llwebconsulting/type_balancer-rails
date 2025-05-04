@@ -82,6 +82,36 @@ The `balance_by_type` method preserves the ActiveRecord query interface:
              .per(20)
 ```
 
+### Pagination and Caching (Always Enabled)
+
+Results from `balance_by_type` are **always paginated** for performance reasons. By default, only the first 20 balanced records are returned. You can control the page size and which page is returned using the `per_page` and `page` options:
+
+```ruby
+# Get the first 20 balanced records (default)
+@posts = Post.all.balance_by_type
+
+# Get the second page of 10 balanced records
+@posts = Post.all.balance_by_type(type_field: :category, per_page: 10, page: 2)
+```
+
+- **Default page size:** 20
+- **Default page:** 1
+- **Pagination is required:** There is no option to disable pagination. This is necessary for performance, especially on large datasets.
+
+#### Cache Expiration
+
+Balanced results are cached by default for 10 minutes to improve performance and reduce redundant calculations. You can override the cache expiration for a specific call by passing the `expires_in` option:
+
+```ruby
+# Cache the balanced results for 1 hour instead of 10 minutes
+@posts = Post.all.balance_by_type(type_field: :category, expires_in: 1.hour)
+```
+
+- **Default cache expiration:** 10 minutes
+- **Custom cache expiration:** Pass `expires_in: ...` (e.g., `expires_in: 1.hour`)
+
+> **Note:** If you need to retrieve all balanced records, you must manually iterate through all pages.
+
 ## Planned Enhancements
 
 - Support for passing a symbol directly to `balance_by_type`, e.g., `balance_by_type(:media_type)`, for more ergonomic usage. This is planned for a future version.

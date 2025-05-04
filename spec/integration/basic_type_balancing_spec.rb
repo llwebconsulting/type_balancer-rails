@@ -111,7 +111,7 @@ RSpec.describe 'Basic Type Balancing', :integration do
                OpenStruct.new(id: 4, type: 'B'), OpenStruct.new(id: 5, type: 'A')]
     allow(relation).to receive(:select).with(:id, :type).and_return(records)
     allow(TypeBalancer).to receive(:balance)
-      .and_return(
+      .and_return(    q1
         [
           { id: 2, type: 'B' }, { id: 1, type: 'A' },
           { id: 4, type: 'B' }, { id: 3, type: 'A' },
