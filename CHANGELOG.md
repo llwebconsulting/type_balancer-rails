@@ -1,5 +1,14 @@
 ## [Unreleased]
 
+## [0.2.7] - 2025-05-04
+
+- Always-on pagination: Results from `balance_by_type` are now always paginated for performance (default: 20 per page, page 1). There is no option to disable pagination.
+- Added support for `per_page` and `page` options to control result size and page.
+- Added support for `expires_in` option to override the default cache expiration (default: 10 minutes) per call.
+- Cache adapter is now a first-class, configurable component (`TypeBalancer::Rails.cache_adapter`).
+- Improved documentation and architecture overview to reflect new pagination and caching behavior.
+- RuboCop and test stability improvements.
+
 ## [0.2.6] - 2025-05-01
 
 - Updated type_balancer dependency to ~> 0.2.1 for improved performance

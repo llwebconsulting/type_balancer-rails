@@ -49,7 +49,10 @@ TypeBalancer is a Ruby gem that provides advanced algorithms for distributing it
 - **Location:** `lib/type_balancer/rails/collection_methods.rb`
 - **Purpose:**
   - Provides the `balance_by_type` method for ActiveRecord::Relation, enabling balanced selection and ordering of records by a type field.
-  - Handles pagination and result ordering.
+  - **Always paginates results** for performance. Default: 20 per page, page 1. There is no option to disable pagination.
+  - Supports `per_page` and `page` options to control result size and page.
+  - **Results are cached** for 10 minutes by default, but you can override this per call with the `expires_in` option (e.g., `expires_in: 1.hour`).
+  - Handles result ordering and cache key generation.
 - **Dependencies:**
   - Depends on `TypeBalancer.balance` for core balancing logic.
   - Expects to be included in ActiveRecord::Relation.
@@ -85,6 +88,7 @@ TypeBalancer is a Ruby gem that provides advanced algorithms for distributing it
 - **Location:** `/Users/carl/gems/type_balancer-rails/lib/type_balancer/rails.rb`
 - **Purpose:**
   - Loads and wires up all Rails-specific extensions and dependencies for the gem.
+  - **Exposes a configurable cache adapter** (`TypeBalancer::Rails.cache_adapter`) used for caching balanced results.
 - **Dependencies:**
   - `active_support`, `active_record`, `TypeBalancer::Rails::ActiveRecordExtension`, `TypeBalancer::Rails::CollectionMethods`.
 
@@ -138,4 +142,7 @@ TypeBalancer is a Ruby gem that provides advanced algorithms for distributing it
 ## 5. Additional Notes
 - All file paths in this documentation are absolute, per project standards.
 - The gem follows SOLID principles and Rails best practices, with minimal monkey-patching and clear extension points.
+- **Pagination and caching are always enabled for performance reasons.**
+  - Default: 20 per page, page 1, 10 minute cache expiration.
+  - Use `per_page`, `page`, and `expires_in` options to customize.
 - For more details, see the README and inline code comments. 
