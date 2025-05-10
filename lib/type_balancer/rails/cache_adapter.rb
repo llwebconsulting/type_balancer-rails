@@ -28,6 +28,11 @@ module TypeBalancer
           @memory_cache.delete(key)
         end
       end
+
+      def clear_cache!
+        ::Rails.cache.clear if defined?(::Rails) && ::Rails.respond_to?(:cache) && ::Rails.cache
+        @memory_cache.clear
+      end
     end
   end
 end

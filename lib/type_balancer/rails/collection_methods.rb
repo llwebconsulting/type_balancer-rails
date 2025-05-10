@@ -11,8 +11,15 @@ module TypeBalancer
       def balance_by_type(options = {})
         type_field, offset, per_page = pagination_params(options)
         cache_key = build_cache_key(type_field)
-        ids = TypeBalancer::Rails.cache_adapter.fetch(cache_key, expires_in: 10.minutes) do
-          compute_ids(type_field)
+        expires_in = options[:expires_in] || ::TypeBalancer::Rails.cache_expiry_seconds
+        cache_reset = options[:cache_reset]
+        if cache_reset
+          ids = compute_ids(type_field)
+          TypeBalancer::Rails.cache_adapter.write(cache_key, ids, expires_in: expires_in)
+        else
+          ids = TypeBalancer::Rails.cache_adapter.fetch(cache_key, expires_in: expires_in) do
+            compute_ids(type_field)
+          end
         end
         page_ids = ids[offset, per_page] || []
         return empty_relation if page_ids.empty?
