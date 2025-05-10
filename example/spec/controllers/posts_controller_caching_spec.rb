@@ -62,4 +62,4 @@ RSpec.describe PostsController, type: :controller do
       expect(TypeBalancer).to have_received(:balance).once
     end
   end
-end 
+end
