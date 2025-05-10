@@ -1,4 +1,29 @@
-## [Unreleased]
+## [0.2.8] - 2025-05-10
+
+- **Rails-style configuration block:**
+  You can now configure TypeBalancer Rails in an initializer using:
+  ```ruby
+  TypeBalancer::Rails.configure do |config|
+    config.cache_adapter = TypeBalancer::Rails::CacheAdapter.new
+    config.cache_expiry_seconds = 600
+  end
+  ```
+  Direct assignment is still supported for backward compatibility.
+
+- **Per-request cache control:**
+  `balance_by_type` now accepts:
+  - `expires_in:` (override cache expiry for a single call)
+  - `cache_reset:` (force cache refresh for a single call)
+
+- **Global cache expiry configuration:**
+  Set the default cache expiry for all balanced queries via `TypeBalancer::Rails.cache_expiry_seconds`.
+
+- **Cache clearing:**
+  Use `TypeBalancer::Rails.clear_cache!` to clear all cached balanced results (e.g., from a console or admin task).
+
+### Changed
+- **Caching and pagination are always enabled** for performance and reliability.
+- **Cache keys are now isolated** per model and type field, preventing cross-contamination.
 
 ## [0.2.7] - 2025-05-04
 
