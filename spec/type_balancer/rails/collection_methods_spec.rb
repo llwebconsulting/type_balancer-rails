@@ -5,6 +5,10 @@ require 'spec_helper'
 RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
   # rubocop:disable RSpec/VerifiedDoubleReference
   let(:model_class) { class_double('MyModel').as_stubbed_const }
+  let(:cache_adapter) { instance_double(TypeBalancer::Rails::CacheAdapter) }
+  let(:ids) { [1, 2, 3, 4] }
+  let(:cache_key) { 'type_balancer:TestModel:category:abc123' }
+  let(:type_field) { :category }
   # rubocop:enable RSpec/VerifiedDoubleReference
   let(:relation) do
     rel = double('ActiveRecord::Relation')
@@ -31,6 +35,40 @@ RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
     end.new
     allow(TypeBalancer::Rails).to receive(:cache_adapter).and_return(cache)
     allow(model_class).to receive(:none) { double('EmptyRelation', to_a: [], klass: model_class) }
+    stub_const('TypeBalancer::Rails::CacheAdapter', Class.new)
+    allow(TypeBalancer::Rails).to receive(:cache_adapter).and_return(cache_adapter)
+    allow(relation).to receive(:klass).and_return(model_class)
+    allow(relation).to receive(:to_sql).and_return('SELECT * FROM test_models')
+    allow(relation).to receive(:select).and_return([])
+    allow(relation).to receive(:map).and_return([])
+    allow(relation).to receive(:group_by).and_return({})
+    allow(relation).to receive(:order).and_return(relation)
+    allow(relation).to receive(:none).and_return([])
+    allow(relation).to receive(:where).and_return(relation)
+    allow(relation).to receive(:public_send).and_return(nil)
+    allow(relation).to receive(:respond_to?).and_return(true)
+    allow(relation).to receive(:is_a?).with(ActiveRecord::Relation).and_return(true)
+    allow(relation).to receive(:build_cache_key).and_return(cache_key)
+    allow(relation).to receive(:compute_ids).and_return(ids)
+    allow(cache_adapter).to receive(:fetch).and_return(ids)
+    allow(cache_adapter).to receive(:write)
+    stub_const('TypeBalancer::Rails::CacheAdapter', Class.new)
+    allow(TypeBalancer::Rails).to receive(:cache_adapter).and_return(cache_adapter)
+    allow(relation).to receive(:klass).and_return(model_class)
+    allow(relation).to receive(:to_sql).and_return('SELECT * FROM test_models')
+    allow(relation).to receive(:select).and_return([])
+    allow(relation).to receive(:map).and_return([])
+    allow(relation).to receive(:group_by).and_return({})
+    allow(relation).to receive(:order).and_return(relation)
+    allow(relation).to receive(:none).and_return([])
+    allow(relation).to receive(:where).and_return(relation)
+    allow(relation).to receive(:public_send).and_return(nil)
+    allow(relation).to receive(:respond_to?).and_return(true)
+    allow(relation).to receive(:is_a?).with(ActiveRecord::Relation).and_return(true)
+    allow(relation).to receive(:build_cache_key).and_return(cache_key)
+    allow(relation).to receive(:compute_ids).and_return(ids)
+    allow(cache_adapter).to receive(:fetch).and_return(ids)
+    allow(cache_adapter).to receive(:write)
   end
 
   it 'returns a relation with records balanced by type (default field)' do
@@ -149,31 +187,6 @@ RSpec.describe TypeBalancer::Rails::CollectionMethods, :unit do
     allow(cache_adapter).to receive(:fetch).and_return([2, 1, 4, 3, 5])
     result = relation.balance_by_type
     expect(result.to_a).to eq(ordered)
-  end
-
-  let(:type_field) { :category }
-  let(:cache_key) { 'type_balancer:TestModel:category:abc123' }
-  let(:ids) { [1, 2, 3, 4] }
-  let(:cache_adapter) { instance_double(TypeBalancer::Rails::CacheAdapter) }
-
-  before do
-    stub_const('TypeBalancer::Rails::CacheAdapter', Class.new)
-    allow(TypeBalancer::Rails).to receive(:cache_adapter).and_return(cache_adapter)
-    allow(relation).to receive(:klass).and_return(model_class)
-    allow(relation).to receive(:to_sql).and_return('SELECT * FROM test_models')
-    allow(relation).to receive(:select).and_return([])
-    allow(relation).to receive(:map).and_return([])
-    allow(relation).to receive(:group_by).and_return({})
-    allow(relation).to receive(:order).and_return(relation)
-    allow(relation).to receive(:none).and_return([])
-    allow(relation).to receive(:where).and_return(relation)
-    allow(relation).to receive(:public_send).and_return(nil)
-    allow(relation).to receive(:respond_to?).and_return(true)
-    allow(relation).to receive(:is_a?).with(ActiveRecord::Relation).and_return(true)
-    allow(relation).to receive(:build_cache_key).and_return(cache_key)
-    allow(relation).to receive(:compute_ids).and_return(ids)
-    allow(cache_adapter).to receive(:fetch).and_return(ids)
-    allow(cache_adapter).to receive(:write)
   end
 
   describe '#balance_by_type' do
