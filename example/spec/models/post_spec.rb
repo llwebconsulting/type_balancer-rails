@@ -16,6 +16,7 @@ RSpec.describe Post, type: :model do
     let(:another_video_post) { described_class.create!(title: 'Post 3', media_type: 'video') }
 
     before do
+      TypeBalancer::Rails.clear_cache!
       described_class.delete_all
       video_post; article_post; another_video_post  # Create the records
     end

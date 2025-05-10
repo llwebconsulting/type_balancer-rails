@@ -19,6 +19,7 @@ RSpec.describe Content, type: :model do
 
   describe 'type balancing with real records' do
     before do
+      TypeBalancer::Rails.clear_cache!
       described_class.delete_all
       @content1 = described_class.create!(title: 'Content 1', content_type: 'blog')
       @content2 = described_class.create!(title: 'Content 2', content_type: 'news')
