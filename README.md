@@ -26,6 +26,38 @@ Or install it yourself as:
 $ gem install type_balancer_rails
 ```
 
+## Caching and Performance
+
+Type balancing can be computationally expensive, especially on large datasets. To ensure efficient performance, **TypeBalancer Rails automatically caches the balanced ID list for each query**. This means:
+- The balancing algorithm only runs when needed (on cache miss or reset).
+- Subsequent requests for the same query use the cached result, reducing database and CPU load.
+- Caching is essential for production use. Disabling or misconfiguring cache may result in slow queries.
+
+**Adjust cache settings thoughtfully:**
+- Shorter expiries mean fresher data but more frequent recalculation.
+- Longer expiries improve performance but may serve stale results if your data changes often.
+
+## Configuration
+
+To customize caching and performance, use the Rails-style configuration block in an initializer (e.g., `config/initializers/type_balancer.rb`):
+
+```ruby
+TypeBalancer::Rails.configure do |config|
+  # Use the default cache adapter (backed by Rails.cache)
+  config.cache_adapter = TypeBalancer::Rails::CacheAdapter.new
+
+  # Set the global cache expiry (in seconds)
+  # Default is 600 (10 minutes). Adjust as needed for your app's freshness/performance needs.
+  config.cache_expiry_seconds = 600
+end
+```
+
+> **Note:** You can also set these options directly
+> ```ruby
+> TypeBalancer::Rails.cache_adapter = TypeBalancer::Rails::CacheAdapter.new
+> TypeBalancer::Rails.cache_expiry_seconds = 600
+> ```
+
 ## Usage
 
 To balance records by a given type field, use the following syntax:
@@ -111,6 +143,52 @@ Balanced results are cached by default for 10 minutes to improve performance and
 - **Custom cache expiration:** Pass `expires_in: ...` (e.g., `expires_in: 1.hour`)
 
 > **Note:** If you need to retrieve all balanced records, you must manually iterate through all pages.
+
+### Per-request Cache Control
+
+You can override cache behavior for a single call to `balance_by_type`:
+
+- **Custom Expiry:**
+  ```ruby
+  # Cache the balanced results for 1 hour for this request only
+  @posts = Post.all.balance_by_type(type_field: :category, expires_in: 1.hour)
+  ```
+- **Force Cache Reset:**
+  ```ruby
+  # Force recalculation and cache update for this request
+  @posts = Post.all.balance_by_type(type_field: :category, cache_reset: true)
+  ```
+
+#### Controller Example
+
+You can pass these options from controller params:
+
+```ruby
+class PostsController < ApplicationController
+  def index
+    @posts = Post.all.balance_by_type(
+      type_field: params[:type_field],
+      expires_in: params[:expires_in],
+      cache_reset: params[:cache_reset].present?
+    )
+  end
+end
+```
+
+## Cache Management and Isolation
+
+- **Cache keys are unique per model and type field.**
+- There is no cross-contamination between different models or type fields.
+- If you use multiple type fields or models, each will have its own cache entry.
+- To avoid stale data, clear the cache after bulk updates or schema changes using `TypeBalancer::Rails.clear_cache!`.
+
+## Upgrade Notes
+
+- `balance_by_type` now supports per-request `expires_in` and `cache_reset` options.
+- Global cache expiry is configurable via `TypeBalancer::Rails.cache_expiry_seconds`.
+- You can clear all cached results with `TypeBalancer::Rails.clear_cache!`.
+- Caching is always enabled and required for performance.
+- Pagination is always enabled; you must page through results if you want all records.
 
 ## Planned Enhancements
 

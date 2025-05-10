@@ -16,6 +16,11 @@ module TypeBalancer
       def clear_cache!
         cache_adapter&.clear_cache!
       end
+
+      # Rails-style configuration block
+      def configure
+        yield self if block_given?
+      end
     end
     self.cache_adapter ||= TypeBalancer::Rails::CacheAdapter.new
     self.cache_expiry_seconds ||= 600 # 10 minutes default
